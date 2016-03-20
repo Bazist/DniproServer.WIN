@@ -1,0 +1,7 @@
+1. ??? IsReaded for ha1 Scan ??
+2. ? Allocate trans optimize
+3. ?? Pool counter optimize
+4. Split Commit
+5. Storage
+6. Network
+7. Testcases
