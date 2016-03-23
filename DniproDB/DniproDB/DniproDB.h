@@ -324,6 +324,29 @@ public:
 
 	void clear()
 	{
+		//wait until all snap trans will be finished
+		while (amountShapshotTrans.load())
+		{
+			Sleep(1);
+		}
+
+		bool val = false;
+
+		//block writers
+		while (!blockWriters.compare_exchange_weak(val, true))
+		{
+			Sleep(1);
+
+			val = false;
+		}
+
+		//block readers
+		blockReaders.store(true);
+
+		//wait while readers finish their work
+		while (amountReaders.load());
+
+		//clear all db
 		attrValuesPool.clear();
 
 		for (uint i = 0; i < MAX_TRANS; i++)
@@ -338,6 +361,12 @@ public:
 		ha2.AllowValueList = false;
 
 		lastDocID = 0;
+
+		//allow readers
+		blockReaders.store(false);
+
+		//allow writers
+		blockWriters.store(false);
 	}
 	
 	void destroy()

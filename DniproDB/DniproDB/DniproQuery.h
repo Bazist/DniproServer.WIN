@@ -16,10 +16,13 @@ public:
 		CountValueList = 0;
 
 		TranID = 0;
+
+		//memset(pValueList, 0, sizeof(uint) * 16);
+		//memset(pIndexes, 0, sizeof(uint) * 16);
 	}
 
 	DniproDB* pDB;
-
+	
 	ValueList* pValueList[16];
 	ValueList* pIndexes[16];
 
@@ -291,7 +294,7 @@ public:
 			hasBeginTran = true;
 		}
 
-		if (pValueList[0])
+		if (CountValueList && pValueList[0])
 		{
 			ValueList* pOrValueList = pDB->getDocsByAttr(query, 0, TranID);
 
@@ -343,7 +346,7 @@ public:
 			hasBeginTran = true;
 		}
 
-		if (pValueList[0])
+		if (CountValueList && pValueList[0])
 		{
 			ValueList* pOrIndexes;
 			ValueList* pOrValueList = pDB->getDocsByAttr(query, docID, TranID, &pOrIndexes);
@@ -707,7 +710,7 @@ public:
 			hasBeginTran = true;
 		}
 
-		if(pValueList[0]->Count < count)
+		if(CountValueList && pValueList[0]->Count < count)
 		{
 			count = pValueList[0]->Count;
 		}
@@ -737,7 +740,7 @@ public:
 			hasBeginTran = true;
 		}
 
-		if (pValueList[0])
+		if (CountValueList && pValueList[0])
 		{
 			for (uint i = count; i < pValueList[0]->Count; i++)
 			{
@@ -765,7 +768,7 @@ public:
 			hasBeginTran = true;
 		}
 
-		if (pValueList[0]->Count < 2)
+		if (!CountValueList || pValueList[0]->Count < 2)
 			return this;
 
 		//1. Get all doc values
@@ -1065,7 +1068,7 @@ public:
 
 		uint cnt = 0;
 
-		if (pValueList[0])
+		if (CountValueList && pValueList[0])
 		{
 			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
