@@ -33,9 +33,9 @@ db.GetWhere("{'FirstName':'John'}")
          ("{'FirstName':$}{'Engine':$}{'City':$}");
 ```
 Few clicks by mouse and database is ready for using in your environment 
-
 (Ready for **Windows** platform and **.NET**, **Java** languages)
-Learn more ? Just download our comprehensive [Dnipro In Using](http://booben.com/DniproDB_In_Using_EN.PDF) book.
+
+**Learn more** ? Just download our comprehensive [Dnipro In Using](http://booben.com/DniproDB_In_Using_EN.PDF) book.
 
 ## SO FAST
 
@@ -45,12 +45,11 @@ Do you remember ? **JSONs** it is just keys in embeded **Key\Value storage**.
 So 
 * When you insert a document, you just insert keys to Key\Value storage.
 * When you insert new or update existing attribute in document,
-  you just update key in the storage without any overwriting of document.
-* When you load part of document, you just lookup several keys. You don't need load all document at all.
+  you just insert or update key in the storage without any overwriting of entire document.
+* When you load part of document, you just lookup several keys. You don't need download all document on client at all.
 
-And ... what you should know ... one operation of insert/update/lookup of long key costs 
+And ... what you should know ... one operation of insert/update/lookup of long key costs about **fifty nanoseconds* on core level.
 
-about **fifty nanoseconds* on core level.
 In regular benchmarks **Dnipro** faster than standard databases in [ten](http://forum.pikosec.com/viewforum.php?f=7) times and more.
 
 Run in console **db.SelfTest()** to see how many seconds need to your computer to finish 
@@ -64,9 +63,8 @@ Without any compromises.
 
 Very carefully blocking on **attribute level** gives maximum parallelism.
 
-Many transactions can change one document at the same time. 
-If changing attributes are not crossed, they changes without conflicts to each other. 
-They wouldn’t overwrite changes to each other.
+Many transactions can change one document at the same time. If changing attributes are not crossed, they changes without conflicts to each other.  They wouldn’t overwrite changes to each other.
+
 **Resolve any deadlocks** with full information in log: who, when, what documents, what attributes
 
 And now it's **Opensource**.
