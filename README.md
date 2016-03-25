@@ -1,4 +1,4 @@
-# DniproDB
+# Dnipro Server
 
 **DniproDB** one of the fastest document oriented database in the world. The database has innovated core based on Trie structures, Inverted indexes and Lock Free algorithms.
 
