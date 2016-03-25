@@ -48,12 +48,10 @@ So
   you just insert or update key in the storage without any overwriting of entire document.
 * When you load part of document, you just lookup several keys. You don't need download all document on client at all.
 
-And ... what you should know ... one operation of insert/update/lookup of long key costs about **fifty nanoseconds* on core level.
-
+And ... what you should know ... one operation of insert/update/lookup of long key costs about **fifty nanoseconds** on core level.
 In regular benchmarks **Dnipro** faster than standard databases in [ten](http://forum.pikosec.com/viewforum.php?f=7) times and more.
 
-Run in console **db.SelfTest()** to see how many seconds need to your computer to finish 
-more than ten millions queries in our benchmark.
+Run in console **db.SelfTest()** to see how many seconds need to your computer to finish more than ten millions queries in our benchmark.
 
 ## RELIABLE DATABASE
 
