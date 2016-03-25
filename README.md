@@ -11,7 +11,7 @@ Just put your bigest hierarchical **Business Object** to database in one row
 ```C#
 db.AddDoc(obj);
 ```
-And that's all ! We indexed the object with all attributes and saved it in convinient JSON format.
+And that's all ! We indexed the object with all attributes and saved it in convinient **JSON** format.
 You have opportunities to load and update your object partially with minimum traffic.
 
 **Link queries** helps build complex queries
