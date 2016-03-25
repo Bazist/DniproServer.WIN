@@ -61,9 +61,7 @@ Without any compromises.
 
 **ACID** and three types of **Transactions** (ReadCommited, RepeatableRead, Snapshot).
 
-Very carefully blocking on **attribute level** gives maximum parallelism.
-
-Many transactions can change one document at the same time. If changing attributes are not crossed, they changes without conflicts to each other.  They wouldn’t overwrite changes to each other.
+Very carefully blocking on **attribute level** gives maximum parallelism. Many transactions can change one document at the same time. If changing attributes are not crossed, they changes without conflicts to each other.  They wouldn’t overwrite changes to each other.
 
 **Resolve any deadlocks** with full information in log: who, when, what documents, what attributes
 
