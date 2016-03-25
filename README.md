@@ -6,7 +6,7 @@
 ## REALLY EASY SYNTAX
 
 Syntax so important for daily using.
-Just put hierarchy of your bigest **Business Object** to database in one row
+Just put your bigest hierarchical **Business Object** to database in one row
 
 ```C#
 db.AddDoc(obj);
