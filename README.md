@@ -6,9 +6,12 @@
 ## REALLY EASY SYNTAX
 
 Syntax so important for daily using.
+
 Just put your bigest hierarchical **Business Object** to database in one row
 
 ```C#
+DniproDB db = new DniproDB("localhost", 4477);
+
 db.AddDoc(obj);
 ```
 And that's all ! We indexed the object with all attributes and saved it in convinient **JSON** format. 
