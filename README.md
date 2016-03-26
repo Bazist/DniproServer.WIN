@@ -11,7 +11,7 @@ Just put your bigest hierarchical **Business Object** to database in one row
 ```C#
 db.AddDoc(obj);
 ```
-And that's all ! We indexed the object with all attributes and saved it in convinient **JSON** format. You have opportunities to load and update your object partially with minimum traffic. You can do searches by documents and do searches inside one document.
+And that's all ! We indexed the object with all attributes and saved it in convinient **JSON** format. 
 
 **Link queries** helps build complex queries
 
@@ -21,6 +21,8 @@ db.GetWhere("{'FirstName':'John'})")
   .AndWhere("{'Address':{'Country':'UK'}})"
 	  .Select<User>("{'FirstName':$,'LastName':$}");
 ```
+
+You have opportunities to load and update your object partially with minimum traffic. You can do searches by documents and do searches inside one document.
 
 And, of course, perfect **JOIN** ...
 ```C#
