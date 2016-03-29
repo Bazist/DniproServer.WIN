@@ -78,6 +78,9 @@
     <ClInclude Include="DniproInterpreter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -115,6 +118,9 @@
     </ClCompile>
     <ClCompile Include="HArrayVarRAM_scanKeysAndValues.cpp">
       <Filter>Source Files\HArray</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

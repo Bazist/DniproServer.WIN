@@ -14,6 +14,7 @@
 #include "DniproInterpreter.h"
 #include "Server.h"
 #include "Storage.h"
+#include "Test.h"
 
 using namespace std;
 
@@ -991,32 +992,75 @@ void testThreads()
 	}
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char** argv)
 {
+	system("cls");
+
+	if (argc > 1 && !strcmp(argv[1], "-selftest")) //test mode
+	{
+		//http://www.computerhope.com/color.htm
+		DniproInfo::PrintLine();
+		DniproInfo::Print("= DniproDB v1.0.3 [SELFTEST] (c)Booben.Com =\n");
+		DniproInfo::PrintLine();
+
+		DniproDB* pDB = new DniproDB();
+		pDB->init();
+
+		Test* pTests = new Test(pDB);
+		pTests->run();
+
+		delete pTests;
+
+		pDB->destroy();
+
+		delete pDB;
+
+		printf("Restart server in normal mode ? (y/n): ");
+
+		if (fgetc(stdin) == 'y')
+		{
+			DniproInterpreter::restartServer();
+		}
+		else
+		{
+			exit(0);
+		}
+
+		return 0;
+	}
+
 	//=====================================================
 
 	//http://www.computerhope.com/color.htm
 	DniproInfo::PrintLine();
-	DniproInfo::Print("=      DniproDB v1.0.1 (c)Booben.Com      =\n");
+	DniproInfo::Print("=      DniproDB v1.0.3 (c)Booben.Com      =\n");
 	DniproInfo::PrintLine();
 
+	//create db
 	DniproDB* pDB = new DniproDB();
-	pDB->init("default.dp");
+	pDB->init(""); //current folder
 
-	//run console interpreter
-	CreateThread(
-			NULL,                   // default security attributes
-			0,                      // use default stack size  
-			DniproInterpreter::runConsole,       // thread function name
-			pDB,          // argument to thread function 
-			0,                      // use default creation flags 
-			0);   // returns the thread identifier 
-
-	Server server(pDB, 4477);
-	server.Run();
+	//run server
+	Server::start(pDB, 4477);
 	
-	
+	//run console
+	char query[1024];
 
+	DniproInterpreter di(pDB, 0, &Server::stop);
+
+	//wait, server is not started
+	Sleep(500);
+
+	while (true)
+	{
+		printf("\nEnter query >> ");
+		fflush(stdout);
+
+		fgets(query, 1024, stdin); /* buffer is sent as a pointer to fgets */
+
+		di.run(query);
+	}
+		
 	//=====================================================
 
 	/*clock_t start, finish;

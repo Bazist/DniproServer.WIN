@@ -59,15 +59,21 @@ public:
 	std::atomic<uint> amountWritedTranPages;
 
 	CRITICAL_SECTION writeTranLock;
+	CRITICAL_SECTION writeBlobLock;
 
 	BinaryFile* pTranLogFile;
-	char dbFileName[256];
+	BinaryFile* pBlobLogFile;
+
+	char dbTranLogFileName[256];
+	char dbBlobLogFileName[256];
+
 	char* tranLog;
 	uint currTranLogPos;
 	uint tranIdentity;
 
 	bool writeTranOnHDD;
 	static uint tranLogSize;
+	static uint blobLogSize;
 
 	HArrayVarRAM ha1;
 	HArrayVarRAM ha2;
@@ -80,6 +86,7 @@ public:
 	static DWORD WINAPI writeTrans(LPVOID lpParam);
 
 	bool readTrans(char* filePath);
+	bool readBlobs(char* filePath);
 
 	void read(BinaryFile* pFile)
 	{
@@ -96,7 +103,7 @@ public:
 		return pFile->writeInt(&val);
 	}
 		
-	void init(char* dbFileName = 0)
+	void init(char* dbFolder = 0)
 	{
 		pHArrayTranItemsPool = new HArrayTranItemsPool();
 		attrValuesPool.init();
@@ -129,33 +136,50 @@ public:
 		//run sync job
 		InitializeCriticalSection(&writeTranLock);
 
-		if (dbFileName)
-		{
-			strcpy(DniproDB::dbFileName, dbFileName);
-		}
+		InitializeCriticalSection(&writeBlobLock);
 
 		tranLog = 0;
 		currTranLogPos = 0;
 		amountWritedTranPages = 0;
 		tranIdentity = 0;
-		writeTranOnHDD = true;
 
-		//read trans from HDD
-		readTrans(dbFileName);
+		if (dbFolder)
+		{
+			if (strlen(dbFolder) > 0)
+			{
+				sprintf(dbTranLogFileName, "%s\\dbTranLog.dp", dbFolder);
+				sprintf(dbBlobLogFileName, "%s\\dbBlobLog.dp", dbFolder);
+			}
+			else
+			{
+				strcpy(dbTranLogFileName, "dbTranLog.dp");
+				strcpy(dbBlobLogFileName, "dbBlobLog.dp");
+			}
 
-		CreateThread(NULL,                   // default security attributes
-					0,                      // use default stack size  
-					DniproDB::writeTrans,       // thread function name
-					this,					 // argument to thread function 
-					0,                      // use default creation flags 
-					0);					 // returns the thread identifier 
+			writeTranOnHDD = true;
+
+			//read trans from HDD
+			readTrans(dbTranLogFileName);
+			readBlobs(dbBlobLogFileName);
+
+			CreateThread(NULL,                   // default security attributes
+				0,                      // use default stack size  
+				DniproDB::writeTrans,       // thread function name
+				this,					 // argument to thread function 
+				0,                      // use default creation flags 
+				0);					 // returns the thread identifier 
+		}
+		else
+		{
+			writeTranOnHDD = false;
+		}
 
 		Sleep(10); //wait until thread started
 	}
 
 	static bool checkDeadlock(uchar tranID);
 
-	uint beginTran(uchar tranType);
+	uint beginTran(uchar tranType = READ_COMMITED_TRAN);
 
 	void rollbackTran(uint tranID);
 
@@ -322,7 +346,45 @@ public:
 		indexesPool.clear();
 	}*/
 
-	void clear()
+	uint addBlobValue(char* value, uint len, char* label, uint tranID)
+	{
+		EnterCriticalSection(&writeBlobLock);
+
+		uint labelLen = sprintf(label, "#%d-%d", blobLogSize, len);
+
+		pBlobLogFile->setPosition(blobLogSize);
+		pBlobLogFile->write(value, len);
+		pBlobLogFile->flush();
+
+		blobLogSize += len;
+
+		LeaveCriticalSection(&writeBlobLock);
+
+		return labelLen;
+	}
+
+	bool getBlobValue(char* value, uint& len, char* label, uint tranID)
+	{
+		char* posStr = label + 1;
+
+		for (uint i = 0; label[i]; i++)
+		{
+			if (label[i] == '-')
+			{
+				label[i] = 0;
+
+				char* lenStr = label + i + 1;
+
+				len = pBlobLogFile->read(value, atoi(posStr), atoi(lenStr));
+
+				return (len > 0);
+			}
+		}
+
+		return false;
+	}
+
+	void block()
 	{
 		//wait until all snap trans will be finished
 		while (amountShapshotTrans.load())
@@ -345,6 +407,20 @@ public:
 
 		//wait while readers finish their work
 		while (amountReaders.load());
+	}
+
+	void unblock()
+	{
+		//allow readers
+		blockReaders.store(false);
+
+		//allow writers
+		blockWriters.store(false);
+	}
+
+	void clear()
+	{
+		block();
 
 		//clear all db
 		attrValuesPool.clear();
@@ -362,15 +438,17 @@ public:
 
 		lastDocID = 0;
 
-		//allow readers
-		blockReaders.store(false);
-
-		//allow writers
-		blockWriters.store(false);
+		unblock();
 	}
 	
 	void destroy()
 	{
+		block();
+
+		writeTranOnHDD = false;
+
+		Sleep(10); //wait until finished
+
 		delete pHArrayTranItemsPool;
 		attrValuesPool.destroy();
 

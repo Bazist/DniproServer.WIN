@@ -1,5 +1,14 @@
+#pragma once
+
+#ifndef _DNIPRO_INTERPRETER		 // Allow use of features specific to Windows XP or later.                   
+#define _DNIPRO_INTERPRETER 0x712 // Change this to the appropriate value to target other versions of Windows.
+
+#endif	
+
 #include "stdafx.h"
 #include "DniproQuery.h"
+
+typedef void STOP_SERVER_FUNC();
 
 struct MethodParam
 {
@@ -25,16 +34,161 @@ struct Method
 class DniproInterpreter
 {
 public:
+	DniproInterpreter(DniproDB* pDB,
+					  char* jsonResult = 0,
+					  STOP_SERVER_FUNC* stopServer = 0)
+	{
+		this->pDB = pDB;
+		
+		this->jsonResult = jsonResult;
+		jsonResultLen = 0;
+
+		this->stopServer = stopServer;
+	}
+	
+	STOP_SERVER_FUNC* stopServer;
+
 	DniproDB* pDB;
 
 	Method methods[16];
 	uint methodCount;
 
+	char* jsonResult;
+	uint jsonResultLen;
+
+	uint CurrLine;
+
+	static void restartServer(DniproDB* pDB = 0,
+							  STOP_SERVER_FUNC* stopServer = 0,
+							  char* withParam = 0)
+	{
+		TCHAR currPath[MAX_PATH];
+
+		// Will contain exe path
+		HMODULE hModule = GetModuleHandle(NULL);
+		if (hModule != NULL)
+		{
+			// When passing NULL to GetModuleHandle, it returns handle of exe itself
+			GetModuleFileName(hModule, currPath, (sizeof(currPath)));
+
+			char exePath[1024];
+			wcstombs(exePath, currPath, wcslen(currPath) + 1);
+
+			if (withParam)
+			{
+				strcat(exePath, withParam);
+			}
+
+			if (stopServer)
+			{
+				(*stopServer)();
+			}
+
+			if (pDB)
+			{
+				pDB->destroy();
+
+				delete pDB;
+			}
+
+			system(exePath);
+		}
+
+		exit(0);
+
+		//Sleep(5000);
+	}
+
+	void printResult(char* json, uint intParam)
+	{
+		char jsonParam[10];
+		itoa(intParam, jsonParam, 10);
+
+		printResult(json, jsonParam);
+	}
+
+	void printResult(char* json, char* jsonParam = 0)
+	{
+		if (jsonResult) //Exec mode
+		{
+			if (!jsonParam)
+			{
+				jsonResultLen += (uint)sprintf(jsonResult + jsonResultLen, json);
+			}
+			else
+			{
+				jsonResultLen += (uint)sprintf(jsonResult + jsonResultLen, json, jsonParam);
+			}
+
+			jsonResult[jsonResultLen++] = ';';
+			jsonResult[jsonResultLen] = 0;
+		}
+		else //Console mode
+		{
+			if (!jsonParam)
+			{
+				printf(json);
+			}
+			else
+			{
+				printf(json, jsonParam);
+
+			}
+
+			printf("\n");
+		}
+	}
+
+	void printError(char* json, uint intParam)
+	{
+		char jsonParam[10];
+		itoa(intParam, jsonParam, 10);
+
+		printError(json, jsonParam);
+	}
+
+	void printError(char* json, char* jsonParam = 0)
+	{
+		if (jsonResult) //Exec mode
+		{
+			if (!jsonParam)
+			{
+				jsonResultLen += (uint)sprintf(jsonResult + jsonResultLen, json);
+			}
+			else
+			{
+				jsonResultLen += (uint)sprintf(jsonResult + jsonResultLen, json, jsonParam);
+			}
+
+			char currLine[64];
+			
+			jsonResultLen += sprintf(currLine, " [Line %d]", CurrLine);
+
+			strcat(jsonResult, currLine);
+
+			jsonResult[jsonResultLen++] = ';';
+			jsonResult[jsonResultLen] = 0;
+		}
+		else //Console mode
+		{
+			if (!jsonParam)
+			{
+				printf(json);
+			}
+			else
+			{
+				printf(json, jsonParam);
+			}
+
+			printf(" [Line %d]\n", CurrLine);
+		}
+	}
+
 	bool validateJson(char* query)
 	{
 		if (query[0] != '{')
 		{
-			printf("Json should be started from '{' symbol.\n");
+			printError("Json should be started from '{' symbol.");
 
 			return false;
 		}
@@ -90,28 +244,28 @@ public:
 
 		if (i >= 1 && query[i - 1] != '}') //} \n 0 three symbols
 		{
-			printf("Json should be finished with '}' symbol.\n");
+			printError("Json should be finished with '}' symbol.");
 
 			return false;
 		}
 
 		if (quotes != 0)
 		{
-			printf("Quotes don't match to each other.\n");
+			printError("Quotes don't match to each other.");
 
 			return false;
 		}
 
 		if (bracket1 != 0)
 		{
-			printf("Brackets '{' and '}' don't match to each other.\n");
+			printError("Brackets '{' and '}' don't match to each other.");
 
 			return false;
 		}
 
 		if (bracket2 != 0)
 		{
-			printf("Brackets '[' and ']' don't match to each other.\n");
+			printError("Brackets '[' and ']' don't match to each other.");
 
 			return false;
 		}
@@ -119,33 +273,42 @@ public:
 		return true;
 	}
 
-	bool parseQuery(char* query)
+	bool parseQuery(char* query, uint& i)
 	{
 		methodCount = 0;
 
-		if (query[0] != 'd' &&
-			query[1] != 'b')
+		//query should be starts from "db"
+		if (query[i++] != 'd' ||
+			query[i++] != 'b')
 		{
-			printf("Query should be started from db. For example: db.GetWhere(...).Print(...)");
+			printError("Query should be started from db. For example: db.GetWhere(...).Print(...)");
 
 			return false; //error
 		}
 
-		uint i = 2;
-
+		//parse method
 		while (query[i])
 		{
+			//skip spaces
 			if (query[i] == ' ' ||
-				query[i] == '\n')
+				query[i] == '\r')
 			{
 				i++;
 
 				continue;
 			}
 
+			//next query
+			if (query[i] == '\n')
+			{
+				i++;
+
+				break;
+			}
+
 			if (query[i++] != '.')
 			{
-				printf("Expected symbol '.'.\n");
+				printError("Expected symbol '.'.");
 
 				return false; //error
 			}
@@ -159,7 +322,7 @@ public:
 			{
 				if (!query[i])
 				{
-					printf("Unexpectable end of query.\n");
+					printError("Unexpectable end of query.");
 
 					return false; //error
 				}
@@ -177,15 +340,15 @@ public:
 			{
 				if (!query[i])
 				{
-					printf("Unexpectable end of query.\n");
+					printError("Unexpectable end of query.");
 
 					return false; //error
 				}
 
 				//skip space
 				if (query[i] == ' ' ||
-					query[i] == '\n' ||
-					query[i] == ',')
+					query[i] == ',' ||
+					query[i] == '\r')
 				{
 					i++;
 
@@ -194,7 +357,7 @@ public:
 
 				if (!query[i])
 				{
-					printf("Unexpectable end of query.\n");
+					printError("Unexpectable end of query.");
 
 					return false; //error
 				}
@@ -209,7 +372,7 @@ public:
 					{
 						if (!query[i])
 						{
-							printf("Unexpectable end of query.\n");
+							printError("Unexpectable end of query.");
 
 							return false; //error
 						}
@@ -240,7 +403,7 @@ public:
 					{
 						if (!query[i])
 						{
-							printf("Unexpectable end of query.\n");
+							printError("Unexpectable end of query.");
 
 							return false; //error
 						}
@@ -251,7 +414,7 @@ public:
 						}
 						else
 						{
-							printf("Unexpectable symbols in Number.\n");
+							printError("Unexpectable symbols in Number.");
 
 							return false; //error
 						}
@@ -271,7 +434,7 @@ public:
 					{
 						if (!query[i])
 						{
-							printf("Unexpectable end of query.\n");
+							printError("Unexpectable end of query.");
 
 							return false; //error
 						}
@@ -313,11 +476,11 @@ public:
 					{
 						uint docID = pDB->addDoc(method.Params[0].Value, tranID);
 
-						printf("Document %d was added.\n", docID);
+						printResult("Document %s was added.", docID);
 					}
 					else
 					{
-						printf("AddDoc method has format: AddDoc(json)\n");
+						printError("AddDoc method has format: AddDoc(json)");
 
 						return false;
 					}
@@ -331,7 +494,7 @@ public:
 					}
 					else
 					{
-						printf("AndWhere method has format: AndWhere(json)\n");
+						printError("AndWhere method has format: AndWhere(json)");
 
 						return false;
 					}
@@ -352,7 +515,7 @@ public:
 					}
 					else
 					{
-						printf("AndWhereElems method has format: AndWhereElems(json) or AndWhereElems(json, docID)\n");
+						printError("AndWhereElems method has format: AndWhereElems(json) or AndWhereElems(json, docID)");
 
 						return false;
 					}
@@ -362,18 +525,18 @@ public:
 					if (method.ParamCount == 1 &&
 						method.Params[0].Type == 1)
 					{
-						printf("%d\n", pDQ->sum(method.Params[0].Value));
+						printResult("%s", pDQ->sum(method.Params[0].Value));
 					}
 					else
 					{
-						printf("Avg method has format: Avg(json)\n");
+						printError("Avg method has format: Avg(json)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -391,11 +554,11 @@ public:
 					{
 						pDB->insPartDoc(method.Params[0].Value, method.Params[0].ValueInt, tranID);
 
-						printf("Attributes %d were inserted.\n");
+						printResult("Attributes were inserted.");
 					}
 					else
 					{
-						printf("InsPartDoc method has format: InsPartDoc(json, docID)\n");
+						printError("InsPartDoc method has format: InsPartDoc(json, docID)");
 
 						return false;
 					}
@@ -409,14 +572,14 @@ public:
 					}
 					else
 					{
-						printf("Insert method has format: Insert(json)\n");
+						printError("Insert method has format: Insert(json)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -434,11 +597,11 @@ public:
 					{
 						pDB->updPartDoc(method.Params[0].Value, method.Params[0].ValueInt, tranID);
 
-						printf("Attributes %d were updated.\n");
+						printResult("Attributes were updated.");
 					}
 					else
 					{
-						printf("UpdPartDoc method has format: UpdPartDoc(json, docID)\n");
+						printError("UpdPartDoc method has format: UpdPartDoc(json, docID)");
 
 						return false;
 					}
@@ -452,14 +615,14 @@ public:
 					}
 					else
 					{
-						printf("Update method has format: Update(json)\n");
+						printError("Update method has format: Update(json)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -477,11 +640,11 @@ public:
 					{
 						pDB->delPartDoc(method.Params[0].Value, method.Params[0].ValueInt, tranID);
 
-						printf("Attributes %d were deleted.\n");
+						printResult("Attributes were deleted.");
 					}
 					else
 					{
-						printf("DelPartDoc method has format: DelPartDoc(json, docID)\n");
+						printError("DelPartDoc method has format: DelPartDoc(json, docID)");
 
 						return false;
 					}
@@ -495,14 +658,14 @@ public:
 					}
 					else
 					{
-						printf("Delete method has format: Delete(json)\n");
+						printError("Delete method has format: Delete(json)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -521,7 +684,7 @@ public:
 					}
 					else
 					{
-						printf("GetWhere method has format: GetWhere(json)\n");
+						printError("GetWhere method has format: GetWhere(json)");
 
 						return false;
 					}
@@ -542,7 +705,7 @@ public:
 					}
 					else
 					{
-						printf("getWhereElems method has format: GetWhereElems(json) or GetWhereElems(json, docID)\n");
+						printError("getWhereElems method has format: GetWhereElems(json) or GetWhereElems(json, docID)");
 
 						return false;
 					}
@@ -555,14 +718,14 @@ public:
 					}
 					else
 					{
-						printf("GetAll method has format: GetAll()\n");
+						printError("GetAll method has format: GetAll()");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -581,7 +744,7 @@ public:
 					}
 					else
 					{
-						printf("OrWhere method has format: OrWhere(json)\n");
+						printError("OrWhere method has format: OrWhere(json)");
 
 						return false;
 					}
@@ -602,14 +765,14 @@ public:
 					}
 					else
 					{
-						printf("OrWhereElems method has format: OrWhereElems(json) or OrWhereElems(json, docID)\n");
+						printError("OrWhereElems method has format: OrWhereElems(json) or OrWhereElems(json, docID)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -630,14 +793,14 @@ public:
 					}
 					else
 					{
-						printf("Join method has format: Join(json1, json2)\n");
+						printError("Join method has format: Join(json1, json2)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -656,7 +819,7 @@ public:
 					}
 					else
 					{
-						printf("Skip method has format: Skip(amount)\n");
+						printError("Skip method has format: Skip(amount)");
 
 						return false;
 					}
@@ -677,7 +840,7 @@ public:
 					}
 					else
 					{
-						printf("Sort method has format: Sort(json) or Sort(json, isAscending)\n");
+						printError("Sort method has format: Sort(json) or Sort(json, isAscending)");
 
 						return false;
 					}
@@ -687,18 +850,53 @@ public:
 					if (method.ParamCount == 1 &&
 						method.Params[0].Type == 1)
 					{
-						printf("%d\n", pDQ->sum(method.Params[0].Value));
+						printResult("%s", pDQ->sum(method.Params[0].Value));
 					}
 					else
 					{
-						printf("Sum method has format: Sum(json)\n");
+						printError("Sum method has format: Sum(json)");
+
+						return false;
+					}
+				}
+				else if (!strcmp(method.MethodName, "Select"))
+				{
+					if (method.ParamCount == 1 &&
+						method.Params[0].Type == 1)
+					{
+						if (jsonResult)
+						{
+							jsonResultLen += pDQ->selectStr(method.Params[0].Value, jsonResult);
+						}
+						else
+						{
+							printError("Select method is not allowed in console format. Please use Print method instead.");
+
+						}
+					}
+					else
+					{
+						printError("Select method has format: Select(json)");
+
+						return false;
+					}
+				}
+				else if (!strcmp(method.MethodName, "SelfTest"))
+				{
+					if (method.ParamCount == 0)
+					{
+						restartServer(pDB, stopServer, " -selftest");
+					}
+					else
+					{
+						printError("SelfTest method has format: SelfTest()");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -717,14 +915,14 @@ public:
 					}
 					else
 					{
-						printf("Skip method has format: Take(amount)\n");
+						printError("Skip method has format: Take(amount)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -738,11 +936,11 @@ public:
 				{
 					if (method.ParamCount == 0)
 					{
-						printf("%d", pDQ->count());
+						printResult("%s", pDQ->count());
 					}
 					else
 					{
-						printf("Count method has format: Count()\n");
+						printError("Count method has format: Count()");
 
 						return false;
 					}
@@ -755,7 +953,7 @@ public:
 					}
 					else
 					{
-						printf("CommitTran method has format CommitTran()\n");
+						printError("CommitTran method has format CommitTran()");
 
 						return false;
 					}
@@ -763,7 +961,7 @@ public:
 					tranID = 0;
 					pDQ->TranID = 0;
 
-					printf("Transaction has been commited.\n");
+					printResult("Transaction has been commited.");
 				}
 				else if (!strcmp(method.MethodName, "Clear"))
 				{
@@ -771,18 +969,18 @@ public:
 					{
 						pDB->clear();
 
-						printf("Database is cleared !\n");
+						printResult("Database is cleared !");
 					}
 					else
 					{
-						printf("Clear method has format Clear()\n");
+						printError("Clear method has format Clear()");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -800,14 +998,14 @@ public:
 					}
 					else
 					{
-						printf("Print method has format: Print(json)\n");
+						printError("Print method has format: Print(json)");
 
 						return false;
 					}
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -840,25 +1038,25 @@ public:
 						}
 						else
 						{
-							printf("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)\n");
+							printError("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
 
 							return false;
 						}
 					}
 					else
 					{
-						printf("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)\n");
+						printError("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
 
 						return false;
 					}
 
-					printf("Transaction has been started.\n");
+					printResult("Transaction has been started.");
 
 					pDQ->TranID = tranID;
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -876,7 +1074,7 @@ public:
 					}
 					else
 					{
-						printf("RollbackTran method has format RollbackTran()\n");
+						printError("RollbackTran method has format RollbackTran()");
 
 						return false;
 					}
@@ -884,11 +1082,11 @@ public:
 					tranID = 0;
 					pDQ->TranID = 0;
 
-					printf("Transaction has been rollbacked.\n");
+					printResult("Transaction has been rollbacked.");
 				}
 				else
 				{
-					printf("%s method is not supported.\n", method.MethodName);
+					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
@@ -898,7 +1096,7 @@ public:
 
 			default:
 			{
-				printf("%s method is not supported.\n", method.MethodName);
+				printError("%s method is not supported.", method.MethodName);
 
 				return false;
 			}
@@ -910,36 +1108,52 @@ public:
 
 	void run(char* query)
 	{
-		if (!parseQuery(query))
+		CurrLine = 1;
+
+		uint i = 0;
+
+		while (query[i]) //not end of query
 		{
-			return;
+			//skip enmpty lines
+			while (true)
+			{
+				if (query[i] == ' ' ||
+					query[i] == '\r')
+				{
+					i++;
+
+					continue;
+				}
+				
+				if (query[i] == '\n')
+				{
+					i++;
+					
+					CurrLine++;
+
+					continue;
+				}
+
+				break;
+			}
+
+			//end of file
+			if (!query[i])
+			{
+				break;
+			}
+				
+			if (!parseQuery(query, i))
+			{
+				return;
+			}
+
+			if (!runQuery())
+			{
+				return;
+			}
+
+			CurrLine++;
 		}
-
-		if (!runQuery())
-		{
-			return;
-		}
-	}
-
-	static DWORD WINAPI runConsole(LPVOID pVal)
-	{
-		char query[1024];   /* the string is stored through pointer to this buffer */
-
-		DniproInterpreter di;
-		di.pDB = (DniproDB*)pVal;
-
-		//wait, server is not started
-		Sleep(1000);
-
-		while (true)
-		{
-			printf("\nEnter query >> ");
-			fflush(stdout);
-
-			fgets(query, 1024, stdin); /* buffer is sent as a pointer to fgets */
-
-			di.run(query);
-		}
-
 	}
 };

@@ -37,6 +37,7 @@ public:
 		for (uint i = 0; i < MAX_ATTR_VALUES_PAGES; i++)
 		{
 			attrValues[i].Index = i;
+			attrValues[i].Values = 0;
 		}
 
 		CountPage = 1;
@@ -164,7 +165,7 @@ public:
 
 	void destroy()
 	{
-		for(uint i=0; i <= MAX_ATTR_VALUES_PAGES; i++)
+		for(uint i=0; i < MAX_ATTR_VALUES_PAGES; i++)
 		{
 			if (attrValues[i].Values)
 			{

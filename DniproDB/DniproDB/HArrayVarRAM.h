@@ -603,6 +603,130 @@ public:
 		return cursor;
 	}
 
+	bool moveCursor(HACursor& cursor)
+	{
+		uint& page = cursor.Page;
+		uint& index = cursor.Index;
+
+		//pages
+		while(page < cursor.CountFullContentPage)
+		{
+			ContentPage* pContentPage = pContentPages[page];
+			
+			while(index < MAX_SHORT)
+			{
+				uchar& contentType = pContentPage->pContent[index].Type;
+
+				if(contentType >= ONLY_CONTENT_TYPE)
+				{
+					index += contentType - ONLY_CONTENT_TYPE;
+
+					if(index >= MAX_SHORT)
+					{
+						//next page
+						page++;
+						index &= 0xFFFF;
+						
+						cursor.Value = &pContentPages[page]->pContent[index].Value;
+					}
+					else
+					{
+						cursor.Value = &pContentPage->pContent[index].Value;
+					}
+
+					index += ValueLen;
+					
+					if(index >= MAX_SHORT)
+					{
+						cursor.Page++;
+						index &= 0xFFFF;
+					}
+
+					return true;
+				}
+				else if(contentType == VALUE_TYPE ||
+						contentType == VALUE_LIST_TYPE)
+				{
+					cursor.Value = &pContentPage->pContent[index].Value;
+				
+					index += ValueLen;
+
+					if(index >= MAX_SHORT)
+					{
+						cursor.Page++;
+						index &= 0xFFFF;
+					}
+
+					return true;
+				}
+				else
+				{
+					index++;
+				}
+			}
+
+			cursor.Page++;
+			cursor.Index = 0;
+		}
+		
+		//last page
+		ContentPage* pContentPage = pContentPages[page];
+		
+		while(index < cursor.SizeLastContentPage)
+		{
+			uchar& contentType = pContentPage->pContent[index].Type;
+			
+			if(contentType >= ONLY_CONTENT_TYPE)
+			{
+				index += contentType - ONLY_CONTENT_TYPE;
+
+				if(index >= MAX_SHORT)
+				{
+					//next page
+					page++;
+					index &= 0xFFFF;
+					
+					cursor.Value = &pContentPages[page]->pContent[index].Value;
+				}
+				else
+				{
+					cursor.Value = &pContentPage->pContent[index].Value;
+				}
+
+				index += ValueLen;
+				
+				if(index >= MAX_SHORT)
+				{
+					cursor.Page++;
+					index &= 0xFFFF;
+				}
+
+				return true;
+			}
+			else if(contentType == VALUE_TYPE ||
+					contentType == VALUE_LIST_TYPE)
+			{
+				cursor.Value = &pContentPage->pContent[index].Value;
+			
+				index += ValueLen;
+
+				if(index >= MAX_SHORT)
+				{
+					cursor.Page++;
+					index &= 0xFFFF;
+				}
+
+				return true;
+			}
+			else
+			{
+				index++;
+			}
+		}
+
+		return false;
+	}
+
 	void getValuesByRangeFromBlock(uint** values, 
 									uint& count,
 									uint size,

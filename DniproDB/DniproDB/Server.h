@@ -6,6 +6,9 @@
 #endif
 
 #include "stdafx.h"
+#include "DniproDB.h"
+#include "DniproQuery.h"
+#include "DniproInterpreter.h"
 
 class DniproPacket
 {
@@ -23,25 +26,35 @@ class Server
 {
 	public:
 
-		Server(DniproDB* pDB, ushort port)
-		{
-			this->pDB = pDB;
-			this->pDQ = new DniproQuery(pDB);
+		static HANDLE hServer;
 
-			this->Port = port;
-			this->pBuffer = new char[SERVER_BUFFER_SIZE];
-			this->pResBuffer = new char[SERVER_BUFFER_SIZE];
+		static char* pBuffer;
+		static char* pResBuffer;
+
+		static DniproDB* pDB;
+		static DniproQuery* pDQ;
+
+		static ushort Port;
+
+		static void start(DniproDB* pDB, ushort port)
+		{
+			Server::pBuffer = new char[SERVER_BUFFER_SIZE];;
+			Server::pResBuffer = new char[SERVER_BUFFER_SIZE];
+
+			Server::pDB = pDB;
+			Server::pDQ = new DniproQuery(pDB);
+
+			Server::hServer = CreateThread(
+										NULL,           // default security attributes
+										0,              // use default stack size  
+										Server::run,	// thread function name
+										0,				// argument to thread function 
+										0,              // use default creation flags 
+										0);				// returns the thread identifier 
 		}
 
-		DniproDB* pDB;
-		DniproQuery* pDQ;
-
-		ushort Port;
-		char* pBuffer;
-		char* pResBuffer;
-		
 		// initialize to empty data...
-		int Run() 
+		static DWORD WINAPI run(LPVOID pVal)
 		{
 			// Initialize Winsock
 			WSADATA wsaData;
@@ -133,7 +146,8 @@ class Server
 
 				char* sendBuffer = pResBuffer; //reserve first 4 bytes for header
 				int sendBufferSize = 4;
-				
+				bool isSimpleExecPacket = false;
+
 				if (bytesRecv != SOCKET_ERROR)
 				{
 					try
@@ -153,242 +167,290 @@ class Server
 							}
 
 							bytesRecv += len;
+
+							if ((uchar)pBuffer[0] == 100) //simple Exec packet
+							{
+								isSimpleExecPacket = true;
+
+								break;
+							}
 						}
 
-						//pDB->clearState();
-						pDQ->clearState();
-
-						for (uint i = 4; i < bytesRecv;)
+						if (isSimpleExecPacket)
 						{
-							DniproPacket* pPacket = (DniproPacket*)(pBuffer + i);
-							char* json = (pBuffer + i + sizeof(DniproPacket));
+							pBuffer[bytesRecv] = 0;
 
-							pDQ->TranID = pPacket->TranID;
+							DniproInterpreter di(pDB, sendBuffer);
 
-							switch (pPacket->MethodType)
+							di.run(pBuffer);
+
+							sendBufferSize = di.jsonResultLen;
+						}
+						else
+						{
+							//pDB->clearState();
+							pDQ->clearState();
+
+							for (uint i = 4; i < bytesRecv;)
 							{
-							case 1: //addDoc
-							{
-								uint* pDocID = (uint*)(sendBuffer + sendBufferSize);
+								DniproPacket* pPacket = (DniproPacket*)(pBuffer + i);
+								char* json = (pBuffer + i + sizeof(DniproPacket));
 
-								*pDocID = pDB->addDoc(json, pPacket->TranID);
+								pDQ->TranID = pPacket->TranID;
 
-								sendBufferSize += 4;
+								switch (pPacket->MethodType)
+								{
+								case 1: //addDoc
+								{
+									uint* pDocID = (uint*)(sendBuffer + sendBufferSize);
 
-								break;
+									*pDocID = pDB->addDoc(json, pPacket->TranID);
+
+									sendBufferSize += 4;
+
+									break;
+								}
+								case 2: //getDocsByAttr
+								{
+									ValueList* pValueList = pDB->getDocsByAttr(json, 0, pPacket->TranID);
+
+									uint len = pValueList->Count * sizeof(uint);
+
+									memcpy(sendBuffer + sendBufferSize, (char*)pValueList->pValues, len);
+
+									sendBufferSize += len;
+
+									break;
+								}
+								case 3: //insPartDoc
+								{
+									pDB->insPartDoc(json, pPacket->Tag1, pPacket->TranID);
+
+									break;
+								}
+								case 4: //updPartDoc
+								{
+									pDB->updPartDoc(json, pPacket->Tag1, pPacket->TranID);
+
+									break;
+								}
+								case 5: //delPartDoc
+								{
+									pDB->delPartDoc(json, pPacket->Tag1, pPacket->TranID);
+
+									break;
+								}
+								case 6: //getPartDoc
+								{
+									//format |len|string|len|string...
+
+									ushort* pLen = (ushort*)(sendBuffer + sendBufferSize);
+
+									sendBufferSize += 2;
+
+									uint len = pDB->getPartDoc(json,
+										sendBuffer + sendBufferSize,
+										pPacket->Tag1,
+										pPacket->TranID,
+										false);
+									*pLen = len;
+
+									sendBufferSize += len;
+
+									break;
+								}
+								case 7: //getWhere
+								{
+									pDQ->getWhere(json);
+
+									break;
+								}
+								case 8: //getWhereElems
+								{
+									pDQ->getWhereElems(json, pPacket->Tag1);
+
+									break;
+								}
+								case 9: //andWhere
+								{
+									pDQ->andWhere(json);
+
+									break;
+								}
+								case 10: //andWhereElems
+								{
+									pDQ->andWhereElems(json, pPacket->Tag1);
+
+									break;
+								}
+								case 11: //orWhere
+								{
+									pDQ->orWhere(json);
+
+									break;
+								}
+								case 12: //orWhereElems
+								{
+									pDQ->orWhereElems(json, pPacket->Tag1);
+
+									break;
+								}
+								case 14: //select
+								{
+									sendBufferSize += pDQ->select(json, sendBuffer + sendBufferSize, pPacket->Tag1, false);
+
+									break;
+								}
+								case 15: //count
+								{
+									uint* pCount = (uint*)(sendBuffer + sendBufferSize);
+
+									*pCount = pDQ->count();
+
+									sendBufferSize += 4;
+
+									break;
+								}
+								case 16: //clear
+								{
+									pDB->clear();
+
+									DniproInfo::Print("Database cleared !\n");
+
+									break;
+								}
+								case 17: //take
+								{
+									pDQ->take(pPacket->Tag1);
+
+									break;
+								}
+								case 18: //skip
+								{
+									pDQ->skip(pPacket->Tag1);
+
+									break;
+								}
+								case 19: //sum
+								{
+									uint* pCount = (uint*)(sendBuffer + sendBufferSize);
+
+									*pCount = pDQ->sum(json);
+
+									sendBufferSize += 4;
+
+									break;
+								}
+								case 20: //value
+								{
+									sendBufferSize += pDQ->select(json, sendBuffer + sendBufferSize, pPacket->Tag1, true);
+
+									break;
+								}
+								case 21: //join
+								{
+									json[pPacket->Tag1] = 0;
+
+									pDQ->join(json, json + pPacket->Tag1 + 1);
+
+									break;
+								}
+								case 22: //sort
+								{
+									pDQ->sort(json, pPacket->Tag1);
+
+									break;
+								}
+								case 23: //drop
+								{
+									pDQ->drop(json);
+
+									break;
+								}
+								case 24: //update
+								{
+									pDQ->update(json);
+
+									break;
+								}
+								case 25: //getAll
+								{
+									pDQ->getAll();
+
+									break;
+								}
+								case 26: //insert
+								{
+									pDQ->insert(json);
+
+									break;
+								}
+								case 27: //begintran
+								{
+									uint* tranID = (uint*)(sendBuffer + sendBufferSize);
+
+									*tranID = pDB->beginTran(pPacket->Tag1);
+
+									sendBufferSize += 4;
+
+									useExistingConnection = true;
+
+									break;
+								}
+								case 28: //rollbackTran
+								{
+									pDB->rollbackTran(pPacket->TranID);
+
+									useExistingConnection = false;
+
+									break;
+								}
+								case 29: //commitTran
+								{
+									pDB->commitTran(pPacket->TranID);
+
+									useExistingConnection = false;
+
+									break;
+								}
+								case 30: //Exec
+								{
+									DniproInterpreter di(pDB, sendBuffer + sendBufferSize);
+
+									di.run(json);
+
+									sendBufferSize += di.jsonResultLen;
+
+									break;
+								}
+								case 31: //addBlobValue
+								{
+									uint len = pDB->addBlobValue(json, pPacket->QuerySize, sendBuffer + sendBufferSize, pPacket->TranID);
+
+									sendBufferSize += len;
+
+									break;
+								}
+								case 32: //getBlobValue
+								{
+									uint len = 0;
+
+									pDB->getBlobValue(sendBuffer + sendBufferSize, len, json, pPacket->TranID);
+
+									sendBufferSize += len;
+
+									break;
+								}
+								default:
+								{
+									DniproError::Print(CONNECTION_ERROR, "Server: Method type is undefined.\n");
+
+									break;
+								}
+								}
+
+								i += (sizeof(DniproPacket) + pPacket->QuerySize);
 							}
-							case 2: //getDocsByAttr
-							{
-								ValueList* pValueList = pDB->getDocsByAttr(json, 0, pPacket->TranID);
-
-								uint len = pValueList->Count * sizeof(uint);
-
-								memcpy(sendBuffer + sendBufferSize, (char*)pValueList->pValues, len);
-
-								sendBufferSize += len;
-
-								break;
-							}
-							case 3: //insPartDoc
-							{
-								pDB->insPartDoc(json, pPacket->Tag1, pPacket->TranID);
-
-								break;
-							}
-							case 4: //updPartDoc
-							{
-								pDB->updPartDoc(json, pPacket->Tag1, pPacket->TranID);
-
-								break;
-							}
-							case 5: //delPartDoc
-							{
-								pDB->delPartDoc(json, pPacket->Tag1, pPacket->TranID);
-
-								break;
-							}
-							case 6: //getPartDoc
-							{
-								//format |len|string|len|string...
-
-								ushort* pLen = (ushort*)(sendBuffer + sendBufferSize);
-
-								sendBufferSize += 2;
-
-								uint len = pDB->getPartDoc(json,
-									sendBuffer + sendBufferSize,
-									pPacket->Tag1,
-									pPacket->TranID,
-									false);
-								*pLen = len;
-
-								sendBufferSize += len;
-
-								break;
-							}
-							case 7: //getWhere
-							{
-								pDQ->getWhere(json);
-
-								break;
-							}
-							case 8: //getWhereElems
-							{
-								pDQ->getWhereElems(json, pPacket->Tag1);
-
-								break;
-							}
-							case 9: //andWhere
-							{
-								pDQ->andWhere(json);
-
-								break;
-							}
-							case 10: //andWhereElems
-							{
-								pDQ->andWhereElems(json, pPacket->Tag1);
-
-								break;
-							}
-							case 11: //orWhere
-							{
-								pDQ->orWhere(json);
-
-								break;
-							}
-							case 12: //orWhereElems
-							{
-								pDQ->orWhereElems(json, pPacket->Tag1);
-
-								break;
-							}
-							case 14: //select
-							{
-								sendBufferSize += pDQ->select(json, sendBuffer + sendBufferSize, pPacket->Tag1, false);
-
-								break;
-							}
-							case 15: //count
-							{
-								uint* pCount = (uint*)(sendBuffer + sendBufferSize);
-
-								*pCount = pDQ->count();
-
-								sendBufferSize += 4;
-
-								break;
-							}
-							case 16: //clear
-							{
-								pDB->clear();
-
-								DniproInfo::Print("Database cleared !\n");
-
-								break;
-							}
-							case 17: //take
-							{
-								pDQ->take(pPacket->Tag1);
-
-								break;
-							}
-							case 18: //skip
-							{
-								pDQ->skip(pPacket->Tag1);
-
-								break;
-							}
-							case 19: //sum
-							{
-								uint* pCount = (uint*)(sendBuffer + sendBufferSize);
-
-								*pCount = pDQ->sum(json);
-
-								sendBufferSize += 4;
-
-								break;
-							}
-							case 20: //value
-							{
-								sendBufferSize += pDQ->select(json, sendBuffer + sendBufferSize, pPacket->Tag1, true);
-
-								break;
-							}
-							case 21: //join
-							{
-								json[pPacket->Tag1] = 0;
-
-								pDQ->join(json, json + pPacket->Tag1 + 1);
-
-								break;
-							}
-							case 22: //sort
-							{
-								pDQ->sort(json, pPacket->Tag1);
-
-								break;
-							}
-							case 23: //drop
-							{
-								pDQ->drop(json);
-
-								break;
-							}
-							case 24: //update
-							{
-								pDQ->update(json);
-
-								break;
-							}
-							case 25: //getAll
-							{
-								pDQ->getAll();
-
-								break;
-							}
-							case 26: //insert
-							{
-								pDQ->insert(json);
-
-								break;
-							}
-							case 27: //begintran
-							{
-								uint* tranID = (uint*)(sendBuffer + sendBufferSize);
-
-								*tranID = pDB->beginTran(pPacket->Tag1);
-
-								sendBufferSize += 4;
-
-								useExistingConnection = true;
-
-								break;
-							}
-							case 28: //rollbackTran
-							{
-								pDB->rollbackTran(pPacket->TranID);
-
-								useExistingConnection = false;
-
-								break;
-							}
-							case 29: //commitTran
-							{
-								pDB->commitTran(pPacket->TranID);
-
-								useExistingConnection = false;
-
-								break;
-							}
-							default:
-							{
-								DniproError::Print(CONNECTION_ERROR, "Server: Method type is undefined.\n");
-
-								break;
-							}
-							}
-
-							i += (sizeof(DniproPacket) + pPacket->QuerySize);
 						}
 					}
 					catch (DniproError de)
@@ -409,7 +471,10 @@ class Server
 				if(sendBuffer)
 				{
 					//set length in header
-					*pSendBufferSize = sendBufferSize;
+					if (!isSimpleExecPacket)
+					{
+						*pSendBufferSize = sendBufferSize;
+					}
 
 					uint bytesSent = send(AcceptSocket, sendBuffer, sendBufferSize, 0);
 
@@ -434,9 +499,16 @@ class Server
 			return 0;
 		}
 
-	~Server()
-	{
-		delete pDQ;
-		delete[] pBuffer;
-	}
+		static void stop()
+		{
+			delete[] pBuffer;
+			delete[] pResBuffer;
+
+			delete pDQ;
+
+			//stop myself
+			TerminateThread(hServer, 0);
+
+			CloseHandle(hServer);
+		}
 };

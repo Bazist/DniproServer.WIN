@@ -1988,7 +1988,7 @@ uint DniproDB::updPartDoc(char* json,
 				addTranLogWithCommit('d', json, rowNumOrDocID, pTran->TranID, pTran->TranIdentity);
 			}
 		}
-
+		
 		commitTran(tranID);
 	}
 

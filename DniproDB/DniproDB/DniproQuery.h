@@ -585,6 +585,69 @@ public:
 		return fullLen;
 	}
 
+	//all results in one str with ';' delimeter
+	uint selectStr(char* query,
+					char* jsonResult,
+					bool isDistinct = false,
+					bool onlyValue = false)
+	{
+		if (!TranID)
+		{
+			TranID = pDB->beginTran(READONLY_TRAN); //readonly tran
+
+			hasBeginTran = true;
+		}
+
+		//format string|;
+		uint index = 0;
+
+		uint fullLen = 0;
+
+		if (pValueList[index])
+		{
+			for (uint i = 0; i<pValueList[index]->Count; i++)
+			{
+				if (pValueList[index]->pValues[i])
+				{
+					uint len;
+
+					if (!pIndexes[index])
+					{
+						len = pDB->getPartDoc(query,
+							jsonResult + fullLen,
+							i,
+							TranID,
+							onlyValue,
+							pValueList);
+					}
+					else
+					{
+						len = pDB->getPartDoc(query,
+							jsonResult + fullLen,
+							i,
+							TranID,
+							onlyValue,
+							pValueList,
+							(uint*)pIndexes[index]->pValues[i]);
+					}
+
+					fullLen += len;
+
+					jsonResult[fullLen++] = ';';
+				}
+			}
+		}
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
+		}
+
+		return fullLen;
+	}
+
 	void print(char* query)
 	{
 		if (!TranID)

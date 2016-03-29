@@ -8,6 +8,7 @@ std::atomic<uint> DniproDB::amountMarkIsReadedTrans = 0;
 std::atomic<uint> DniproDB::amountShapshotTrans = 0;
 
 uint DniproDB::tranLogSize = 0;
+uint DniproDB::blobLogSize = 0;
 
 std::atomic_int HArrayTran::testVal = 0;
 
@@ -162,13 +163,13 @@ DWORD WINAPI DniproDB::writeTrans(LPVOID lpParam)
 	pDB->tranLog = saveBuffer1;
 	pDB->currTranLogPos = 0;
 
-	if (BinaryFile::existsFile(pDB->dbFileName))
+	if (BinaryFile::existsFile(pDB->dbTranLogFileName))
 	{
-		pDB->pTranLogFile = new BinaryFile(pDB->dbFileName, true, false);
+		pDB->pTranLogFile = new BinaryFile(pDB->dbTranLogFileName, true, false);
 	}
 	else
 	{
-		pDB->pTranLogFile = new BinaryFile(pDB->dbFileName, true, true);
+		pDB->pTranLogFile = new BinaryFile(pDB->dbTranLogFileName, true, true);
 	}
 
 	if (!pDB->pTranLogFile->open())
@@ -181,7 +182,7 @@ DWORD WINAPI DniproDB::writeTrans(LPVOID lpParam)
 	//move to end
 	pDB->pTranLogFile->setPosition(tranLogSize);
 
-	while (true)
+	while (pDB->writeTranOnHDD)
 	{
 		char* saveBuffer;
 		uint saveLength;
@@ -444,6 +445,26 @@ bool DniproDB::readTrans(char* filePath)
 	}
 }
 
+bool DniproDB::readBlobs(char* filePath)
+{
+	pBlobLogFile = new BinaryFile(filePath, true, true);
+
+	if (pBlobLogFile->open())
+	{
+		blobLogSize = pBlobLogFile->getFileSize();
+
+		return true;
+	}
+	/*else
+	{
+		delete pFile;
+
+		return false;
+	}*/
+
+	return false;
+}
+
 bool DniproDB::checkDeadlock(uchar tranID)
 {
 	bool val = false;
@@ -664,7 +685,7 @@ void DniproDB::commitTran(uint tranID)
 		blockWriters.store(false);
 
 		//commit tran on disc
-		if (tran.IsWritable)
+		if (tran.IsWritable && writeTranOnHDD)
 		{
 			while (tran.LasWritedOnTranPage >= amountWritedTranPages) //our page is not saved, wait
 			{
