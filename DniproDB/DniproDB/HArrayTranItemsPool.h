@@ -41,14 +41,14 @@ public:
 				return 0;
 			}
 
-			HArrayTranItems* pHArrayTranItemss = new HArrayTranItems[MAX_CHAR];
-			pHArrayTranItemsLists[page] = pHArrayTranItemss;
+			HArrayTranItems* pHArrayTranItems = new HArrayTranItems[MAX_CHAR];
+			pHArrayTranItemsLists[page] = pHArrayTranItems;
 
 			pFreeHArrayTranItemsLists[page] = new HArrayTranItems*[MAX_CHAR];
 
 			for (uint i = 0; i < MAX_CHAR; i++)
 			{
-				pFreeHArrayTranItemsLists[page][i] = pHArrayTranItemss + i;
+				pFreeHArrayTranItemsLists[page][i] = pHArrayTranItems + i;
 			}
 
 			Size += MAX_CHAR;
@@ -66,7 +66,7 @@ public:
 
 	void releaseObject(HArrayTranItems* pHArrayTranItems)
 	{
-		uint count = Count.fetch_sub(1);
+		uint count = --Count;
 
 		pFreeHArrayTranItemsLists[count >> 8][count & 0xFF] = pHArrayTranItems;
 	}

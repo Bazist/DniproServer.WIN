@@ -1127,6 +1127,8 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 			//copy value
 			if (attrValue)
 			{
+				attrValue += 4; //skip ha1DocIndex, 4 bytes
+
 				if ((attrValue[0] == 't' && strcmp(attrValue, "true") == 0) ||
 					(attrValue[0] == 'f' && strcmp(attrValue, "false") == 0) ||
 					(attrValue[0] == 'n' && strcmp(attrValue, "null") == 0))
@@ -1373,7 +1375,11 @@ uint DniproDB::insPartDoc(char* json,
 					pTran);
 
 			attrCurrPos = currPos;
+			
+			//format attr value: ha1DocIndex(4 bytes) | attr value
 			attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
+
+			pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
 
 			break;
 		}
@@ -1464,7 +1470,11 @@ uint DniproDB::insPartDoc(char* json,
 			}
 
 			attrCurrPos = currPos;
+			
+			//format attr value: ha1DocIndex(4 bytes) | attr value
 			attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
+			 
+			pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
 
 			break;
 		}
@@ -1493,7 +1503,7 @@ uint DniproDB::insPartDoc(char* json,
 				//if (pTran)
 				//{
 					
-				pTran->insertOrDelete1((uint*)key, currPos, docID, true);
+				pTran->insertOrDelete1((uint*)key, currPos, docID, (uint*)attrValue, true); //first 4 bytes will update later
 				
 				//}
 				//else
@@ -1563,7 +1573,11 @@ uint DniproDB::insPartDoc(char* json,
 				if (arrayPos[level])
 				{
 					attrCurrPos = currPos;
+					
+					//format attr value: ha1DocIndex(4 bytes) | attr value
 					attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
+
+					pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
 
 					arrayPos[level]++;
 
@@ -1794,7 +1808,11 @@ uint DniproDB::updPartDoc(char* json,
 				}
 
 				attrCurrPos = currPos;
+
+				//format attr value: ha1DocIndex(4 bytes) | attr value
 				attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
+
+				pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
 
 				//get value
 				*(uint*)&key[currPos] = docID;
@@ -1809,7 +1827,7 @@ uint DniproDB::updPartDoc(char* json,
 				uchar valueType;
 
 				//char* attrVal = attrValuesPool.fromSerPointer(ha2.getValueByKey((uint*)key, currPos, valueType));
-				char* attrVal;
+				char* delAttrVal;
 				
 				/*while (blockReaders.load());
 
@@ -1817,7 +1835,9 @@ uint DniproDB::updPartDoc(char* json,
 
 				//if (pTran->TranType)
 				//{
-				attrVal = attrValuesPool.fromSerPointer(pTran->getValueByKey(false, (uint*)key, currPos, valueType));
+				
+				//attrVal = attrValuesPool.fromSerPointer(pTran->getValueByKey(false, (uint*)key, currPos, valueType));
+				delAttrVal = attrValuesPool.fromSerPointer(ha2.getValueByKey((uint*)key, currPos, valueType, 0, pTran->TranID));
 				//}
 				//else
 				//{
@@ -1826,41 +1846,47 @@ uint DniproDB::updPartDoc(char* json,
 
 				//amountReaders--;
 
-				if (attrVal && attrVal[0])
+				if (delAttrVal)
 				{
-					currPos = attrCurrPos;
-
-					//copy value
-					for (uint k = 0; attrVal[k]; k++, currPos++)
-					{
-						key[currPos] = attrVal[k];
-					}
-
-					//delete
-					*attrVal = 0;
-
-					//alingment
-					while (currPos & 0x3)
-					{
-						key[currPos++] = 0;
-					}
-
-					//add indexes
-					setPathIndexes(arrayPos, indexes, key, level, currPos);
-
-					print(key, currPos, level);
-
-					//delete
-					//if (pTran)
-					//{
-						
-					pTran->insertOrDelete1((uint*)key, currPos, docID, false);
+					char* delAttrValStr = delAttrVal;
+					delAttrValStr += 4; //skip ha1DocIndex
 					
-					//}
-					//else
-					//{
-					//	ha1.detValueByKey((uint*)key, currPos, docID);
-					//}
+					if (delAttrValStr[0])
+					{
+						currPos = attrCurrPos;
+
+						//copy value
+						for (uint k = 0; delAttrValStr[k]; k++, currPos++)
+						{
+							key[currPos] = delAttrValStr[k];
+						}
+
+						//delete
+						*delAttrValStr = 0;
+
+						//alingment
+						while (currPos & 0x3)
+						{
+							key[currPos++] = 0;
+						}
+
+						//add indexes
+						setPathIndexes(arrayPos, indexes, key, level, currPos);
+
+						print(key, currPos, level);
+
+						//delete
+						//if (pTran)
+						//{
+
+						pTran->insertOrDelete1((uint*)key, currPos, docID, (uint*)delAttrVal, false);
+
+						//}
+						//else
+						//{
+						//	ha1.detValueByKey((uint*)key, currPos, docID);
+						//}
+					}
 				}
 
 				currPos = attrCurrPos;
@@ -1889,7 +1915,7 @@ uint DniproDB::updPartDoc(char* json,
 					//if (pTran)
 					//{
 					
-					pTran->insertOrDelete1((uint*)key, currPos, docID, true);
+					pTran->insertOrDelete1((uint*)key, currPos, docID, (uint*)attrValue, true);
 					
 					//}
 					//else
@@ -1912,9 +1938,9 @@ uint DniproDB::updPartDoc(char* json,
 					//{
 						
 					pTran->insertOrDelete2((uint*)key,
-							attrCurrPos,
-							attrValuesPool.toSerPointer(pTran->pAttrValuesPage, attrValue),
-							true);
+											attrCurrPos,
+											attrValuesPool.toSerPointer(pTran->pAttrValuesPage, attrValue),
+											true);
 
 					//}
 					//else
@@ -1950,7 +1976,11 @@ uint DniproDB::updPartDoc(char* json,
 						if (arrayPos[level])
 						{
 							attrCurrPos = currPos;
+							
+							//format attr value: ha1DocIndex(4 bytes) | attr value
 							attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
+
+							pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
 
 							arrayPos[level]++;
 						}

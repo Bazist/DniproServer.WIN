@@ -190,12 +190,8 @@ public:
 	uint Count;
 	uint Size;
 
-	inline void addValue(uint value)
-	{
-		addValue(value, false);
-	}
-
-	inline void addValue(uint value, bool isUnique)
+	//returns index of insertion
+	inline uint addValue(uint value, bool isUnique = false)
 	{
 		if (Count == Size)
 		{
@@ -228,16 +224,18 @@ public:
 				{
 					pValues[i] = value;
 
-					return;
+					return i;
 				}
 				else if (pValues[i] == value) //if value is exists, just return
 				{
-					return;
+					return i;
 				}
 			}
 		}
 
-		pValues[Count++] = value;
+		pValues[Count] = value;
+
+		return Count++;
 	}
 
 	inline void addValues(ValueList* pValueList)
@@ -264,9 +262,16 @@ public:
 		addValue(value);
 	}
 
-	inline void delValue(uint value)
+	inline void delValue(uint value, uint index = 0)
 	{
-		for (uint i = 0; i < Count; i++)
+		if (pValues[index] == value) //fast way
+		{
+			pValues[index] = 0;
+
+			return;
+		}
+
+		for (uint i = 1; i < Count; i++) //long way
 		{
 			if (pValues[i] == value)
 			{

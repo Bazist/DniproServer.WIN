@@ -4,7 +4,7 @@ class HArrayTranItem
 {
 public:
 	bool IsInserted; //true - Inserted, false - Deleted
-
+	uint* pIndexInVL; //index in Value List (need for fast fast delete item from ha1.ValueList with big Count)
 	uint Key[32]; //128 bytes by default
 	uint KeyLen;
 	uint Value;

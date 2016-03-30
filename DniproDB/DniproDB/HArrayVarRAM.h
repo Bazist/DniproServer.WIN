@@ -470,7 +470,8 @@ public:
 
 	//INSERT =============================================================================================================
 
-	bool insert(uint* key,
+	//returns ha1DocIndex
+	uint insert(uint* key,
 				uint keyLen,
 				uint value);
 		
@@ -484,7 +485,7 @@ public:
 					   ReadedList* pReadedList = 0);
 
 	bool hasPartKey(uint* key, uint keyLen);
-	void detValueByKey(uint* key, uint keyLen, uint value);
+	void delValueByKey(uint* key, uint keyLen, uint value, uint index = 0);
 
 	//uint* getValueByVarKey(uint* key, uint keyLen);
 	

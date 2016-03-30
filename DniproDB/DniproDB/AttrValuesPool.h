@@ -86,7 +86,14 @@ public:
 	//from serializable pointer
 	inline char* fromSerPointer(uint serPointer)
 	{
-		return attrValues[serPointer >> 16].Values + (serPointer & 0xFFFF);
+		if (serPointer)
+		{
+			return attrValues[serPointer >> 16].Values + (serPointer & 0xFFFF);
+		}
+		else
+		{
+			return 0;
+		}
 	}
 
 	//to serializable pointer

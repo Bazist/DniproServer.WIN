@@ -97,72 +97,79 @@ public:
 	bool insertOrDelete1(uint* key,
 						 uint keyLen,
 						 uint value,
+						 uint* pIndexInVL,
 						 bool isInserted)
 	{
 		if (Count1 < 128)
 		{
-			if (!isInserted) //if delete, just mark
-			{
-				for (uint i = 0; i < Count1; i++)
-				{
-					HArrayTranItem& item = pHArrayTranItems1->Items[i];
+			//if (!isInserted) //if delete, just mark
+			//{
+			//	for (uint i = 0; i < Count1; i++)
+			//	{
+			//		HArrayTranItem& item = pHArrayTranItems1->Items[i];
 
-					if (item.KeyLen == keyLen && item.Value == value)
-					{
-						if (!memcmp(item.Key, key, item.KeyLen))
-						{
-							item.IsInserted = false;
+			//		if (item.KeyLen == keyLen && item.Value == value)
+			//		{
+			//			if (!memcmp(item.Key, key, item.KeyLen))
+			//			{
+			//				item.IsInserted = false;
 
-							return true;
-						}
-					}
-				}
-			}
+			//				return true;
+			//			}
+			//		}
+			//	}
+			//}
 
 			HArrayTranItem& item = pHArrayTranItems1->Items[Count1];
 			
 			item.IsInserted = isInserted;
+			item.pIndexInVL = pIndexInVL;
 			memcpy(item.Key, key, keyLen);
 			item.KeyLen = keyLen;
 			item.Value = value;
 		}
 		else
 		{
-			if (!isInserted)
-			{
-				HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
-				uint count = 128;
+			//if (!isInserted)
+			//{
+			//	HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
+			//	uint count = 128;
 
-				while (pCurrHArrayTranItems)
-				{
-					for (uint i = 0; i < count; i++)
-					{
-						HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
+			//	while (true)
+			//	{
+			//		for (uint i = 0; i < count; i++)
+			//		{
+			//			HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-						if (item.KeyLen == keyLen && item.Value == value)
-						{
-							if (!memcmp(item.Key, key, item.KeyLen))
-							{
-								item.IsInserted = false;
+			//			if (item.KeyLen == keyLen && item.Value == value)
+			//			{
+			//				if (!memcmp(item.Key, key, item.KeyLen))
+			//				{
+			//					item.IsInserted = false;
 
-								return false;
-							}
-						}
-					}
+			//					return false;
+			//				}
+			//			}
+			//		}
 
-					//next block
-					pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+			//		//next block
+			//		pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
 
-					if (pCurrHArrayTranItems->pNextItems)
-					{
-						count = 128; //not last
-					}
-					else
-					{
-						count = Count1 & 0x7F; //last
-					}
-				}
-			}
+			//		if (!pCurrHArrayTranItems)
+			//		{
+			//			break;
+			//		}
+
+			//		if (pCurrHArrayTranItems->pNextItems)
+			//		{
+			//			count = 128; //not last
+			//		}
+			//		else
+			//		{
+			//			count = Count1 & 0x7F; //last
+			//		}
+			//	}
+			//}
 
 			//find block
 			//HArrayTranItems* pCurrHArrayTranItems = pLastHArrayTranItems1;
@@ -182,6 +189,7 @@ public:
 			HArrayTranItem& item = pLastHArrayTranItems1->Items[count1];
 
 			item.IsInserted = isInserted;
+			item.pIndexInVL = pIndexInVL;
 			memcpy(item.Key, key, keyLen);
 			item.KeyLen = keyLen;
 			item.Value = value;
@@ -200,23 +208,23 @@ public:
 	{
 		if (Count2 < 128)
 		{
-			if (!isInserted) //if delete, just mark
-			{
-				for (uint i = 0; i < Count2; i++)
-				{
-					HArrayTranItem& item = pHArrayTranItems2->Items[i];
+			//if (!isInserted) //if delete, just mark
+			//{
+			//	for (uint i = 0; i < Count2; i++)
+			//	{
+			//		HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
-					if (item.KeyLen == keyLen && item.Value == value)
-					{
-						if (!memcmp(item.Key, key, item.KeyLen))
-						{
-							item.IsInserted = false;
+			//		if (item.KeyLen == keyLen && item.Value == value)
+			//		{
+			//			if (!memcmp(item.Key, key, item.KeyLen))
+			//			{
+			//				item.IsInserted = false;
 
-							return true;
-						}
-					}
-				}
-			}
+			//				return true;
+			//			}
+			//		}
+			//	}
+			//}
 
 			HArrayTranItem& item = pHArrayTranItems2->Items[Count2];
 
@@ -227,41 +235,46 @@ public:
 		}
 		else
 		{
-			if (!isInserted)
-			{
-				HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems2;
-				uint count = 128;
+			//if (!isInserted)
+			//{
+			//	HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems2;
+			//	uint count = 128;
 
-				while (pCurrHArrayTranItems)
-				{
-					for (uint i = 0; i < count; i++)
-					{
-						HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
+			//	while (true)
+			//	{
+			//		for (uint i = 0; i < count; i++)
+			//		{
+			//			HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-						if (item.KeyLen == keyLen && item.Value == value)
-						{
-							if (!memcmp(item.Key, key, item.KeyLen))
-							{
-								item.IsInserted = false;
+			//			if (item.KeyLen == keyLen && item.Value == value)
+			//			{
+			//				if (!memcmp(item.Key, key, item.KeyLen))
+			//				{
+			//					item.IsInserted = false;
 
-								return true;
-							}
-						}
-					}
+			//					return true;
+			//				}
+			//			}
+			//		}
 
-					//next block
-					pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+			//		//next block
+			//		pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
 
-					if (pCurrHArrayTranItems->pNextItems)
-					{
-						count = 128; //not last
-					}
-					else
-					{
-						count = Count2 & 0x7F; //last
-					}
-				}
-			}
+			//		if (!pCurrHArrayTranItems)
+			//		{
+			//			break;
+			//		}
+
+			//		if (pCurrHArrayTranItems->pNextItems)
+			//		{
+			//			count = 128; //not last
+			//		}
+			//		else
+			//		{
+			//			count = Count2 & 0x7F; //last
+			//		}
+			//	}
+			//}
 
 			//find block
 			uint count2 = Count2 & 0x7F;
@@ -313,7 +326,7 @@ public:
 				HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
 				uint count = 128;
 
-				while (pCurrHArrayTranItems)
+				while (true)
 				{
 					for (uint i = 0; i < count; i++)
 					{
@@ -332,6 +345,11 @@ public:
 
 					//next block
 					pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+
+					if (!pCurrHArrayTranItems)
+					{
+						break;
+					}
 
 					if (pCurrHArrayTranItems->pNextItems)
 					{
@@ -354,7 +372,7 @@ public:
 						    HARRAY_ITEM_VISIT_FUNC visitor,
 						    void* pData)
 	{
-		if (Count1 <= 128) //in one block
+		if (Count1 < 128) //in one block
 		{
 			for (uint i = 0; i < Count1; i++)
 			{
@@ -374,7 +392,7 @@ public:
 			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
 			uint count = 128;
 
-			while (pCurrHArrayTranItems)
+			while (true)
 			{
 				for (uint i = 0; i < count; i++)
 				{
@@ -391,6 +409,11 @@ public:
 
 				//next block
 				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
 
 				if (pCurrHArrayTranItems->pNextItems)
 				{
@@ -420,7 +443,7 @@ public:
 		uint valueDeleted = 0;
 		ValueList* pValuesDeleted = 0;
 
-		if (Count1 <= 128)
+		if (Count1 < 128)
 		{
 			for (uint i = 0; i < Count1; i++)
 			{
@@ -475,7 +498,7 @@ public:
 			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
 			uint count = 128;
 
-			while (pCurrHArrayTranItems)
+			while (true)
 			{
 				for (uint i = 0; i < count; i++)
 				{
@@ -528,6 +551,11 @@ public:
 				//next block
 				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
 
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
+
 				if (pCurrHArrayTranItems->pNextItems)
 				{
 					count = 128; //not last
@@ -579,7 +607,7 @@ public:
 		uint valueDeleted = 0;
 		ValueList* pValuesDeleted = 0;
 
-		if (Count2 <= 128)
+		if (Count2 < 128)
 		{
 			for (uint i = 0; i < Count2; i++)
 			{
@@ -633,7 +661,7 @@ public:
 			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems2;
 			uint count = 128;
 
-			while (pCurrHArrayTranItems)
+			while (true)
 			{
 				for (uint i = 0; i < count; i++)
 				{
@@ -685,6 +713,11 @@ public:
 
 				//next block
 				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
 
 				if (pCurrHArrayTranItems->pNextItems)
 				{
@@ -1108,6 +1141,11 @@ public:
 				//next block
 				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
 
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
+
 				if (pCurrHArrayTranItems->pNextItems)
 				{
 					count = 128; //not last
@@ -1126,7 +1164,9 @@ public:
 
 	void commit(bool hasReadedCells)
 	{
-		if (Count1 <= 128) //in one block
+		testVal = 0;
+
+		if (Count1 < 128) //in one block
 		{
 			for (uint i = 0; i < Count1; i++)
 			{
@@ -1134,11 +1174,12 @@ public:
 
 				if (item.IsInserted)
 				{
-					pHA1->insert(item.Key, item.KeyLen, item.Value);
+					//save ha1DocIndex in attrvalues
+					*item.pIndexInVL = pHA1->insert(item.Key, item.KeyLen, item.Value);
 				}
 				else
 				{
-					pHA1->detValueByKey(item.Key, item.KeyLen, item.Value);
+					pHA1->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 				}
 			}
 		}
@@ -1147,24 +1188,31 @@ public:
 			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
 			uint count = 128;
 
-			while (pCurrHArrayTranItems)
+			while (true)
 			{
+				testVal++;
+
 				for (uint i = 0; i < count; i++)
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
 					if (item.IsInserted)
 					{
-						pHA1->insert(item.Key, item.KeyLen, item.Value);
+						*item.pIndexInVL = pHA1->insert(item.Key, item.KeyLen, item.Value);
 					}
 					else
 					{
-						pHA1->detValueByKey(item.Key, item.KeyLen, item.Value);
+						pHA1->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 					}
 				}
 
 				//next block
 				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
 
 				if (pCurrHArrayTranItems)
 				{
@@ -1184,7 +1232,7 @@ public:
 			}
 		}
 
-		if (Count2 <= 128) //in one block
+		if (Count2 < 128) //in one block
 		{
 			if (!hasReadedCells)
 			{
@@ -1198,7 +1246,7 @@ public:
 					}
 					else
 					{
-						pHA2->detValueByKey(item.Key, item.KeyLen, item.Value);
+						pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
 				}
 			}
@@ -1214,7 +1262,7 @@ public:
 					}
 					else
 					{
-						pHA2->detValueByKey(item.Key, item.KeyLen, item.Value);
+						pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
 				}
 			}
@@ -1224,7 +1272,7 @@ public:
 			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems2;
 			uint count = 128;
 
-			while (pCurrHArrayTranItems)
+			while (true)
 			{
 				if (!hasReadedCells)
 				{
@@ -1238,7 +1286,7 @@ public:
 						}
 						else
 						{
-							pHA2->detValueByKey(item.Key, item.KeyLen, item.Value);
+							pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
 					}
 				}
@@ -1254,13 +1302,18 @@ public:
 						}
 						else
 						{
-							pHA2->detValueByKey(item.Key, item.KeyLen, item.Value);
+							pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
 					}
 				}
 
 				//next block
 				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
 
 				if (pCurrHArrayTranItems)
 				{

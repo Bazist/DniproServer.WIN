@@ -994,9 +994,31 @@ void testThreads()
 
 int main(int argc, char** argv)
 {
+
+	/*DniproDB* db = new DniproDB();
+	db->init();
+
+	db->addDoc("{'attr':'x1'}");
+
+	db->updPartDoc("{'attr':'x1'}", 1);
+
+	return 0;
+
+	for (uint i = 0; i < 10; i++)
+	{
+		db->addDoc("{'attr':'x1'}");
+	}
+
+	for (uint i = 1; i <= 10; i++)
+	{
+		db->updPartDoc("{'attr':'x1'}", i);
+	}
+	
+	return 0;*/
+
 	system("cls");
 
-	if (argc > 1 && !strcmp(argv[1], "-selftest")) //test mode
+	//if (argc > 1 && !strcmp(argv[1], "-selftest")) //test mode
 	{
 		//http://www.computerhope.com/color.htm
 		DniproInfo::PrintLine();
