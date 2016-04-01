@@ -40,7 +40,7 @@ void DniproDB::procAlias(char* json,
 
 		if (!pTran->TranType) //READ_ONLY_TRAN
 		{
-			serPointer = ha2.getValueByKey((uint*)key, currPos, valueType, 1, pTran->TranID); //1. Read data with check blocking (ha2)
+			serPointer = has2[pTran->CollID]->getValueByKey((uint*)key, currPos, valueType, 1, pTran->TranID); //1. Read data with check blocking (ha2)
 		}
 		else 
 		{
@@ -239,6 +239,7 @@ void DniproDB::setPathIndexes(uint* arrayPos,
 ValueList* DniproDB::getDocsByAttr(char* json,
 									uint docID ,
 									uint tranID,
+									uint collID,
 									ValueList** pIndexes)
 {
 	bool hasBeginTran;
@@ -255,6 +256,7 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 	}
 
 	HArrayTran* pTran = &_trans[tranID];
+	pTran->CollID = collID;
 	
 	pTran->LastJson = json;
 
@@ -289,7 +291,7 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 										//scanKeyData.pIndexes = *pIndexes;
 
 		scanKeyData.DocID = docID;
-		scanKeyData.pValueListPool = &ha1.valueListPool;
+		scanKeyData.pValueListPool = &has1[pTran->CollID]->valueListPool;
 		scanKeyData.pIndexesPool = &pTran->indexesPool;
 		scanKeyData.pTran = pTran;
 	}
@@ -470,10 +472,10 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 			amountReaders++;
 
 			//copy value;
-			ha1.scanKeysAndValues((uint*)key,
-				currPos,
-				&getDocsByAttr_scanCond,
-				&scanKeyData);
+			has1[pTran->CollID]->scanKeysAndValues((uint*)key,
+														currPos,
+														&getDocsByAttr_scanCond,
+														&scanKeyData);
 
 			amountReaders--;
 
@@ -597,7 +599,7 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 						}
 						else
 						{
-							value = ha1.getValueByKey((uint*)key, currPos, valueType);
+							value = has1[pTran->CollID]->getValueByKey((uint*)key, currPos, valueType);
 						}
 
 						amountReaders--;
@@ -606,7 +608,7 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 						{
 							if (valueType == VALUE_LIST_TYPE)
 							{
-								pValueListCommand[valueListCommandCount] = ha1.valueListPool.fromSerPointer(value);
+								pValueListCommand[valueListCommandCount] = has1[pTran->CollID]->valueListPool.fromSerPointer(value);
 								pIndexesListCommand[valueListCommandCount] = 0;
 
 								valueListCommandCount++;
@@ -638,10 +640,10 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 						amountReaders++;
 
 						//scan store
-						ha1.scanKeysAndValues((uint*)key,
-							currPos,
-							getDocsByAttr_scanIn,
-							&scanKeyData);
+						has1[pTran->CollID]->scanKeysAndValues((uint*)key,
+																	currPos,
+																	getDocsByAttr_scanIn,
+																	&scanKeyData);
 
 						amountReaders--;
 
@@ -674,10 +676,10 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 					amountReaders++;
 
 					//scan tran
-					ha1.scanKeysAndValues((uint*)key,
-						currPos,
-						getDocsByAttr_scanKey,
-						&scanKeyData);
+					has1[pTran->CollID]->scanKeysAndValues((uint*)key,
+															currPos,
+															getDocsByAttr_scanKey,
+															&scanKeyData);
 
 					amountReaders--;
 
@@ -845,6 +847,7 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 						  char* jsonResult,
 						  uint rowNumOrDocID,
 						  uint tranID,
+						  uint collID,
 						  bool onlyValue,
 						  ValueList** pDocIDs,
 						  uint* indexes)
@@ -863,6 +866,7 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 	}
 
 	HArrayTran* pTran = &_trans[tranID];
+	pTran->CollID = collID;
 
 	pTran->LastJson = jsonTemplate;
 
@@ -1107,7 +1111,7 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 			if (!pTran->TranType) //READONLY_TRAN
 			{
 				//1. Read data check blocking (ha2)
-				attrValue = attrValuesPool.fromSerPointer(ha2.getValueByKey((uint*)key, currPos, valueType, 1, pTran->TranID)); 
+				attrValue = attrValuesPool.fromSerPointer(has2[pTran->CollID]->getValueByKey((uint*)key, currPos, valueType, 1, pTran->TranID)); 
 			}
 			else
 			{
@@ -1282,6 +1286,7 @@ uint DniproDB::addDocFromFile(char* fileName)
 uint DniproDB::insPartDoc(char* json,
 						  uint rowNumOrDocID,
 						  uint tranID,
+						  uint collID,
 						  ValueList** pDocIDs,
 						  uint* indexes)
 {
@@ -1314,12 +1319,13 @@ uint DniproDB::insPartDoc(char* json,
 			pTran->IsWritable = true;
 
 			//add tran log
-			addTranLog('i', json, rowNumOrDocID, pTran->TranID, pTran->TranIdentity);
+			addTranLog('i', json, rowNumOrDocID, pTran->TranID, collID, pTran->TranIdentity);
 
 			pTran->LasWritedOnTranPage = amountWritedTranPages;
 		}
 	}
-		
+	
+	pTran->CollID = collID;
 	pTran->LastJson = json;
 	
 	//allocate new page
@@ -1610,7 +1616,7 @@ uint DniproDB::insPartDoc(char* json,
 		//add tran log
 		if (writeTranOnHDD)
 		{
-			addTranLogWithCommit('i', json, rowNumOrDocID, pTran->TranID, pTran->TranIdentity);
+			addTranLogWithCommit('i', json, rowNumOrDocID, pTran->TranID, collID, pTran->TranIdentity);
 		}
 
 		commitTran(tranID);
@@ -1622,6 +1628,7 @@ uint DniproDB::insPartDoc(char* json,
 uint DniproDB::updPartDoc(char* json,
 						uint rowNumOrDocID,
 						uint tranID,
+						uint collID,
 						ValueList** pDocIDs,
 						uint* indexes,
 						bool onlyDelete)
@@ -1657,17 +1664,19 @@ uint DniproDB::updPartDoc(char* json,
 			//add tranLog
 			if (!onlyDelete)
 			{
-				addTranLog('u', json, rowNumOrDocID, pTran->TranID, pTran->TranIdentity);
+				addTranLog('u', json, rowNumOrDocID, pTran->TranID, collID, pTran->TranIdentity);
 			}
 			else
 			{
-				addTranLog('d', json, rowNumOrDocID, pTran->TranID, pTran->TranIdentity);
+				addTranLog('d', json, rowNumOrDocID, pTran->TranID, collID, pTran->TranIdentity);
 			}
 
 			pTran->LasWritedOnTranPage = amountWritedTranPages;
 		}
 	}
 
+	pTran->CollID = collID;
+	
 	pTran->LastJson = json;
 		
 	//allocate new page
@@ -1837,7 +1846,7 @@ uint DniproDB::updPartDoc(char* json,
 				//{
 				
 				//attrVal = attrValuesPool.fromSerPointer(pTran->getValueByKey(false, (uint*)key, currPos, valueType));
-				delAttrVal = attrValuesPool.fromSerPointer(ha2.getValueByKey((uint*)key, currPos, valueType, 0, pTran->TranID));
+				delAttrVal = attrValuesPool.fromSerPointer(has2[pTran->CollID]->getValueByKey((uint*)key, currPos, valueType, 0, pTran->TranID));
 				//}
 				//else
 				//{
@@ -1861,6 +1870,7 @@ uint DniproDB::updPartDoc(char* json,
 							key[currPos] = delAttrValStr[k];
 						}
 
+						//REGISTER IN TRAN DELETE!
 						//delete
 						*delAttrValStr = 0;
 
@@ -2011,11 +2021,11 @@ uint DniproDB::updPartDoc(char* json,
 
 			if (!onlyDelete)
 			{
-				addTranLogWithCommit('u', json, rowNumOrDocID, pTran->TranID, pTran->TranIdentity);
+				addTranLogWithCommit('u', json, rowNumOrDocID, pTran->TranID, collID, pTran->TranIdentity);
 			}
 			else
 			{
-				addTranLogWithCommit('d', json, rowNumOrDocID, pTran->TranID, pTran->TranIdentity);
+				addTranLogWithCommit('d', json, rowNumOrDocID, pTran->TranID, collID, pTran->TranIdentity);
 			}
 		}
 		

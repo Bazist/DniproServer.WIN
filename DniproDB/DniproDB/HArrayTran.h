@@ -14,6 +14,8 @@ public:
 	//2 = RepeatableRead
 	//3 = Snapshot
 
+	uint CollID;
+
 	uint TranIdentity;
 	uchar TranID;
 	uchar TranType;
@@ -28,8 +30,8 @@ public:
 	ON_CONTENT_CELL_MOVED_FUNC* onContentCellMovedFunc;
 
 	HArrayTranItemsPool* pHArrayTranItemsPool;
-	HArrayVarRAM* pHA1;
-	HArrayVarRAM* pHA2;
+	HArrayVarRAM** has1;
+	HArrayVarRAM** has2;
 
 	IndexesPool indexesPool;
 	AttrValuesPage* pAttrValuesPage;
@@ -53,16 +55,18 @@ public:
 
 	void init(uchar tranID,
 			  HArrayTranItemsPool* pHArrayTranItemsPool,
-			  HArrayVarRAM* pHA1,
-			  HArrayVarRAM* pHA2,
+			  HArrayVarRAM** has1,
+			  HArrayVarRAM** has2,
 			  ON_CONTENT_CELL_MOVED_FUNC* onContentCellMovedFunc)
 	{
+		CollID = 0; //default;
+
 		TranID = tranID;
 
 		this->pHArrayTranItemsPool = pHArrayTranItemsPool;
 		
-		this->pHA1 = pHA1;
-		this->pHA2 = pHA2;
+		this->has1 = has1;
+		this->has2 = has2;
 
 		pHArrayTranItems1 = pHArrayTranItemsPool->newObject();
 		pHArrayTranItems2 = pHArrayTranItemsPool->newObject();
@@ -122,6 +126,7 @@ public:
 
 			HArrayTranItem& item = pHArrayTranItems1->Items[Count1];
 			
+			item.CollID = CollID;
 			item.IsInserted = isInserted;
 			item.pIndexInVL = pIndexInVL;
 			memcpy(item.Key, key, keyLen);
@@ -188,6 +193,7 @@ public:
 			
 			HArrayTranItem& item = pLastHArrayTranItems1->Items[count1];
 
+			item.CollID = CollID;
 			item.IsInserted = isInserted;
 			item.pIndexInVL = pIndexInVL;
 			memcpy(item.Key, key, keyLen);
@@ -229,6 +235,7 @@ public:
 			HArrayTranItem& item = pHArrayTranItems2->Items[Count2];
 
 			memcpy(item.Key, key, keyLen);
+			item.CollID = CollID;
 			item.IsInserted = isInserted;
 			item.KeyLen = keyLen;
 			item.Value = value;
@@ -287,6 +294,7 @@ public:
 			HArrayTranItem& item = pLastHArrayTranItems2->Items[count2];
 
 			item.IsInserted = isInserted;
+			item.CollID = CollID;
 			memcpy(item.Key, key, keyLen);
 			item.KeyLen = keyLen;
 			item.Value = value;
@@ -310,7 +318,8 @@ public:
 
 				if (item.KeyLen == keyLen &&
 					item.Value == value &&
-					item.IsInserted == isInserted)
+					item.IsInserted == isInserted &&
+					item.CollID == CollID)
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
@@ -334,7 +343,8 @@ public:
 
 						if (item.KeyLen == keyLen &&
 							item.Value == value &&
-							item.IsInserted == isInserted)
+							item.IsInserted == isInserted &&
+							item.CollID == CollID)
 						{
 							if (!memcmp(item.Key, key, item.KeyLen))
 							{
@@ -378,7 +388,8 @@ public:
 			{
 				HArrayTranItem& item = pHArrayTranItems1->Items[i];
 
-				if (item.IsInserted)
+				if (item.IsInserted &&
+					item.CollID == CollID)
 				{
 					if (!memcmp(key, item.Key, keyLen))
 					{
@@ -398,7 +409,8 @@ public:
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-					if (item.IsInserted)
+					if (item.IsInserted &&
+						item.CollID == CollID)
 					{
 						if (!memcmp(key, item.Key, keyLen))
 						{
@@ -449,7 +461,8 @@ public:
 			{
 				HArrayTranItem& item = pHArrayTranItems1->Items[i];
 
-				if (item.KeyLen == keyLen)
+				if (item.KeyLen == keyLen &&
+					item.CollID == CollID)
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
@@ -504,7 +517,8 @@ public:
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-					if (item.KeyLen == keyLen && item.IsInserted)
+					if (item.KeyLen == keyLen &&
+						item.CollID == CollID)
 					{
 						if (!memcmp(item.Key, key, item.KeyLen))
 						{
@@ -613,7 +627,8 @@ public:
 			{
 				HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
-				if (item.KeyLen == keyLen)
+				if (item.KeyLen == keyLen &&
+					item.CollID == CollID)
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
@@ -667,7 +682,8 @@ public:
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-					if (item.KeyLen == keyLen && item.IsInserted)
+					if (item.KeyLen == keyLen &&
+						item.CollID == CollID)
 					{
 						if (!memcmp(item.Key, key, item.KeyLen))
 						{
@@ -783,9 +799,9 @@ public:
 						   tranValueDeleted,
 						   tranValueTypeDeleted);
 
-			storeValue = pHA1->getValueByKey(key,
-											 keyLen,
-											 storeValueType);
+			storeValue = has1[CollID]->getValueByKey(key,
+													 keyLen,
+													 storeValueType);
 		}
 		else
 		{
@@ -796,12 +812,12 @@ public:
 						   tranValueDeleted,
 						   tranValueTypeDeleted);
 
-			storeValue = pHA2->getValueByKey(key,
-											 keyLen,
-											 storeValueType,
-											 readModeType,
-											 TranID,
-											 &readedList);
+			storeValue = has2[CollID]->getValueByKey(key,
+													keyLen,
+													storeValueType,
+													readModeType,
+													TranID,
+													&readedList);
 		}
 
 		//0. There is no value
@@ -1054,7 +1070,7 @@ public:
 				HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
 				uchar valueType;
-				if (pHA2->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
+				if (has2[item.CollID]->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
 				{
 					return true;
 				}
@@ -1072,7 +1088,7 @@ public:
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
 					uchar valueType;
-					if (pHA2->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
+					if (has2[item.CollID]->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
 					{
 						return true;
 					}
@@ -1104,7 +1120,7 @@ public:
 				HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
 				uchar valueType;
-				if (pHA2->getValueByKey(item.Key,
+				if (has2[CollID]->getValueByKey(item.Key,
 										item.KeyLen,
 										valueType,
 										4,
@@ -1127,7 +1143,7 @@ public:
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
 					uchar valueType;
-					if (pHA2->getValueByKey(item.Key,
+					if (has2[CollID]->getValueByKey(item.Key,
 											item.KeyLen,
 											valueType,
 											4,
@@ -1175,11 +1191,11 @@ public:
 				if (item.IsInserted)
 				{
 					//save ha1DocIndex in attrvalues
-					*item.pIndexInVL = pHA1->insert(item.Key, item.KeyLen, item.Value);
+					*item.pIndexInVL = has1[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 				}
 				else
 				{
-					pHA1->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
+					has1[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 				}
 			}
 		}
@@ -1198,11 +1214,11 @@ public:
 
 					if (item.IsInserted)
 					{
-						*item.pIndexInVL = pHA1->insert(item.Key, item.KeyLen, item.Value);
+						*item.pIndexInVL = has1[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
 					else
 					{
-						pHA1->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
+						has1[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 					}
 				}
 
@@ -1242,11 +1258,11 @@ public:
 
 					if (item.IsInserted)
 					{
-						pHA2->insert(item.Key, item.KeyLen, item.Value);
+						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
 					else
 					{
-						pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
+						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
 				}
 			}
@@ -1258,11 +1274,11 @@ public:
 
 					if (item.IsInserted)
 					{
-						pHA2->insert(item.Key, item.KeyLen, item.Value);
+						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
 					else
 					{
-						pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
+						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
 				}
 			}
@@ -1282,11 +1298,11 @@ public:
 
 						if (item.IsInserted)
 						{
-							pHA2->insert(item.Key, item.KeyLen, item.Value);
+							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
 						else
 						{
-							pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
+							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
 					}
 				}
@@ -1298,11 +1314,11 @@ public:
 
 						if (item.IsInserted)
 						{
-							pHA2->insert(item.Key, item.KeyLen, item.Value);
+							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
 						else
 						{
-							pHA2->delValueByKey(item.Key, item.KeyLen, item.Value);
+							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
 					}
 				}

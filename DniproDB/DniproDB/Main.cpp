@@ -1018,7 +1018,7 @@ int main(int argc, char** argv)
 
 	system("cls");
 
-	//if (argc > 1 && !strcmp(argv[1], "-selftest")) //test mode
+	if (argc > 1 && !strcmp(argv[1], "-selftest")) //test mode
 	{
 		//http://www.computerhope.com/color.htm
 		DniproInfo::PrintLine();

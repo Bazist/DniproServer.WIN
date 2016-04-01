@@ -15,7 +15,10 @@ struct MethodParam
 	char Value[1024];
 	uint ValueInt;
 
-	uchar Type;
+	uchar Type; //1 - json
+				//2 - int
+				//3 - literal
+				//4 - name
 };
 
 struct Method
@@ -44,6 +47,9 @@ public:
 		jsonResultLen = 0;
 
 		this->stopServer = stopServer;
+
+		TranID = 0;
+		CollID = 0;
 	}
 	
 	STOP_SERVER_FUNC* stopServer;
@@ -57,6 +63,9 @@ public:
 	uint jsonResultLen;
 
 	uint CurrLine;
+
+	uint TranID;
+	uint CollID;
 
 	static void restartServer(DniproDB* pDB = 0,
 							  STOP_SERVER_FUNC* stopServer = 0,
@@ -365,7 +374,6 @@ public:
 				//read string param
 				if (query[i] == '"')
 				{
-					method.Params[method.ParamCount].Type = 1;
 					char* value = method.Params[method.ParamCount].Value;
 
 					for (j = 0, i++; query[i] != '"'; i++, j++)
@@ -387,9 +395,18 @@ public:
 
 					value[j] = 0;
 
-					if (!validateJson(value))
+					if (value[0] == '{') //json
 					{
-						return false;
+						method.Params[method.ParamCount].Type = 1;
+
+						if (!validateJson(value))
+						{
+							return false;
+						}
+					}
+					else //name
+					{
+						method.Params[method.ParamCount].Type = 4; //name
 					}
 
 					i++;
@@ -458,583 +475,641 @@ public:
 
 	bool runQuery()
 	{
-		DniproQuery* pDQ = new DniproQuery(pDB);
-		uint tranID = 0;
-
-		for (uint i = 0; i < methodCount; i++)
+		try
 		{
-			Method& method = methods[i];
-
-			switch (method.MethodName[0])
+			DniproQuery* pDQ = new DniproQuery(pDB);
+			pDQ->TranID = TranID;
+			pDQ->CollID = CollID;
+			
+			for (uint i = 0; i < methodCount; i++)
 			{
-			case 'A':
-			{
-				if (!strcmp(method.MethodName, "AddDoc"))
+				Method& method = methods[i];
+
+				switch (method.MethodName[0])
 				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						uint docID = pDB->addDoc(method.Params[0].Value, tranID);
-
-						printResult("Document %s was added.", docID);
-					}
-					else
-					{
-						printError("AddDoc method has format: AddDoc(json)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "AndWhere"))
+				case 'A':
 				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
+					if (!strcmp(method.MethodName, "AddDoc"))
 					{
-						pDQ->andWhere(method.Params[0].Value);
-					}
-					else
-					{
-						printError("AndWhere method has format: AndWhere(json)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "AndWhereElems"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->andWhereElems(method.Params[0].Value);
-					}
-					else if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[1].Type == 2)
-					{
-						pDQ->andWhereElems(method.Params[0].Value,
-							method.Params[1].ValueInt);
-					}
-					else
-					{
-						printError("AndWhereElems method has format: AndWhereElems(json) or AndWhereElems(json, docID)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "Avg"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						printResult("%s", pDQ->sum(method.Params[0].Value));
-					}
-					else
-					{
-						printError("Avg method has format: Avg(json)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'I':
-			{
-				if (!strcmp(method.MethodName, "InsPartDoc"))
-				{
-					if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[0].Type == 2)
-					{
-						pDB->insPartDoc(method.Params[0].Value, method.Params[0].ValueInt, tranID);
-
-						printResult("Attributes were inserted.");
-					}
-					else
-					{
-						printError("InsPartDoc method has format: InsPartDoc(json, docID)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "Insert"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->insert(method.Params[0].Value);
-					}
-					else
-					{
-						printError("Insert method has format: Insert(json)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'U':
-			{
-				if (!strcmp(method.MethodName, "UpdPartDoc"))
-				{
-					if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[0].Type == 2)
-					{
-						pDB->updPartDoc(method.Params[0].Value, method.Params[0].ValueInt, tranID);
-
-						printResult("Attributes were updated.");
-					}
-					else
-					{
-						printError("UpdPartDoc method has format: UpdPartDoc(json, docID)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "Update"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->update(method.Params[0].Value);
-					}
-					else
-					{
-						printError("Update method has format: Update(json)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'D':
-			{
-				if (!strcmp(method.MethodName, "DelPartDoc"))
-				{
-					if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[0].Type == 2)
-					{
-						pDB->delPartDoc(method.Params[0].Value, method.Params[0].ValueInt, tranID);
-
-						printResult("Attributes were deleted.");
-					}
-					else
-					{
-						printError("DelPartDoc method has format: DelPartDoc(json, docID)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "Delete"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->drop(method.Params[0].Value);
-					}
-					else
-					{
-						printError("Delete method has format: Delete(json)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'G':
-			{
-				if (!strcmp(method.MethodName, "GetWhere"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->getWhere(method.Params[0].Value);
-					}
-					else
-					{
-						printError("GetWhere method has format: GetWhere(json)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "GetWhereElems"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->getWhereElems(method.Params[0].Value);
-					}
-					else if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[1].Type == 2)
-					{
-						pDQ->getWhereElems(method.Params[0].Value,
-							method.Params[1].ValueInt);
-					}
-					else
-					{
-						printError("getWhereElems method has format: GetWhereElems(json) or GetWhereElems(json, docID)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "GetAll"))
-				{
-					if (method.ParamCount == 0)
-					{
-						pDQ->getAll();
-					}
-					else
-					{
-						printError("GetAll method has format: GetAll()");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'O':
-			{
-				if (!strcmp(method.MethodName, "OrWhere"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->orWhere(method.Params[0].Value);
-					}
-					else
-					{
-						printError("OrWhere method has format: OrWhere(json)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "OrWhereElems"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->orWhereElems(method.Params[0].Value);
-					}
-					else if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[1].Type == 2)
-					{
-						pDQ->orWhereElems(method.Params[0].Value,
-							method.Params[1].ValueInt);
-					}
-					else
-					{
-						printError("OrWhereElems method has format: OrWhereElems(json) or OrWhereElems(json, docID)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'J':
-			{
-				if (!strcmp(method.MethodName, "Join"))
-				{
-					if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[1].Type == 1)
-					{
-						pDQ->join(method.Params[0].Value,
-							method.Params[1].Value);
-					}
-					else
-					{
-						printError("Join method has format: Join(json1, json2)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'S':
-			{
-				if (!strcmp(method.MethodName, "Skip"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 2)
-					{
-						pDQ->skip(method.Params[0].ValueInt);
-					}
-					else
-					{
-						printError("Skip method has format: Skip(amount)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "Sort"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						pDQ->sort(method.Params[0].Value, true);
-					}
-					else if (method.ParamCount == 2 &&
-						method.Params[0].Type == 1 &&
-						method.Params[1].Type == 3)
-					{
-						pDQ->sort(method.Params[0].Value,
-							!strcmp(method.Params[1].Value, "true"));
-					}
-					else
-					{
-						printError("Sort method has format: Sort(json) or Sort(json, isAscending)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "Sum"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						printResult("%s", pDQ->sum(method.Params[0].Value));
-					}
-					else
-					{
-						printError("Sum method has format: Sum(json)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "Select"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
-					{
-						if (jsonResult)
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
 						{
-							jsonResultLen += pDQ->selectStr(method.Params[0].Value, jsonResult);
+							uint docID = pDB->addDoc(method.Params[0].Value, TranID, CollID);
+
+							printResult("Document %s was added.", docID);
 						}
 						else
 						{
-							printError("Select method is not allowed in console format. Please use Print method instead.");
+							printError("AddDoc method has format: AddDoc(json)");
 
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "AndWhere"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->andWhere(method.Params[0].Value);
+						}
+						else
+						{
+							printError("AndWhere method has format: AndWhere(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "AndWhereElems"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->andWhereElems(method.Params[0].Value);
+						}
+						else if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[1].Type == 2)
+						{
+							pDQ->andWhereElems(method.Params[0].Value,
+								method.Params[1].ValueInt);
+						}
+						else
+						{
+							printError("AndWhereElems method has format: AndWhereElems(json) or AndWhereElems(json, docID)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Avg"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							printResult("%s", pDQ->sum(method.Params[0].Value));
+						}
+						else
+						{
+							printError("Avg method has format: Avg(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "AddColl"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 4)
+						{
+							pDB->addColl(method.Params[0].Value);
+
+							printResult("%s collection is added", method.Params[0].Value);
+						}
+						else
+						{
+							printError("AddColl method has format: AddColl(name)");
+
+							return false;
 						}
 					}
 					else
 					{
-						printError("Select method has format: Select(json)");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "SelfTest"))
-				{
-					if (method.ParamCount == 0)
-					{
-						restartServer(pDB, stopServer, " -selftest");
-					}
-					else
-					{
-						printError("SelfTest method has format: SelfTest()");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'T':
-			{
-				if (!strcmp(method.MethodName, "Take"))
-				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 2)
-					{
-						pDQ->take(method.Params[0].ValueInt);
-					}
-					else
-					{
-						printError("Skip method has format: Take(amount)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'C':
-			{
-				if (!strcmp(method.MethodName, "Count"))
-				{
-					if (method.ParamCount == 0)
-					{
-						printResult("%s", pDQ->count());
-					}
-					else
-					{
-						printError("Count method has format: Count()");
-
-						return false;
-					}
-				}
-				else if (!strcmp(method.MethodName, "CommitTran"))
-				{
-					if (method.ParamCount == 0)
-					{
-						pDB->commitTran(tranID);
-					}
-					else
-					{
-						printError("CommitTran method has format CommitTran()");
+						printError("%s method is not supported.", method.MethodName);
 
 						return false;
 					}
 
-					tranID = 0;
-					pDQ->TranID = 0;
-
-					printResult("Transaction has been commited.");
-				}
-				else if (!strcmp(method.MethodName, "Clear"))
-				{
-					if (method.ParamCount == 0)
-					{
-						pDB->clear();
-
-						printResult("Database is cleared !");
-					}
-					else
-					{
-						printError("Clear method has format Clear()");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
+					break;
 				}
 
-				break;
-			}
-			case 'P':
-			{
-				if (!strcmp(method.MethodName, "Print"))
+				case 'I':
 				{
-					if (method.ParamCount == 1 &&
-						method.Params[0].Type == 1)
+					if (!strcmp(method.MethodName, "InsPartDoc"))
 					{
-						pDQ->print(method.Params[0].Value);
-					}
-					else
-					{
-						printError("Print method has format: Print(json)");
-
-						return false;
-					}
-				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
-			}
-
-			case 'B':
-			{
-				if (!strcmp(method.MethodName, "BeginTran"))
-				{
-					if (method.ParamCount == 0)
-					{
-						tranID = pDB->beginTran(READ_COMMITED_TRAN);
-					}
-					else if (method.ParamCount == 1 &&
-						method.Params[0].Type == 3)
-					{
-						if (!strcmp(method.Params[0].Value, "TranType.ReadCommited"))
+						if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[0].Type == 2)
 						{
-							tranID = pDB->beginTran(READ_COMMITED_TRAN);
+							pDB->insPartDoc(method.Params[0].Value, method.Params[0].ValueInt, TranID, CollID);
+
+							printResult("Attributes were inserted.");
 						}
-						else if (!strcmp(method.Params[0].Value, "TranType.RepeatableRead"))
+						else
 						{
-							tranID = pDB->beginTran(REPEATABLE_READ_TRAN);
+							printError("InsPartDoc method has format: InsPartDoc(json, docID)");
+
+							return false;
 						}
-						else if (!strcmp(method.Params[0].Value, "TranType.Snapshot"))
+					}
+					else if (!strcmp(method.MethodName, "Insert"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
 						{
-							tranID = pDB->beginTran(SNAPSHOT_TRAN);
+							pDQ->insert(method.Params[0].Value);
+						}
+						else
+						{
+							printError("Insert method has format: Insert(json)");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'U':
+				{
+					if (!strcmp(method.MethodName, "UpdPartDoc"))
+					{
+						if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[0].Type == 2)
+						{
+							pDB->updPartDoc(method.Params[0].Value, method.Params[0].ValueInt, TranID, CollID);
+
+							printResult("Attributes were updated.");
+						}
+						else
+						{
+							printError("UpdPartDoc method has format: UpdPartDoc(json, docID)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Update"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->update(method.Params[0].Value);
+						}
+						else
+						{
+							printError("Update method has format: Update(json)");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'D':
+				{
+					if (!strcmp(method.MethodName, "DelPartDoc"))
+					{
+						if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[0].Type == 2)
+						{
+							pDB->delPartDoc(method.Params[0].Value, method.Params[0].ValueInt, TranID, CollID);
+
+							printResult("Attributes were deleted.");
+						}
+						else
+						{
+							printError("DelPartDoc method has format: DelPartDoc(json, docID)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Delete"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->drop(method.Params[0].Value);
+						}
+						else
+						{
+							printError("Delete method has format: Delete(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "DelColl"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 4)
+						{
+							pDB->delColl(method.Params[0].Value);
+
+							printResult("%s collection is deleted", method.Params[0].Value);
+						}
+						else
+						{
+							printError("DelColl method has format: DelColl(name)");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'G':
+				{
+					if (!strcmp(method.MethodName, "GetWhere"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->getWhere(method.Params[0].Value);
+						}
+						else
+						{
+							printError("GetWhere method has format: GetWhere(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "GetWhereElems"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->getWhereElems(method.Params[0].Value);
+						}
+						else if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[1].Type == 2)
+						{
+							pDQ->getWhereElems(method.Params[0].Value,
+								method.Params[1].ValueInt);
+						}
+						else
+						{
+							printError("getWhereElems method has format: GetWhereElems(json) or GetWhereElems(json, docID)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "GetAll"))
+					{
+						if (method.ParamCount == 0)
+						{
+							pDQ->getAll();
+						}
+						else
+						{
+							printError("GetAll method has format: GetAll()");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'O':
+				{
+					if (!strcmp(method.MethodName, "OrWhere"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->orWhere(method.Params[0].Value);
+						}
+						else
+						{
+							printError("OrWhere method has format: OrWhere(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "OrWhereElems"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->orWhereElems(method.Params[0].Value);
+						}
+						else if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[1].Type == 2)
+						{
+							pDQ->orWhereElems(method.Params[0].Value,
+								method.Params[1].ValueInt);
+						}
+						else
+						{
+							printError("OrWhereElems method has format: OrWhereElems(json) or OrWhereElems(json, docID)");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'J':
+				{
+					if (!strcmp(method.MethodName, "Join"))
+					{
+						if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[1].Type == 1)
+						{
+							pDQ->join(method.Params[0].Value,
+								method.Params[1].Value);
+						}
+						else
+						{
+							printError("Join method has format: Join(json1, json2)");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'S':
+				{
+					if (!strcmp(method.MethodName, "SetDefColl"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 4)
+						{
+							CollID = pDQ->CollID = pDB->getCollID(method.Params[0].Value);
+
+							printResult("%s collection setted as default", method.Params[0].Value);
+						}
+						else
+						{
+							printError("SetDefColl method has format: SetDefColl(name)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Skip"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 2)
+						{
+							pDQ->skip(method.Params[0].ValueInt);
+						}
+						else
+						{
+							printError("Skip method has format: Skip(amount)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Sort"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->sort(method.Params[0].Value, true);
+						}
+						else if (method.ParamCount == 2 &&
+							method.Params[0].Type == 1 &&
+							method.Params[1].Type == 3)
+						{
+							pDQ->sort(method.Params[0].Value,
+								!strcmp(method.Params[1].Value, "true"));
+						}
+						else
+						{
+							printError("Sort method has format: Sort(json) or Sort(json, isAscending)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Sum"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							printResult("%s", pDQ->sum(method.Params[0].Value));
+						}
+						else
+						{
+							printError("Sum method has format: Sum(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Select"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							if (jsonResult)
+							{
+								jsonResultLen += pDQ->selectStr(method.Params[0].Value, jsonResult);
+							}
+							else
+							{
+								printError("Select method is not allowed in console format. Please use Print method instead.");
+
+							}
+						}
+						else
+						{
+							printError("Select method has format: Select(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "SelfTest"))
+					{
+						if (method.ParamCount == 0)
+						{
+							restartServer(pDB, stopServer, " -selftest");
+						}
+						else
+						{
+							printError("SelfTest method has format: SelfTest()");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'T':
+				{
+					if (!strcmp(method.MethodName, "Take"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 2)
+						{
+							pDQ->take(method.Params[0].ValueInt);
+						}
+						else
+						{
+							printError("Skip method has format: Take(amount)");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'C':
+				{
+					if (!strcmp(method.MethodName, "Count"))
+					{
+						if (method.ParamCount == 0)
+						{
+							printResult("%s", pDQ->count());
+						}
+						else
+						{
+							printError("Count method has format: Count()");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "CommitTran"))
+					{
+						if (method.ParamCount == 0)
+						{
+							pDB->commitTran(TranID);
+						}
+						else
+						{
+							printError("CommitTran method has format CommitTran()");
+
+							return false;
+						}
+
+						TranID = 0;
+						pDQ->TranID = 0;
+
+						printResult("Transaction has been commited.");
+					}
+					else if (!strcmp(method.MethodName, "Clear"))
+					{
+						if (method.ParamCount == 0)
+						{
+							pDB->clear();
+
+							printResult("Database is cleared !");
+						}
+						else
+						{
+							printError("Clear method has format Clear()");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+				case 'P':
+				{
+					if (!strcmp(method.MethodName, "Print"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 1)
+						{
+							pDQ->print(method.Params[0].Value);
+						}
+						else
+						{
+							printError("Print method has format: Print(json)");
+
+							return false;
+						}
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				case 'B':
+				{
+					if (!strcmp(method.MethodName, "BeginTran"))
+					{
+						if (method.ParamCount == 0)
+						{
+							TranID = pDB->beginTran(READ_COMMITED_TRAN);
+						}
+						else if (method.ParamCount == 1 &&
+							method.Params[0].Type == 3)
+						{
+							if (!strcmp(method.Params[0].Value, "TranType.ReadCommited"))
+							{
+								TranID = pDB->beginTran(READ_COMMITED_TRAN);
+							}
+							else if (!strcmp(method.Params[0].Value, "TranType.RepeatableRead"))
+							{
+								TranID = pDB->beginTran(REPEATABLE_READ_TRAN);
+							}
+							else if (!strcmp(method.Params[0].Value, "TranType.Snapshot"))
+							{
+								TranID = pDB->beginTran(SNAPSHOT_TRAN);
+							}
+							else
+							{
+								printError("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
+
+								return false;
+							}
 						}
 						else
 						{
@@ -1042,65 +1117,64 @@ public:
 
 							return false;
 						}
+
+						printResult("Transaction has been started.");
+
+						pDQ->TranID = TranID;
 					}
 					else
 					{
-						printError("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
+						printError("%s method is not supported.", method.MethodName);
 
 						return false;
 					}
 
-					printResult("Transaction has been started.");
-
-					pDQ->TranID = tranID;
+					break;
 				}
-				else
+
+				case 'R':
+				{
+					if (!strcmp(method.MethodName, "RollbackTran"))
+					{
+						if (method.ParamCount == 0)
+						{
+							pDB->rollbackTran(TranID);
+						}
+						else
+						{
+							printError("RollbackTran method has format RollbackTran()");
+
+							return false;
+						}
+
+						TranID = 0;
+						pDQ->TranID = 0;
+
+						printResult("Transaction has been rollbacked.");
+					}
+					else
+					{
+						printError("%s method is not supported.", method.MethodName);
+
+						return false;
+					}
+
+					break;
+				}
+
+				default:
 				{
 					printError("%s method is not supported.", method.MethodName);
 
 					return false;
 				}
-
-				break;
-			}
-
-			case 'R':
-			{
-				if (!strcmp(method.MethodName, "RollbackTran"))
-				{
-					if (method.ParamCount == 0)
-					{
-						pDB->rollbackTran(tranID);
-					}
-					else
-					{
-						printError("RollbackTran method has format RollbackTran()");
-
-						return false;
-					}
-
-					tranID = 0;
-					pDQ->TranID = 0;
-
-					printResult("Transaction has been rollbacked.");
 				}
-				else
-				{
-					printError("%s method is not supported.", method.MethodName);
-
-					return false;
-				}
-
-				break;
 			}
 
-			default:
-			{
-				printError("%s method is not supported.", method.MethodName);
-
-				return false;
-			}
-			}
+		}
+		catch (DniproError de)
+		{
+			printError(de.Message);
 		}
 
 		return true;

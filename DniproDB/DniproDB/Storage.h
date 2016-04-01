@@ -6,7 +6,7 @@
 class Storage
 {
 public:
-	
+	/*
 	Storage(DniproDB* pDB, char* folder)
 	{
 		this->pDB = pDB;
@@ -27,7 +27,6 @@ public:
 	char currFileName[1024];
 	char backupCurrFileName[1024];
 	
-	/*
 	void createBinaryFiles(BinaryFile* pFile, bool isWritable)
 	{
 		//db
@@ -82,7 +81,7 @@ public:
 		sprintf(path, "%s\\valueLists.pg", currentFolder);
 		pFiles[14] = new BinaryFile(path, isWritable, isWritable);
 	}
-	*/
+	
 
 	static void error()
 	{
@@ -563,8 +562,8 @@ public:
 		if(!pDB->ha2.save(pFile3, pFile3, pFile3, pFile3, pFile3, pFile3, pFile3))
 			return false;
 		
-		/*if(!pDB->attrValuesPool.save(pFile4))
-			return false;*/
+		if(!pDB->attrValuesPool.save(pFile4))
+			return false;
 	
 		return true;
 	}
@@ -646,4 +645,5 @@ public:
 
 		return true;
 	}
+	*/
 };

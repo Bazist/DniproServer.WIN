@@ -42,5 +42,7 @@ const uint SNAPSHOT_TRAN = 3;
 
 const uint CONNECTION_ERROR = 1;
 const uint DEADLOCK_ERROR = 2;
+const uint COLL_ALREADY_EXISTS_ERROR = 3;
+const uint COLL_IS_NOT_FOUND_ERROR = 4;
 
 const uint TESTS_COUNT_KEYS = 1000000;

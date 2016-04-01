@@ -75,8 +75,10 @@ public:
 	static uint tranLogSize;
 	static uint blobLogSize;
 
-	HArrayVarRAM ha1;
-	HArrayVarRAM ha2;
+	HArrayVarRAM* has1[MAX_CHAR];
+	HArrayVarRAM* has2[MAX_CHAR];
+
+	uint countColls;
 
 	HArrayTranItemsPool* pHArrayTranItemsPool;
 	AttrValuesPool attrValuesPool;
@@ -102,24 +104,19 @@ public:
 
 		return pFile->writeInt(&val);
 	}
-		
+	
 	void init(char* dbFolder = 0)
 	{
 		pHArrayTranItemsPool = new HArrayTranItemsPool();
 		attrValuesPool.init();
 
-		ha1.init(4, 16);
-		ha1.AllowValueList = true;
-
-		ha2.init(4, 16);
-		ha2.AllowValueList = false;
-
 		lastDocID = 0;
 		currTranLogPos = 0;
-		
+		countColls = 0;
+
 		for (uchar i = 1; i < MAX_TRANS; i++)
 		{
-			_trans[i].init(i, pHArrayTranItemsPool, &ha1, &ha2, onContentCellMoved);
+			_trans[i].init(i, pHArrayTranItemsPool, has1, has2, onContentCellMoved);
 		}
 
 		blockReaders = false;
@@ -130,8 +127,9 @@ public:
 		amountMarkIsReadedTrans = 0;
 		amountShapshotTrans = 0;
 
-		ha2.onContentCellMovedFunc = onContentCellMoved;
-		ha2.checkDeadlockFunc = checkDeadlock;
+		writeTranOnHDD = false;
+
+		addColl("Default");
 
 		//run sync job
 		InitializeCriticalSection(&writeTranLock);
@@ -169,11 +167,7 @@ public:
 				0,                      // use default creation flags 
 				0);					 // returns the thread identifier 
 		}
-		else
-		{
-			writeTranOnHDD = false;
-		}
-
+		
 		Sleep(10); //wait until thread started
 	}
 
@@ -191,17 +185,21 @@ public:
 					char* json,
 					uint docID,
 					uchar tranID,
+					uchar collID,
 					uint tranIdentity);
 
 	void addTranLogWithCommit(char type,
 							  char* json,
 							  uint docID,
 							  uchar tranID,
+							  uchar collID,
 							  uint tranIdentity);
 	
-	uint addDoc(char* json, uint tranID = 0)
+	uint addDoc(char* json,
+				uint tranID = 0,
+				uint collID = 0)
 	{
-		insPartDoc(json, ++lastDocID, tranID);
+		insPartDoc(json, ++lastDocID, tranID, collID);
 
 		return lastDocID.load();
 	}
@@ -228,9 +226,10 @@ public:
 							   uint& currPos);
 	
 	ValueList* getDocsByAttr(char* json,
-							uint docID = 0,
-							uint tranID = 0,
-							ValueList** pIndexes = 0);
+							 uint docID = 0,
+							 uint tranID = 0,
+							 uint collID = 0,
+							 ValueList** pIndexes = 0);
 
 	static bool getDocsByAttr_scanKey(uint* key,
 									  uint keyLen,
@@ -254,6 +253,7 @@ public:
 					char* jsonResult,
 					uint rowNumOrDocID,
 					uint tranID = 0,
+					uint collID = 0,
 					bool onlyValue = false,
 					ValueList** pDocIDs = 0,
 					uint* indexes = 0);
@@ -261,12 +261,14 @@ public:
 	uint delPartDoc(char* json,
 					uint rowNumOrDocID,
 					uint tranID = 0,
+					uint collID = 0,
 					ValueList** pDocIDs = 0,
 					uint* indexes = 0)
 	{
 		return updPartDoc(json,
 			  			  rowNumOrDocID,
 						  tranID,
+						  collID,
 						  pDocIDs,
 						  indexes,
 						  true);
@@ -275,6 +277,7 @@ public:
 	uint updPartDoc(char* json,
 					uint rowNumOrDocID,
 					uint tranID = 0,
+					uint collID = 0,
 					ValueList** pDocIDs = 0,
 					uint* indexes = 0,
 					bool onlyDelete = false);
@@ -282,6 +285,7 @@ public:
 	uint insPartDoc(char* json,
 					uint rowNumOrDocID = 0,
 					uint tranID = 0,
+					uint collID = 0,
 					ValueList** pDocIDs = 0,
 					uint* indexes = 0);
 	
@@ -326,18 +330,20 @@ public:
 
 		//attrValuesPool.printMemory();
 
-		ha1.printMemory();
+		//ha1.printMemory();
 
-		ha2.printMemory();
+		//ha2.printMemory();
 	}
 
 	uint getTotalMemory()
 	{
-		return sizeof(DniproDB) +
-			   //attrValuesPool.getTotalMemory() +
-			   //valueListPool.getTotalMemory() +
-			   ha1.getTotalMemory() +
-			   ha2.getTotalMemory();
+		//return sizeof(DniproDB) +
+		//	   //attrValuesPool.getTotalMemory() +
+		//	   //valueListPool.getTotalMemory() +
+		//	   ha1.getTotalMemory() +
+		//	   ha2.getTotalMemory();
+
+		return 0;
 	}
 
 	/*void clearState()
@@ -346,7 +352,7 @@ public:
 		indexesPool.clear();
 	}*/
 
-	uint addBlobValue(char* value, uint len, char* label, uint tranID)
+	uint addBlobValue(char* value, uint len, char* label)
 	{
 		EnterCriticalSection(&writeBlobLock);
 
@@ -363,7 +369,7 @@ public:
 		return labelLen;
 	}
 
-	bool getBlobValue(char* value, uint& len, char* label, uint tranID)
+	bool getBlobValue(char* value, uint& len, char* label)
 	{
 		char* posStr = label + 1;
 
@@ -382,6 +388,96 @@ public:
 		}
 
 		return false;
+	}
+
+	uint addColl(char* name)
+	{
+		for (uint i = 0; i < countColls; i++)
+		{ 
+			if (!strcmp(has1[i]->Name, name))
+			{
+				DniproError de;
+				de.Code = COLL_ALREADY_EXISTS_ERROR;
+				strcpy(de.Message, "Collection already exists.");
+
+				throw de;
+			}
+		}
+
+		has1[countColls] = new HArrayVarRAM();
+
+		strcpy(has1[countColls]->Name, name);
+		
+		has1[countColls]->init(4, 16);
+		has1[countColls]->AllowValueList = true;
+
+		has2[countColls] = new HArrayVarRAM();
+
+		strcpy(has2[countColls]->Name, name);
+
+		has2[countColls]->init(4, 16);
+		has2[countColls]->AllowValueList = false;
+
+		has2[countColls]->onContentCellMovedFunc = onContentCellMoved;
+		has2[countColls]->checkDeadlockFunc = checkDeadlock;
+
+		if (writeTranOnHDD)
+		{
+			addTranLog('c', name, 0, 0, countColls, 0);
+		}
+
+		countColls++;
+
+		return strlen(name);
+	}
+
+	uint getCollID(char* name)
+	{
+		for (uint i = 0; i < countColls; i++)
+		{
+			if (!strcmp(has1[i]->Name, name))
+			{
+				return i;
+			}
+		}
+
+		DniproError de;
+		de.Code = COLL_IS_NOT_FOUND_ERROR;
+		strcpy(de.Message, "Collection is not found.");
+
+		throw de;
+	}
+
+	uint delColl(char* name)
+	{
+		//default coll can not be deleted
+		for (uint i = 1; i < countColls; i++)
+		{
+			if (!strcmp(has1[i]->Name, name))
+			{
+				if (has1[i] && has2[i])
+				{
+					has1[i]->destroy();
+					has2[i]->destroy();
+
+					has1[i] = 0;
+					has2[i] = 0;
+
+					if (writeTranOnHDD)
+					{
+						addTranLog('r', name, 0, 0, countColls, 0);
+					}
+
+					return strlen(name);
+				}
+			}
+		}
+
+		DniproError de;
+		de.Code = COLL_IS_NOT_FOUND_ERROR;
+		strcpy(de.Message, "Collection is not found.");
+
+		throw de;
 	}
 
 	void block()
@@ -430,12 +526,15 @@ public:
 			_trans[i].clear();
 		}
 
-		ha1.clear();
-		ha2.clear();
+		for (uint i = 0; i < countColls; i++)
+		{
+			has1[i]->clear();
+			has2[i]->clear();
 
-		ha1.AllowValueList = true;
-		ha2.AllowValueList = false;
-
+			has1[i]->AllowValueList = true;
+			has2[i]->AllowValueList = false;
+		}
+		
 		lastDocID = 0;
 
 		unblock();
@@ -457,8 +556,11 @@ public:
 			_trans[i].destroy();
 		}
 
-		ha1.destroy();
-		ha2.destroy();
+		for (uint i = 0; i < countColls; i++)
+		{
+			has1[i]->destroy();
+			has2[i]->destroy();
+		}
 	}
 };
 

@@ -16,6 +16,7 @@ void DniproDB::addTranLog(char type,
 						char* json,
 						uint docID,
 						uchar tranID,
+						uchar collID,
 						uint tranIdentity)
 {
 	//if (tranStarted)
@@ -33,15 +34,20 @@ WRITE_TRAN_LOG:
 	//header
 	tranLog[currTranLogPos++] = type;
 
+	
 	//docid
 	*(uint*)&tranLog[currTranLogPos] = docID;
 
 	currTranLogPos += 4;
 
-	//tran unique identifier
+	//tranID
 	tranLog[currTranLogPos++] = tranID;
-	*(uint*)&tranLog[currTranLogPos] = tranIdentity;
 
+	//collID
+	tranLog[currTranLogPos++] = collID;
+
+	//Tran unique identifier
+	*(uint*)&tranLog[currTranLogPos] = tranIdentity;
 	currTranLogPos += 4;
 
 	//json
@@ -77,6 +83,7 @@ void DniproDB::addTranLogWithCommit(char type,
 									char* json,
 									uint docID,
 									uchar tranID,
+									uchar collID,
 									uint tranIdentity)
 {
 WRITE_TRAN_LOG:
@@ -94,16 +101,22 @@ WRITE_TRAN_LOG:
 	//header
 	tranLog[newCurrTranLogPos++] = type;
 
+	//collID
+	tranLog[newCurrTranLogPos++] = collID;
+
 	//docid
 	*(uint*)&tranLog[newCurrTranLogPos] = docID;
 
 	newCurrTranLogPos += 4;
 
-	//tran unique identifier
+	//tranID
 	tranLog[newCurrTranLogPos++] = tranID;
 
-	*(uint*)&tranLog[newCurrTranLogPos] = tranIdentity;	  //time when tran is commited
+	//collID
+	tranLog[currTranLogPos++] = collID;
 
+	//unique identifier tran
+	*(uint*)&tranLog[newCurrTranLogPos] = tranIdentity;	  //time when tran is commited
 	newCurrTranLogPos += 4;
 
 	//json
@@ -303,6 +316,9 @@ bool DniproDB::readTrans(char* filePath)
 					uchar tranID = *(uint*)(buff + i);
 					i++;
 
+					uchar collID = *(uint*)(buff + i);
+					i++;
+
 					uint tranIdentity = *(uint*)(buff + i);
 					i += 4;
 
@@ -311,24 +327,27 @@ bool DniproDB::readTrans(char* filePath)
 						this->tranIdentity = tranIdentity;
 					}
 
-					if (!_trans[tranID].InUse)
+					if (tranID) //for transaction commands
 					{
-						//begin tran
-						_trans[tranID].TranType = READ_COMMITED_TRAN;
-						_trans[tranID].TranIdentity = tranIdentity;
-						_trans[tranID].InUse = true;
-					}
-					else
-					{
-						//not finished tran, rollback and start new
-						if (_trans[tranID].InUse && _trans[tranID].TranIdentity != tranIdentity)
+						if (!_trans[tranID].InUse)
 						{
-							rollbackTran(tranID);
-
 							//begin tran
 							_trans[tranID].TranType = READ_COMMITED_TRAN;
 							_trans[tranID].TranIdentity = tranIdentity;
 							_trans[tranID].InUse = true;
+						}
+						else
+						{
+							//not finished tran, rollback and start new
+							if (_trans[tranID].InUse && _trans[tranID].TranIdentity != tranIdentity)
+							{
+								rollbackTran(tranID);
+
+								//begin tran
+								_trans[tranID].TranType = READ_COMMITED_TRAN;
+								_trans[tranID].TranIdentity = tranIdentity;
+								_trans[tranID].InUse = true;
+							}
 						}
 					}
 
@@ -336,7 +355,7 @@ bool DniproDB::readTrans(char* filePath)
 					{
 					case 'i':
 					{
-						i += insPartDoc(buff + i, docID, tranID);
+						i += insPartDoc(buff + i, docID, tranID, collID);
 
 						if (docID > lastDocID)
 						{
@@ -349,7 +368,7 @@ bool DniproDB::readTrans(char* filePath)
 					}
 					case 'u':
 					{
-						i += updPartDoc(buff + i, docID, tranID);
+						i += updPartDoc(buff + i, docID, tranID, collID);
 						
 						i++; //zero terminated
 						
@@ -357,7 +376,23 @@ bool DniproDB::readTrans(char* filePath)
 					}
 					case 'd':
 					{
-						i += delPartDoc(buff + i, docID, tranID);
+						i += delPartDoc(buff + i, docID, tranID, collID);
+
+						i++; //zero terminated
+
+						break;
+					}
+					case 'c':
+					{
+						i += addColl(buff + i);
+
+						i++; //zero terminated
+
+						break;
+					}
+					case 'r':
+					{
+						i += delColl(buff + i);
 
 						i++; //zero terminated
 

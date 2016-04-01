@@ -23,10 +23,12 @@ public:
 		BlockPagesCount = 0;
 	}
 
-	volatile uint ContentPagesCount;
-	volatile uint VarPagesCount;
-	volatile uint BranchPagesCount;
-	volatile uint BlockPagesCount;
+	char Name[256];
+
+	uint ContentPagesCount;
+	uint VarPagesCount;
+	uint BranchPagesCount;
+	uint BlockPagesCount;
 
 	uint ContentPagesSize;
 	uint VarPagesSize;
@@ -47,7 +49,7 @@ public:
 
 	uint HeaderBase;
 	uint HeaderBits;
-	volatile uint HeaderSize;
+	uint HeaderSize;
 
 	uint* freeBranchCells;
 	uint countFreeBranchCell;

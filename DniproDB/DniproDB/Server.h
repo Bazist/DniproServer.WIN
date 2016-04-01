@@ -15,6 +15,7 @@ class DniproPacket
 public:
 	uchar MethodType;
 	uint TranID;
+	uint CollID;
 	uint Tag1;
 	uint Tag2;
 	uint Tag3;
@@ -43,6 +44,7 @@ class Server
 
 			Server::pDB = pDB;
 			Server::pDQ = new DniproQuery(pDB);
+			Server::Port = port;
 
 			Server::hServer = CreateThread(
 										NULL,           // default security attributes
@@ -190,13 +192,14 @@ class Server
 						{
 							//pDB->clearState();
 							pDQ->clearState();
-
+							
 							for (uint i = 4; i < bytesRecv;)
 							{
 								DniproPacket* pPacket = (DniproPacket*)(pBuffer + i);
 								char* json = (pBuffer + i + sizeof(DniproPacket));
 
 								pDQ->TranID = pPacket->TranID;
+								pDQ->CollID = pPacket->CollID;
 
 								switch (pPacket->MethodType)
 								{
@@ -212,7 +215,7 @@ class Server
 								}
 								case 2: //getDocsByAttr
 								{
-									ValueList* pValueList = pDB->getDocsByAttr(json, 0, pPacket->TranID);
+									ValueList* pValueList = pDB->getDocsByAttr(json, 0, pPacket->TranID, pPacket->CollID);
 
 									uint len = pValueList->Count * sizeof(uint);
 
@@ -224,19 +227,19 @@ class Server
 								}
 								case 3: //insPartDoc
 								{
-									pDB->insPartDoc(json, pPacket->Tag1, pPacket->TranID);
+									pDB->insPartDoc(json, pPacket->Tag1, pPacket->TranID, pPacket->CollID);
 
 									break;
 								}
 								case 4: //updPartDoc
 								{
-									pDB->updPartDoc(json, pPacket->Tag1, pPacket->TranID);
+									pDB->updPartDoc(json, pPacket->Tag1, pPacket->TranID, pPacket->CollID);
 
 									break;
 								}
 								case 5: //delPartDoc
 								{
-									pDB->delPartDoc(json, pPacket->Tag1, pPacket->TranID);
+									pDB->delPartDoc(json, pPacket->Tag1, pPacket->TranID, pPacket->CollID);
 
 									break;
 								}
@@ -252,6 +255,7 @@ class Server
 										sendBuffer + sendBufferSize,
 										pPacket->Tag1,
 										pPacket->TranID,
+										pPacket->CollID,
 										false);
 									*pLen = len;
 
@@ -425,7 +429,7 @@ class Server
 								}
 								case 31: //addBlobValue
 								{
-									uint len = pDB->addBlobValue(json, pPacket->QuerySize, sendBuffer + sendBufferSize, pPacket->TranID);
+									uint len = pDB->addBlobValue(json, pPacket->QuerySize, sendBuffer + sendBufferSize);
 
 									sendBufferSize += len;
 
@@ -435,9 +439,31 @@ class Server
 								{
 									uint len = 0;
 
-									pDB->getBlobValue(sendBuffer + sendBufferSize, len, json, pPacket->TranID);
+									pDB->getBlobValue(sendBuffer + sendBufferSize, len, json);
 
 									sendBufferSize += len;
+
+									break;
+								}
+								case 33: //addCollection
+								{
+									pDB->addColl(json);
+
+									break;
+								}
+								case 34: //getCollectionID
+								{
+									uint* collID = (uint*)(sendBuffer + sendBufferSize);
+
+									*collID = pDB->getCollID(json);
+
+									sendBufferSize += 4;
+
+									break;
+								}
+								case 35: //delCollection
+								{
+									pDB->delColl(json);
 
 									break;
 								}

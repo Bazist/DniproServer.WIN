@@ -204,7 +204,27 @@ public:
 
 	void test9()
 	{
-		//scan range
+		return;
+
+		char query[100][128];
+
+		for (uint i = 0; i < 100; i++)
+		{
+			sprintf(query[i], "{'attr2':@'%u-%u'}", i * 10, i * 10 + 10);
+		}
+
+		startTest(9, "100K queries (scan) like:\nFind all docs where {'attr1':@'1-10'}, {'attr1':@'10-20'}, {'attr1':@'20-30'}");
+
+		uint temp = 0;
+
+		for (uint i = 1; i <= TESTS_COUNT_KEYS/1000; i++)
+		{
+			temp += (uint)pDB->getDocsByAttr(query[i % 100]);
+
+			printf("%d\n", i);
+		}
+
+		endTest(TESTS_COUNT_KEYS/1000, temp);
 	}
 
 	void test10()
