@@ -18,10 +18,15 @@ public:
 
 	uint TranIdentity;
 	uchar TranID;
+	uchar ParentTranID;
+	HArrayTran* pGrandParentTran;
+
 	uchar TranType;
 	bool IsWritable;
+	bool HasChilds;
+
 	//bool HasCommitedLabel;
-	uint LasWritedOnTranPage;
+	uint LastWritedOnTranPage; //need for sync with parallel thread. We will wait until our pages is not saved.
 
 	char* LastJson;
 
@@ -54,17 +59,19 @@ public:
 	}
 
 	void init(uchar tranID,
-			  HArrayTranItemsPool* pHArrayTranItemsPool,
-			  HArrayVarRAM** has1,
-			  HArrayVarRAM** has2,
-			  ON_CONTENT_CELL_MOVED_FUNC* onContentCellMovedFunc)
+		HArrayTranItemsPool* pHArrayTranItemsPool,
+		HArrayVarRAM** has1,
+		HArrayVarRAM** has2,
+		ON_CONTENT_CELL_MOVED_FUNC* onContentCellMovedFunc)
 	{
 		CollID = 0; //default;
 
 		TranID = tranID;
+		ParentTranID = 0;
+		pGrandParentTran = 0;
 
 		this->pHArrayTranItemsPool = pHArrayTranItemsPool;
-		
+
 		this->has1 = has1;
 		this->has2 = has2;
 
@@ -91,19 +98,33 @@ public:
 		TranType = 0; //readonly by default
 
 		IsWritable = false;
+		HasChilds = false;
+
 		//HasCommitedLabel = false;
-		LasWritedOnTranPage = 0;
+		LastWritedOnTranPage = 0;
 
 		LastJson = 0;
 	}
 
 	//insert in ha1
 	bool insertOrDelete1(uint* key,
-						 uint keyLen,
-						 uint value,
-						 uint* pIndexInVL,
-						 bool isInserted)
+		uint keyLen,
+		uint value,
+		uint* pIndexInVL,
+		uchar itemType,
+		uchar tranID)
 	{
+		if (ParentTranID)
+		{
+			//insert data to grand parent tran
+			return pGrandParentTran->insertOrDelete1(key,
+				keyLen,
+				value,
+				pIndexInVL,
+				itemType,
+				tranID);
+		}
+
 		if (Count1 < 128)
 		{
 			//if (!isInserted) //if delete, just mark
@@ -125,9 +146,9 @@ public:
 			//}
 
 			HArrayTranItem& item = pHArrayTranItems1->Items[Count1];
-			
+			item.TranID = tranID;
 			item.CollID = CollID;
-			item.IsInserted = isInserted;
+			item.Type = itemType;
 			item.pIndexInVL = pIndexInVL;
 			memcpy(item.Key, key, keyLen);
 			item.KeyLen = keyLen;
@@ -190,11 +211,12 @@ public:
 			{
 				pLastHArrayTranItems1 = pLastHArrayTranItems1->pNextItems = pHArrayTranItemsPool->newObject();
 			}
-			
+
 			HArrayTranItem& item = pLastHArrayTranItems1->Items[count1];
 
+			item.TranID = tranID;
 			item.CollID = CollID;
-			item.IsInserted = isInserted;
+			item.Type = itemType;
 			item.pIndexInVL = pIndexInVL;
 			memcpy(item.Key, key, keyLen);
 			item.KeyLen = keyLen;
@@ -208,10 +230,21 @@ public:
 
 	//insert in ha2
 	bool insertOrDelete2(uint* key,
-						 uint keyLen,
-						 uint value,
-						 bool isInserted)
+		uint keyLen,
+		uint value,
+		uchar itemType,
+		uchar tranID)
 	{
+		if (ParentTranID)
+		{
+			//insert data to grand parent tran
+			return pGrandParentTran->insertOrDelete2(key,
+				keyLen,
+				value,
+				itemType,
+				tranID);
+		}
+
 		if (Count2 < 128)
 		{
 			//if (!isInserted) //if delete, just mark
@@ -235,8 +268,9 @@ public:
 			HArrayTranItem& item = pHArrayTranItems2->Items[Count2];
 
 			memcpy(item.Key, key, keyLen);
+			item.TranID = tranID;
 			item.CollID = CollID;
-			item.IsInserted = isInserted;
+			item.Type = itemType;
 			item.KeyLen = keyLen;
 			item.Value = value;
 		}
@@ -293,7 +327,8 @@ public:
 
 			HArrayTranItem& item = pLastHArrayTranItems2->Items[count2];
 
-			item.IsInserted = isInserted;
+			item.Type = itemType;
+			item.TranID = tranID;
 			item.CollID = CollID;
 			memcpy(item.Key, key, keyLen);
 			item.KeyLen = keyLen;
@@ -306,10 +341,16 @@ public:
 	}
 
 	bool hasKeyAndValue1(uint* key,
-						 uint keyLen,
-						 uint value,
-						 bool isInserted)
+		uint keyLen,
+		uint value,
+		uchar itemType)
 	{
+		if (ParentTranID)
+		{
+			//data in grand parent tran
+			return pGrandParentTran->hasKeyAndValue1(key, keyLen, value, itemType);
+		}
+
 		if (Count1 < 128)
 		{
 			for (uint i = 0; i < Count1; i++)
@@ -318,7 +359,7 @@ public:
 
 				if (item.KeyLen == keyLen &&
 					item.Value == value &&
-					item.IsInserted == isInserted &&
+					item.Type == itemType &&
 					item.CollID == CollID)
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
@@ -330,7 +371,7 @@ public:
 		}
 		else
 		{
-			if (!isInserted)
+			if (itemType == 2)
 			{
 				HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
 				uint count = 128;
@@ -343,7 +384,7 @@ public:
 
 						if (item.KeyLen == keyLen &&
 							item.Value == value &&
-							item.IsInserted == isInserted &&
+							item.Type == itemType &&
 							item.CollID == CollID)
 						{
 							if (!memcmp(item.Key, key, item.KeyLen))
@@ -375,12 +416,12 @@ public:
 
 		return false;
 	}
-	
+
 	//scanKeysAndValues
 	uint scanKeysAndValues1(uint* key,
-						    uint keyLen,
-						    HARRAY_ITEM_VISIT_FUNC visitor,
-						    void* pData)
+		uint keyLen,
+		HARRAY_ITEM_VISIT_FUNC visitor,
+		void* pData)
 	{
 		if (Count1 < 128) //in one block
 		{
@@ -388,7 +429,7 @@ public:
 			{
 				HArrayTranItem& item = pHArrayTranItems1->Items[i];
 
-				if (item.IsInserted &&
+				if (item.Type == 1 &&
 					item.CollID == CollID)
 				{
 					if (!memcmp(key, item.Key, keyLen))
@@ -409,7 +450,7 @@ public:
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-					if (item.IsInserted &&
+					if (item.Type == 1 &&
 						item.CollID == CollID)
 					{
 						if (!memcmp(key, item.Key, keyLen))
@@ -443,11 +484,11 @@ public:
 
 	//getValueByKey
 	void getValueByKey1(uint* key,
-						uint keyLen,
-						uint& resValueInserted,
-						uchar& resValueTypeInserted,
-						uint& resValueDeleted,
-						uchar& resValueTypeDeleted)
+		uint keyLen,
+		uint& resValueInserted,
+		uchar& resValueTypeInserted,
+		uint& resValueDeleted,
+		uchar& resValueTypeDeleted)
 	{
 		uint valueInserted = 0;
 		ValueList* pValuesInserted = 0;
@@ -466,7 +507,7 @@ public:
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
-						if (item.IsInserted)
+						if (item.Type == 1) //inserted
 						{
 							if (!valueInserted)
 							{
@@ -484,7 +525,7 @@ public:
 								pValuesInserted->addValue(item.Value);
 							}
 						}
-						else
+						else if(item.Type == 2) //deleted
 						{
 							if (!valueDeleted)
 							{
@@ -522,7 +563,7 @@ public:
 					{
 						if (!memcmp(item.Key, key, item.KeyLen))
 						{
-							if (item.IsInserted)
+							if (item.Type == 1) //inserted
 							{
 								if (!valueInserted)
 								{
@@ -540,7 +581,7 @@ public:
 									pValuesInserted->addValue(item.Value);
 								}
 							}
-							else
+							else if(item.Type == 2) //deleted
 							{
 								if (!valueDeleted)
 								{
@@ -609,11 +650,11 @@ public:
 	}
 
 	void getValueByKey2(uint* key,
-						uint keyLen,
-						uint& resValueInserted,
-						uchar& resValueTypeInserted,
-						uint& resValueDeleted,
-						uchar& resValueTypeDeleted)
+		uint keyLen,
+		uint& resValueInserted,
+		uchar& resValueTypeInserted,
+		uint& resValueDeleted,
+		uchar& resValueTypeDeleted)
 	{
 		uint valueInserted = 0;
 		ValueList* pValuesInserted = 0;
@@ -632,7 +673,7 @@ public:
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
-						if (item.IsInserted)
+						if (item.Type == 1) //inserted
 						{
 							if (!valueInserted)
 							{
@@ -649,7 +690,7 @@ public:
 								pValuesInserted->addValue(item.Value);
 							}
 						}
-						else
+						else if(item.Type == 2) //deleted
 						{
 							if (!valueDeleted)
 							{
@@ -687,7 +728,7 @@ public:
 					{
 						if (!memcmp(item.Key, key, item.KeyLen))
 						{
-							if (item.IsInserted)
+							if (item.Type == 1) //inserted
 							{
 								if (!valueInserted)
 								{
@@ -705,7 +746,7 @@ public:
 									pValuesInserted->addValue(item.Value);
 								}
 							}
-							else
+							else if(item.Type == 2) //deleted
 							{
 								if (!valueDeleted)
 								{
@@ -774,13 +815,23 @@ public:
 	}
 
 	uint getValueByKey(bool isHA1,
-					   uint* key,
-					   uint keyLen,
-					   uchar& valueType,
-					   uchar readModeType = 0,
-					   uchar tranID = 0,
-					   ReadedList* pReadedList = 0)
+		uint* key,
+		uint keyLen,
+		uchar& valueType,
+		uchar readModeType = 0,
+		ReadedList* pReadedList = 0)
 	{
+		if (ParentTranID)
+		{
+			//all data in grand parent tran
+			return pGrandParentTran->getValueByKey(isHA1,
+				key,
+				keyLen,
+				valueType,
+				readModeType,
+				pReadedList);
+		}
+
 		uchar tranValueTypeInserted;
 		uint tranValueInserted;
 
@@ -793,31 +844,31 @@ public:
 		if (isHA1)
 		{
 			getValueByKey1(key,
-						   keyLen,
-						   tranValueInserted,
-						   tranValueTypeInserted,
-						   tranValueDeleted,
-						   tranValueTypeDeleted);
+				keyLen,
+				tranValueInserted,
+				tranValueTypeInserted,
+				tranValueDeleted,
+				tranValueTypeDeleted);
 
 			storeValue = has1[CollID]->getValueByKey(key,
-													 keyLen,
-													 storeValueType);
+				keyLen,
+				storeValueType);
 		}
 		else
 		{
 			getValueByKey2(key,
-						   keyLen,
-						   tranValueInserted,
-						   tranValueTypeInserted,
-						   tranValueDeleted,
-						   tranValueTypeDeleted);
+				keyLen,
+				tranValueInserted,
+				tranValueTypeInserted,
+				tranValueDeleted,
+				tranValueTypeDeleted);
 
 			storeValue = has2[CollID]->getValueByKey(key,
-													keyLen,
-													storeValueType,
-													readModeType,
-													TranID,
-													&readedList);
+				keyLen,
+				storeValueType,
+				readModeType,
+				TranID,
+				&readedList);
 		}
 
 		//0. There is no value
@@ -1121,11 +1172,11 @@ public:
 
 				uchar valueType;
 				if (has2[CollID]->getValueByKey(item.Key,
-										item.KeyLen,
-										valueType,
-										4,
-										TranID,
-										&readedList)) //4. Check if key blocked, but excluded my cells
+					item.KeyLen,
+					valueType,
+					4,
+					TranID,
+					&readedList)) //4. Check if key blocked, but excluded my cells
 				{
 					return true;
 				}
@@ -1144,11 +1195,11 @@ public:
 
 					uchar valueType;
 					if (has2[CollID]->getValueByKey(item.Key,
-											item.KeyLen,
-											valueType,
-											4,
-											TranID,
-											&readedList)) //4. Check if key blocked, but excluded my cells
+						item.KeyLen,
+						valueType,
+						4,
+						TranID,
+						&readedList)) //4. Check if key blocked, but excluded my cells
 					{
 						return true;
 					}
@@ -1180,6 +1231,8 @@ public:
 
 	void commit(bool hasReadedCells)
 	{
+		//this method never calls for nested trans
+
 		testVal = 0;
 
 		if (Count1 < 128) //in one block
@@ -1188,12 +1241,12 @@ public:
 			{
 				HArrayTranItem& item = pHArrayTranItems1->Items[i];
 
-				if (item.IsInserted)
+				if (item.Type == 1) //inserted
 				{
 					//save ha1DocIndex in attrvalues
 					*item.pIndexInVL = has1[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 				}
-				else
+				else if(item.Type == 2) //deleted
 				{
 					has1[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 				}
@@ -1212,11 +1265,11 @@ public:
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-					if (item.IsInserted)
+					if (item.Type == 1) //inserted
 					{
 						*item.pIndexInVL = has1[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
-					else
+					else if(item.Type == 2) //deleted
 					{
 						has1[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 					}
@@ -1256,11 +1309,11 @@ public:
 				{
 					HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
-					if (item.IsInserted)
+					if (item.Type == 1) //inserted
 					{
 						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
-					else
+					else if(item.Type == 2) //deleted
 					{
 						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
@@ -1272,11 +1325,11 @@ public:
 				{
 					HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
-					if (item.IsInserted)
+					if (item.Type == 1) //inserted
 					{
 						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
-					else
+					else if(item.Type == 2) //deleted
 					{
 						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
@@ -1296,11 +1349,11 @@ public:
 					{
 						HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-						if (item.IsInserted)
+						if (item.Type == 1) //inserted
 						{
 							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
-						else
+						else if(item.Type == 2) //deleted
 						{
 							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
@@ -1312,11 +1365,11 @@ public:
 					{
 						HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-						if (item.IsInserted)
+						if (item.Type == 1) //inserted
 						{
 							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
-						else
+						else if(item.Type == 2) //deleted
 						{
 							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
@@ -1350,66 +1403,185 @@ public:
 		}
 	}
 
+	void clearPart(uchar tranID)
+	{
+		//clear items in current parrent tran
+		if (Count1 < 128) //in one block
+		{
+			for (uint i = 0; i < Count1; i++)
+			{
+				HArrayTranItem& item = pHArrayTranItems1->Items[i];
+
+				if (item.TranID == tranID)
+				{
+					item.Type = 3; //rollbacked
+				}
+			}
+		}
+		else
+		{
+			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1;
+			uint count = 128;
+
+			while (true)
+			{
+				for (uint i = 0; i < count; i++)
+				{
+					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
+
+					if (item.TranID == tranID)
+					{
+						item.Type = 3; //rollbacked
+					}
+				}
+
+				//next block
+				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
+
+				if (pCurrHArrayTranItems)
+				{
+					if (pCurrHArrayTranItems->pNextItems)
+					{
+						count = 128; //not last
+					}
+					else
+					{
+						count = Count1 & 0x7F; //last
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+
+		if (Count2 < 128) //in one block
+		{
+			for (uint i = 0; i < Count2; i++)
+			{
+				HArrayTranItem& item = pHArrayTranItems2->Items[i];
+
+				if (item.TranID == tranID)
+				{
+					item.Type = 3; //rollbacked
+				}
+			}
+		}
+		else
+		{
+			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems2;
+			uint count = 128;
+
+			while (true)
+			{
+				for (uint i = 0; i < count; i++)
+				{
+					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
+
+					if (item.TranID == tranID)
+					{
+						item.Type = 3; //rollbacked
+					}
+				}
+
+				//next block
+				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+
+				if (!pCurrHArrayTranItems)
+				{
+					break;
+				}
+
+				if (pCurrHArrayTranItems)
+				{
+					if (pCurrHArrayTranItems->pNextItems)
+					{
+						count = 128; //not last
+					}
+					else
+					{
+						count = Count2 & 0x7F; //last
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+	}
+
 	void clear()
 	{
-		if (TranType) //was not read only tran
+		if (!ParentTranID)
 		{
-			//clear ha1 blocks
-			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1->pNextItems;
-
-			while (pCurrHArrayTranItems)
+			if (TranType) //was not read only tran
 			{
-				pHArrayTranItemsPool->releaseObject(pCurrHArrayTranItems);
 
-				//next block
-				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+				//clear ha1 blocks
+				HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems1->pNextItems;
+
+				while (pCurrHArrayTranItems)
+				{
+					pHArrayTranItemsPool->releaseObject(pCurrHArrayTranItems);
+
+					//next block
+					pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+				}
+
+				pHArrayTranItems1->pNextItems = 0;
+
+				//clear ha2 blocks
+				pCurrHArrayTranItems = pHArrayTranItems2->pNextItems;
+
+				while (pCurrHArrayTranItems)
+				{
+					pHArrayTranItemsPool->releaseObject(pCurrHArrayTranItems);
+
+					//next block
+					pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+				}
+
+				pHArrayTranItems2->pNextItems = 0;
+
+				//clear other
+				pLastHArrayTranItems1 = pHArrayTranItems1;
+				pLastHArrayTranItems2 = pHArrayTranItems2;
+
+				Count1 = 0;
+				Count2 = 0;
+
+				readedList.clear();
+
+				IsWritable = false;
+				//HasCommitedLabel = false;
+
+				LastWritedOnTranPage = 0;
 			}
 
-			pHArrayTranItems1->pNextItems = 0;
+			indexesPool.clear();
+			//attrValuesPool.clear();
+			valueListPool.clear();
 
-			//clear ha2 blocks
-			pCurrHArrayTranItems = pHArrayTranItems2->pNextItems;
-
-			while (pCurrHArrayTranItems)
+			if (pAttrValuesPage)
 			{
-				pHArrayTranItemsPool->releaseObject(pCurrHArrayTranItems);
-
-				//next block
-				pCurrHArrayTranItems = pCurrHArrayTranItems->pNextItems;
+				pAttrValuesPage->Type.store(0); //page is free
+				pAttrValuesPage = 0;
 			}
-
-			pHArrayTranItems2->pNextItems = 0;
-
-			//clear other
-			pLastHArrayTranItems1 = pHArrayTranItems1;
-			pLastHArrayTranItems2 = pHArrayTranItems2;
-
-			Count1 = 0;
-			Count2 = 0;
-
-			readedList.clear();
-
-			IsWritable = false;
-			//HasCommitedLabel = false;
-
-			LasWritedOnTranPage = 0;
 		}
-
-		indexesPool.clear();
-		//attrValuesPool.clear();
-		valueListPool.clear();
-
-		if (pAttrValuesPage)
-		{
-			pAttrValuesPage->Type.store(0); //page is free
-			pAttrValuesPage = 0;
-		}
-
+		
 		InUse.store(false);
 
 		LastJson = 0;
 
-		TranIdentity = 0;
+		ParentTranID = 0;
+		pGrandParentTran = 0;
 	}
 
 	void destroy()

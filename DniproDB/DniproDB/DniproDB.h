@@ -55,7 +55,7 @@ public:
 	static std::atomic<uint> amountReaders;
 	static std::atomic<uint> amountMarkIsReadedTrans;
 	static std::atomic<uint> amountShapshotTrans;
-
+	
 	std::atomic<uint> amountWritedTranPages;
 
 	CRITICAL_SECTION writeTranLock;
@@ -79,6 +79,7 @@ public:
 	HArrayVarRAM* has2[MAX_CHAR];
 
 	uint countColls;
+	uint currTime;
 
 	HArrayTranItemsPool* pHArrayTranItemsPool;
 	AttrValuesPool attrValuesPool;
@@ -87,7 +88,7 @@ public:
 
 	static DWORD WINAPI writeTrans(LPVOID lpParam);
 
-	bool readTrans(char* filePath);
+	bool readTrans(char* filePath, uint maxDate);
 	bool readBlobs(char* filePath);
 
 	void read(BinaryFile* pFile)
@@ -105,7 +106,8 @@ public:
 		return pFile->writeInt(&val);
 	}
 	
-	void init(char* dbFolder = 0)
+	void init(char* dbFolder = 0,
+			  uint onDate = 0)
 	{
 		pHArrayTranItemsPool = new HArrayTranItemsPool();
 		attrValuesPool.init();
@@ -139,8 +141,7 @@ public:
 		tranLog = 0;
 		currTranLogPos = 0;
 		amountWritedTranPages = 0;
-		tranIdentity = 0;
-
+		
 		if (dbFolder)
 		{
 			if (strlen(dbFolder) > 0)
@@ -157,7 +158,7 @@ public:
 			writeTranOnHDD = true;
 
 			//read trans from HDD
-			readTrans(dbTranLogFileName);
+			readTrans(dbTranLogFileName, onDate);
 			readBlobs(dbBlobLogFileName);
 
 			CreateThread(NULL,                   // default security attributes
@@ -173,7 +174,12 @@ public:
 
 	static bool checkDeadlock(uchar tranID);
 
-	uint beginTran(uchar tranType = READ_COMMITED_TRAN);
+	void clearChilds(uint tranID);
+
+	void clearParts(uint tranID);
+
+	uint beginTran(uchar tranType = READ_COMMITED_TRAN,
+	 			   uchar parentTranID = 0);
 
 	void rollbackTran(uint tranID);
 
@@ -186,13 +192,15 @@ public:
 					uint docID,
 					uchar tranID,
 					uchar collID,
-					uint tranIdentity);
+					uchar parentTranID,
+					uint tranIdenity);
 
 	void addTranLogWithCommit(char type,
 							  char* json,
 							  uint docID,
 							  uchar tranID,
 							  uchar collID,
+							  uchar parentTranID,
 							  uint tranIdentity);
 	
 	uint addDoc(char* json,
@@ -423,7 +431,7 @@ public:
 
 		if (writeTranOnHDD)
 		{
-			addTranLog('c', name, 0, 0, countColls, 0);
+			addTranLog('c', name, 0, 0, countColls, 0, 0);
 		}
 
 		countColls++;
@@ -465,7 +473,7 @@ public:
 
 					if (writeTranOnHDD)
 					{
-						addTranLog('r', name, 0, 0, countColls, 0);
+						addTranLog('r', name, 0, 0, countColls, 0, 0);
 					}
 
 					return strlen(name);

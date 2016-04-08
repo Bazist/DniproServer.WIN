@@ -1046,7 +1046,7 @@ public:
 		//begin tran
 		if (!TranID)
 		{
-			TranID = pDB->beginTran(1);
+			TranID = pDB->beginTran(READ_COMMITED_TRAN);
 
 			hasBeginTran = true;
 		}
@@ -1106,7 +1106,7 @@ public:
 		//begin tran
 		if (!TranID)
 		{
-			TranID = pDB->beginTran(1);
+			TranID = pDB->beginTran(READ_COMMITED_TRAN);
 
 			hasBeginTran = true;
 		}

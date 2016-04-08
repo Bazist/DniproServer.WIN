@@ -992,37 +992,77 @@ void testThreads()
 	}
 }
 
-int main(int argc, char** argv)
+void testCascadeTran()
 {
+	char jsonResult[1024];
 
-	/*DniproDB* db = new DniproDB();
+	DniproDB* db = new DniproDB();
 	db->init();
 
-	db->addDoc("{'attr':'x1'}");
+	uint docID;
 
-	db->updPartDoc("{'attr':'x1'}", 1);
+	{//LEVEL 1 ===============================================================
+	 //tran level 1
+		uint tranLevel1 = db->beginTran(READ_COMMITED_TRAN);
 
-	return 0;
+		//add doc with one attribute, level 1
+		docID = db->addDoc("{'attr1':'lev1'}", tranLevel1);
 
-	for (uint i = 0; i < 10; i++)
-	{
-		db->addDoc("{'attr':'x1'}");
-	}
+		{//LEVEL 2 ==============================================================
+		 //tran level 2
+			uint tranLevel2 = db->beginTran(READ_COMMITED_TRAN, tranLevel1);
 
-	for (uint i = 1; i <= 10; i++)
-	{
-		db->updPartDoc("{'attr':'x1'}", i);
-	}
-	
-	return 0;*/
+			//add to doc one new attribute
+			db->insPartDoc("{'attr2':'lev2'}", docID, tranLevel2);
+
+			//in doc 2 attributes {'attr1':'Lev1', 'attr2':'Lev2'}
+			db->getPartDoc("{'attr1':$, 'attr2':$, 'attr3':$}", jsonResult, docID, tranLevel2);
+
+			{//LEVEL 3 ==============================================================
+			 //tran level 3
+				uint tranLevel3 = db->beginTran(READ_COMMITED_TRAN, tranLevel2);
+
+				//add to doc next attribute
+				db->insPartDoc("{'attr3':'lev3'}", docID, tranLevel3);
+
+				//in doc 3 attributes {'attr1':'Lev1', 'attr2':'Lev2', 'attr3':'Lev3'}
+				db->getPartDoc("{'attr1':$, 'attr2':$, 'attr3':$}", jsonResult, docID, tranLevel2);
+
+				db->commitTran(tranLevel3);
+			}//=====================================================================
+
+			 //in doc 3 attributes {'attr1':'Lev1', 'attr2':'Lev2', 'attr3':'Lev3'}
+			db->getPartDoc("{'attr1':$, 'attr2':$, 'attr3':$}", jsonResult, docID, tranLevel2);
+
+			db->rollbackTran(tranLevel2);
+		}//=====================================================================
+
+		 //in doc 1 attribute {'attr1':'Lev1'}, other two were rollbacked
+		db->getPartDoc("{'attr1':$, 'attr2':$, 'attr3':$}", jsonResult, docID, tranLevel1);
+
+		//outrside tran document found nothing
+		db->getPartDoc("{'attr1':$, 'attr2':$, 'attr3':$}", jsonResult, docID, 0);
+
+		//commit tran level 1
+		db->commitTran(tranLevel1);
+
+	}//=====================================================================
+
+	 //in doc 1 attribute {'attr1':'Lev1'}
+	db->getPartDoc("{'attr1':$, 'attr2':$, 'attr3':$}", jsonResult, docID, 0);
+}
+
+int main(int argc, char** argv)
+{
+	//=====================================================
 
 	system("cls");
 
-	if (argc > 1 && !strcmp(argv[1], "-selftest")) //test mode
+	if (argc == 2 && !strcmp(argv[1], "-selftest")) //test mode
 	{
 		//http://www.computerhope.com/color.htm
 		DniproInfo::PrintLine();
-		DniproInfo::Print("= DniproDB v1.0.3 [SELFTEST] (c)Booben.Com =\n");
+		DniproInfo::Print("= DniproDB v1.0.4 [SELFTEST] (c)Booben.Com =\n");
 		DniproInfo::PrintLine();
 
 		DniproDB* pDB = new DniproDB();
@@ -1053,14 +1093,46 @@ int main(int argc, char** argv)
 
 	//=====================================================
 
+	uint onDate = 0;
+
+	if (argc == 8 && !strcmp(argv[1], "-restoreondate"))
+	{
+		struct tm when;
+
+		when.tm_year = atoi(argv[2]) - 1900;
+		when.tm_mon = atoi(argv[3]) - 1;
+		when.tm_mday = atoi(argv[4]);
+		when.tm_hour = atoi(argv[5]);
+		when.tm_min = atoi(argv[6]);
+		when.tm_sec = atoi(argv[7]);;
+
+		time_t tm;
+		tm = mktime(&when);
+
+		if (tm != -1)
+		{
+			onDate = (uint)tm;
+		}
+		else
+		{
+			DniproError::Print(0, "Date is not correct.");
+
+			system("pause");
+
+			return 0;
+		}
+	}
+
+	//=====================================================
+
 	//http://www.computerhope.com/color.htm
 	DniproInfo::PrintLine();
-	DniproInfo::Print("=      DniproDB v1.0.3 (c)Booben.Com      =\n");
+	DniproInfo::Print("=      DniproDB v1.0.4 (c)Booben.Com      =\n");
 	DniproInfo::PrintLine();
 
 	//create db
 	DniproDB* pDB = new DniproDB();
-	pDB->init(""); //current folder
+	pDB->init("", onDate); //current folder
 
 	//run server
 	Server::start(pDB, 4477);

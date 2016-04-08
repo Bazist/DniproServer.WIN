@@ -3,9 +3,10 @@
 class HArrayTranItem
 {
 public:
-	bool IsInserted; //true - Inserted, false - Deleted
+	uchar Type; //1 - Inserted, 2 - Deleted, 3 - Rollbacked
 	uint* pIndexInVL; //index in Value List (need for fast fast delete item from ha1.ValueList with big Count)
-	uint CollID;
+	uchar TranID;
+	uchar CollID;
 	uint Key[32]; //128 bytes by default
 	uint KeyLen;
 	uint Value;

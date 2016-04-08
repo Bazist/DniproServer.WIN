@@ -13,11 +13,12 @@ uint DniproDB::blobLogSize = 0;
 std::atomic_int HArrayTran::testVal = 0;
 
 void DniproDB::addTranLog(char type,
-						char* json,
-						uint docID,
-						uchar tranID,
-						uchar collID,
-						uint tranIdentity)
+	char* json,
+	uint docID,
+	uchar tranID,
+	uchar collID,
+	uchar parentTranID,
+	uint tranIdentity)
 {
 	//if (tranStarted)
 	//{
@@ -34,7 +35,6 @@ WRITE_TRAN_LOG:
 	//header
 	tranLog[currTranLogPos++] = type;
 
-	
 	//docid
 	*(uint*)&tranLog[currTranLogPos] = docID;
 
@@ -46,8 +46,12 @@ WRITE_TRAN_LOG:
 	//collID
 	tranLog[currTranLogPos++] = collID;
 
-	//Tran unique identifier
+	//parent tran ID
+	tranLog[currTranLogPos++] = parentTranID;
+
+	//tranIdentity
 	*(uint*)&tranLog[currTranLogPos] = tranIdentity;
+
 	currTranLogPos += 4;
 
 	//json
@@ -80,11 +84,12 @@ WRITE_TRAN_LOG:
 }
 
 void DniproDB::addTranLogWithCommit(char type,
-									char* json,
-									uint docID,
-									uchar tranID,
-									uchar collID,
-									uint tranIdentity)
+	char* json,
+	uint docID,
+	uchar tranID,
+	uchar collID,
+	uchar parentTranID,
+	uint tranIdentity)
 {
 WRITE_TRAN_LOG:
 
@@ -101,9 +106,6 @@ WRITE_TRAN_LOG:
 	//header
 	tranLog[newCurrTranLogPos++] = type;
 
-	//collID
-	tranLog[newCurrTranLogPos++] = collID;
-
 	//docid
 	*(uint*)&tranLog[newCurrTranLogPos] = docID;
 
@@ -113,10 +115,13 @@ WRITE_TRAN_LOG:
 	tranLog[newCurrTranLogPos++] = tranID;
 
 	//collID
-	tranLog[currTranLogPos++] = collID;
+	tranLog[newCurrTranLogPos++] = collID;
+
+	//parent tran
+	tranLog[newCurrTranLogPos++] = parentTranID;	  //time when tran is commited
 
 	//unique identifier tran
-	*(uint*)&tranLog[newCurrTranLogPos] = tranIdentity;	  //time when tran is commited
+	*(uint*)&tranLog[newCurrTranLogPos] = tranIdentity;
 	newCurrTranLogPos += 4;
 
 	//json
@@ -151,17 +156,15 @@ WRITE_TRAN_LOG:
 	tranLog[newCurrTranLogPos++] = tranID; //tran identity
 
 	*(uint*)&tranLog[newCurrTranLogPos] = tranIdentity;	  //time when tran is commited
-
 	newCurrTranLogPos += 4;
 
-	*(uint*)&tranLog[newCurrTranLogPos] = clock();	  //time when tran is commited
-
+	*(uint*)&tranLog[newCurrTranLogPos] = currTime;	  //time when tran is commited
 	newCurrTranLogPos += 4;
-	
+
 	//write
 	pTranLogFile->write(tranLog + currTranLogPos, newCurrTranLogPos - currTranLogPos);
 	pTranLogFile->flush();
-	
+
 	LeaveCriticalSection(&writeTranLock);
 	//}
 }
@@ -192,6 +195,8 @@ DWORD WINAPI DniproDB::writeTrans(LPVOID lpParam)
 		return 0;
 	}
 
+	time_t tm;
+
 	//move to end
 	pDB->pTranLogFile->setPosition(tranLogSize);
 
@@ -202,6 +207,10 @@ DWORD WINAPI DniproDB::writeTrans(LPVOID lpParam)
 
 		//swap buffer
 		EnterCriticalSection(&pDB->writeTranLock);
+
+		//update time
+		time(&tm);
+		pDB->currTime = (uint)tm;
 
 		if (pDB->currTranLogPos)
 		{
@@ -258,7 +267,8 @@ DWORD WINAPI DniproDB::writeTrans(LPVOID lpParam)
 	return 0;
 }
 
-bool DniproDB::readTrans(char* filePath)
+bool DniproDB::readTrans(char* filePath,
+	uint onDate = 0)
 {
 	const uint buffSize = 10 * WRITE_TRANS_BUFFER_SIZE;
 
@@ -270,8 +280,8 @@ bool DniproDB::readTrans(char* filePath)
 
 		DniproInfo::Print("Read log ...\n");
 
-		ulong fileSize = pFile->getFileSize() + 1; //avoid zero
-		
+		ulong fileSize = pFile->getFileSize(); //avoid zero
+
 		char* buff = new char[buffSize];
 
 		uint safeLen = buffSize - WRITE_TRANS_BUFFER_SIZE;
@@ -280,7 +290,15 @@ bool DniproDB::readTrans(char* filePath)
 
 		while (true)
 		{
-			DniproInfo::Print("\rProgress: %d%%", pos * 100 / fileSize);
+			if (fileSize)
+			{
+				uint perc = pos * 100 / fileSize;
+
+				if (perc)
+				{
+					DniproInfo::Print("\rProgress: %u%%", perc);
+				}
+			}
 
 			uint len = pFile->read(buff, pos, buffSize);
 
@@ -292,7 +310,7 @@ bool DniproDB::readTrans(char* filePath)
 				{
 					uint* pLen = (uint*)&buff[i];
 
-					if(i + *pLen > len)
+					if (i + *pLen > len)
 					{
 						break; //corrupted
 					}
@@ -308,7 +326,61 @@ bool DniproDB::readTrans(char* filePath)
 				char commandType = buff[i];
 				i++;
 
-				if (commandType != '#') //command
+				if (commandType == '#') //commit
+				{
+					uchar tranID = *(uint*)(buff + i);
+					i++;
+
+					uint tranIdentity = *(uint*)(buff + i);
+					i += 4;
+
+					if (tranIdentity > this->tranIdentity)
+					{
+						this->tranIdentity = tranIdentity;
+					}
+
+					uint time = *(uint*)(buff + i);
+					i += 4;
+
+					if (onDate && time > onDate)
+					{
+						break; //do not read other trans
+					}
+
+					if (_trans[tranID].InUse && 
+						_trans[tranID].TranIdentity == tranIdentity)
+					{
+						commitTran(tranID);
+					}
+					else
+					{
+						rollbackTran(tranID);
+					}
+				}
+				else if (commandType == '*') //rollback
+				{
+					uchar tranID = *(uint*)(buff + i);
+					i++;
+
+					uint tranIdentity = *(uint*)(buff + i);
+					i += 4;
+
+					if (tranIdentity > this->tranIdentity)
+					{
+						this->tranIdentity = tranIdentity;
+					}
+
+					if (_trans[tranID].InUse &&
+						_trans[tranID].TranIdentity == tranIdentity)
+					{
+						rollbackTran(tranID);
+					}
+					else
+					{
+						DniproError::Print(0, "DB File corrupted.");
+					}
+				}
+				else //query
 				{
 					uint docID = *(uint*)(buff + i);
 					i += 4;
@@ -317,6 +389,9 @@ bool DniproDB::readTrans(char* filePath)
 					i++;
 
 					uchar collID = *(uint*)(buff + i);
+					i++;
+
+					uchar parentTranID = *(uint*)(buff + i);
 					i++;
 
 					uint tranIdentity = *(uint*)(buff + i);
@@ -334,11 +409,22 @@ bool DniproDB::readTrans(char* filePath)
 							//begin tran
 							_trans[tranID].TranType = READ_COMMITED_TRAN;
 							_trans[tranID].TranIdentity = tranIdentity;
+							_trans[tranID].ParentTranID = parentTranID;
+
+							if (!_trans[parentTranID].pGrandParentTran)
+							{
+								_trans[tranID].pGrandParentTran = &_trans[parentTranID];
+							}
+							else
+							{
+								_trans[tranID].pGrandParentTran = _trans[parentTranID].pGrandParentTran;
+							}
+
 							_trans[tranID].InUse = true;
 						}
 						else
 						{
-							//not finished tran, rollback and start new
+							// not finished tran, rollback and start new
 							if (_trans[tranID].InUse && _trans[tranID].TranIdentity != tranIdentity)
 							{
 								rollbackTran(tranID);
@@ -346,6 +432,17 @@ bool DniproDB::readTrans(char* filePath)
 								//begin tran
 								_trans[tranID].TranType = READ_COMMITED_TRAN;
 								_trans[tranID].TranIdentity = tranIdentity;
+								_trans[tranID].ParentTranID = parentTranID;
+
+								if (!_trans[parentTranID].pGrandParentTran)
+								{
+									_trans[tranID].pGrandParentTran = &_trans[parentTranID];
+								}
+								else
+								{
+									_trans[tranID].pGrandParentTran = _trans[parentTranID].pGrandParentTran;
+								}
+
 								_trans[tranID].InUse = true;
 							}
 						}
@@ -369,9 +466,9 @@ bool DniproDB::readTrans(char* filePath)
 					case 'u':
 					{
 						i += updPartDoc(buff + i, docID, tranID, collID);
-						
+
 						i++; //zero terminated
-						
+
 						break;
 					}
 					case 'd':
@@ -406,33 +503,6 @@ bool DniproDB::readTrans(char* filePath)
 					}
 					}
 				}
-				else //commit
-				{
-					uchar tranID = *(uint*)(buff + i);
-					i++;
-
-					uint tranIdentity = *(uint*)(buff + i);
-					i += 4;
-
-					if (tranIdentity > this->tranIdentity)
-					{
-						this->tranIdentity = tranIdentity;
-					}
-
-					//skip clock
-					uint time = *(uint*)(buff + i);
-					i += 4;
-
-					if (_trans[tranID].InUse &&
-						_trans[tranID].TranIdentity == tranIdentity)
-					{
-						commitTran(tranID);
-					}
-					else
-					{
-						rollbackTran(tranID);
-					}
-				}
 			}
 
 			tranLogSize = i;
@@ -464,6 +534,30 @@ bool DniproDB::readTrans(char* filePath)
 			{
 				rollbackTran(_trans[i].TranID);
 			}
+		}
+
+		//need shrink file
+		if (onDate)
+		{
+			BinaryFile* pFile = new BinaryFile(filePath, true, true);
+
+			if (pFile->open())
+			{
+				uint blank = 0;
+
+				for (uint i = tranLogSize; i < fileSize; i += 4)
+				{
+					pFile->writeInt(&blank);
+				}
+
+				//pFile->flush();
+				pFile->close();
+			}
+
+			delete pFile;
+
+			time_t tm = (time_t)onDate;
+			DniproInfo::Print("Log restored on date: %s\n", ctime(&tm));
 		}
 
 		DniproInfo::Print("Log readed.\n");
@@ -563,7 +657,37 @@ bool DniproDB::checkDeadlock(uchar tranID)
 	return false;
 }
 
-uint DniproDB::beginTran(uchar tranType)
+void DniproDB::clearChilds(uint tranID)
+{
+	for (uint i = 1; i < MAX_TRANS; i++)
+	{
+		if (_trans[i].ParentTranID == tranID)
+		{
+			clearChilds(_trans[i].TranID);
+
+			_trans[i].clear();
+		}
+	}
+}
+
+void DniproDB::clearParts(uint tranID)
+{
+	//for parent tran, clear data of nested trans
+	for (uint i = 1; i < MAX_TRANS; i++)
+	{
+		if (_trans[i].ParentTranID == tranID)
+		{
+			//clear childs
+			clearParts(_trans[i].TranID);
+		}
+	}
+
+	//clear myself
+	_trans[tranID].pGrandParentTran->clearPart(tranID);
+}
+
+uint DniproDB::beginTran(uchar tranType,
+						 uchar parentTranID)
 {
 	while (true)
 	{
@@ -578,15 +702,45 @@ uint DniproDB::beginTran(uchar tranType)
 				tran.TranType = tranType;
 				tran.TranIdentity = ++tranIdentity;
 
-				if (tranType == REPEATABLE_READ_TRAN)
+				//nested tran
+				if (parentTranID)
 				{
-					amountMarkIsReadedTrans++;
-				}
-				else if (tranType == SNAPSHOT_TRAN)
-				{
-					amountMarkIsReadedTrans++;
+					tran.ParentTranID = parentTranID;
+					
+					_trans[parentTranID].HasChilds = true;
 
-					amountShapshotTrans++;
+					if (!_trans[parentTranID].pGrandParentTran)
+					{
+						tran.pGrandParentTran = &_trans[parentTranID];
+					}
+					else
+					{
+						tran.pGrandParentTran = _trans[parentTranID].pGrandParentTran;
+					}
+
+					if (tran.TranType > tran.pGrandParentTran->TranType)
+					{
+						tran.clear();
+
+						DniproError de;
+						de.Code = 0;
+						strcpy(de.Message, "Isolation level of nested transaction can not be more than parent transaction");
+
+						throw de;
+					}
+				}
+				else
+				{
+					if (tranType == REPEATABLE_READ_TRAN)
+					{
+						amountMarkIsReadedTrans++;
+					}
+					else if (tranType == SNAPSHOT_TRAN)
+					{
+						amountMarkIsReadedTrans++;
+
+						amountShapshotTrans++;
+					}
 				}
 
 				return i;
@@ -603,17 +757,57 @@ void DniproDB::rollbackTran(uint tranID)
 {
 	HArrayTran& tran = _trans[tranID];
 
-	if (tran.TranType == REPEATABLE_READ_TRAN)
+	if (!tran.ParentTranID)
 	{
-		amountMarkIsReadedTrans--;
+		if (tran.TranType == REPEATABLE_READ_TRAN)
+		{
+			amountMarkIsReadedTrans--;
+		}
+		else if (tran.TranType == SNAPSHOT_TRAN)
+		{
+			amountMarkIsReadedTrans--;
+
+			amountShapshotTrans--;
+		}
 	}
-	else if (tran.TranType == SNAPSHOT_TRAN)
+	else
 	{
-		amountMarkIsReadedTrans--;
+		//our data in parent grand tran
+		clearParts(tran.TranID);
 
-		amountShapshotTrans--;
+		//write on disc
+		if (writeTranOnHDD)
+		{
+			while (tran.LastWritedOnTranPage >= amountWritedTranPages) //our page is not saved, wait
+			{
+				Sleep(1);
+			}
+
+			//save rollback label
+			char commitLabel[14];
+
+			//len
+			*(uint*)&commitLabel[0] = 6;
+
+			commitLabel[4] = '*'; //rollback
+			commitLabel[5] = tran.TranID;				//tran ID
+
+			EnterCriticalSection(&writeTranLock);
+
+			pTranLogFile->write(commitLabel, 6);
+			pTranLogFile->flush();
+
+			LeaveCriticalSection(&writeTranLock);
+		}
 	}
 
+	if (tran.HasChilds)
+	{
+		//clear all child trans
+		clearChilds(tran.TranID);
+	}
+
+	//clear tran
 	tran.clear();
 }
 
@@ -626,7 +820,7 @@ void DniproDB::commitTran(uint tranID)
 {
 	HArrayTran& tran = _trans[tranID];
 
-	if (tran.TranType) //not readonly tran
+	if (tran.TranType && !tran.ParentTranID) //not readonly tran and commit will be not in parent tran
 	{
 		if (tran.TranType == SNAPSHOT_TRAN)
 		{
@@ -722,7 +916,7 @@ void DniproDB::commitTran(uint tranID)
 		//commit tran on disc
 		if (tran.IsWritable && writeTranOnHDD)
 		{
-			while (tran.LasWritedOnTranPage >= amountWritedTranPages) //our page is not saved, wait
+			while (tran.LastWritedOnTranPage >= amountWritedTranPages) //our page is not saved, wait
 			{
 				Sleep(1);
 			}
@@ -732,21 +926,26 @@ void DniproDB::commitTran(uint tranID)
 
 			//len
 			*(uint*)&commitLabel[0] = 14;
-			
+
 			commitLabel[4] = '#';
-			commitLabel[5] = tran.TranID;					//tran ID
+			commitLabel[5] = tran.TranID;				//tran ID
 			*(uint*)&commitLabel[6] = tran.TranIdentity;	//time identity
-			*(uint*)&commitLabel[10] = clock();			//time when tran is commited
+			*(uint*)&commitLabel[10] = currTime;			//time when tran is commited
 
 			EnterCriticalSection(&writeTranLock);
 
-			pTranLogFile->write(commitLabel, 14);
+			pTranLogFile->write(commitLabel, 10);
 			pTranLogFile->flush();
 
 			LeaveCriticalSection(&writeTranLock);
 		}
-	}
 
-	//clear tran
-	tran.clear();
+		if (tran.HasChilds)
+		{
+			clearChilds(tran.TranID);
+		}
+
+		//clear tran
+		tran.clear();
+	}
 }

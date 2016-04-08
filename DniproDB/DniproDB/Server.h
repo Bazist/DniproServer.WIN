@@ -393,7 +393,7 @@ class Server
 								{
 									uint* tranID = (uint*)(sendBuffer + sendBufferSize);
 
-									*tranID = pDB->beginTran(pPacket->Tag1);
+									*tranID = pDB->beginTran(pPacket->Tag1, pPacket->Tag2);
 
 									sendBufferSize += 4;
 
@@ -536,5 +536,7 @@ class Server
 			TerminateThread(hServer, 0);
 
 			CloseHandle(hServer);
+
+			Sleep(1000);
 		}
 };
