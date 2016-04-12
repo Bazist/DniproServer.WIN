@@ -61,6 +61,19 @@ public:
 		CountValueList = 0;
 	}
 
+	uint getFirstID()
+	{
+		if (this->pValueList[0])
+		{
+			if (pValueList[0]->Count)
+			{
+				return pValueList[0]->pValues[0];
+			}
+		}
+
+		return 0;
+	}
+
 	uint sum(char* query)
 	{
 		if (!TranID)

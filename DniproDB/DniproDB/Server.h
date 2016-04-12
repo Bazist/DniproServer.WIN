@@ -126,6 +126,8 @@ class Server
 			// Accept the connection if any...
 			while (1)
 			{
+			NEXT_CLIENT:
+				
 				AcceptSocket = SOCKET_ERROR;
 
 				//ACCEPT CONNECTION ============================================================
@@ -160,6 +162,11 @@ class Server
 						while (fullBytesRecv > bytesRecv)
 						{
 							uint len = recv(AcceptSocket, pBuffer + bytesRecv, SERVER_BUFFER_SIZE - bytesRecv, 0);
+
+							if (len == 0)
+							{
+								goto NEXT_CLIENT;
+							}
 
 							if (len == SOCKET_ERROR)
 							{
@@ -397,7 +404,7 @@ class Server
 
 									sendBufferSize += 4;
 
-									useExistingConnection = true;
+									//useExistingConnection = true;
 
 									break;
 								}
@@ -405,7 +412,7 @@ class Server
 								{
 									pDB->rollbackTran(pPacket->TranID);
 
-									useExistingConnection = false;
+									//useExistingConnection = false;
 
 									break;
 								}
@@ -413,7 +420,7 @@ class Server
 								{
 									pDB->commitTran(pPacket->TranID);
 
-									useExistingConnection = false;
+									//useExistingConnection = false;
 
 									break;
 								}
@@ -464,6 +471,16 @@ class Server
 								case 35: //delCollection
 								{
 									pDB->delColl(json);
+
+									break;
+								}
+								case 36: //GetFirstID
+								{
+									uint* id = (uint*)(sendBuffer + sendBufferSize);
+
+									*id = pDQ->getFirstID();
+
+									sendBufferSize += 4;
 
 									break;
 								}
