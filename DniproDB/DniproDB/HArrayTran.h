@@ -650,18 +650,13 @@ public:
 	}
 
 	void getValueByKey2(uint* key,
-		uint keyLen,
-		uint& resValueInserted,
-		uchar& resValueTypeInserted,
-		uint& resValueDeleted,
-		uchar& resValueTypeDeleted)
+						uint keyLen,
+						uint& resValueInserted,
+						uint& resValueDeleted)
 	{
-		uint valueInserted = 0;
-		ValueList* pValuesInserted = 0;
-
-		uint valueDeleted = 0;
-		ValueList* pValuesDeleted = 0;
-
+		resValueInserted = 0;
+		resValueDeleted = 0;
+		
 		if (Count2 < 128)
 		{
 			for (uint i = 0; i < Count2; i++)
@@ -675,38 +670,13 @@ public:
 					{
 						if (item.Type == 1) //inserted
 						{
-							if (!valueInserted)
-							{
-								valueInserted = item.Value;
-							}
-							else
-							{
-								if (!pValuesInserted)
-								{
-									pValuesInserted = valueListPool.newObject();
-									pValuesInserted->addValue(valueInserted);
-								}
-
-								pValuesInserted->addValue(item.Value);
-							}
+							resValueInserted = item.Value;
+							resValueDeleted = 0;
 						}
 						else if(item.Type == 2) //deleted
 						{
-							if (!valueDeleted)
-							{
-								valueDeleted = item.Value;
-							}
-							else
-							{
-								if (!pValuesDeleted)
-								{
-									pValuesDeleted = valueListPool.newObject();
-
-									pValuesDeleted->addValue(valueDeleted);
-								}
-
-								pValuesDeleted->addValue(item.Value);
-							}
+							resValueInserted = 0;
+							resValueDeleted = item.Value;
 						}
 					}
 				}
@@ -730,39 +700,13 @@ public:
 						{
 							if (item.Type == 1) //inserted
 							{
-								if (!valueInserted)
-								{
-									valueInserted = item.Value;
-								}
-								else
-								{
-									if (!pValuesInserted)
-									{
-										pValuesInserted = valueListPool.newObject();
-
-										pValuesInserted->addValue(valueInserted);
-									}
-
-									pValuesInserted->addValue(item.Value);
-								}
+								resValueInserted = item.Value;
+								resValueDeleted = 0;
 							}
-							else if(item.Type == 2) //deleted
+							else if (item.Type == 2) //deleted
 							{
-								if (!valueDeleted)
-								{
-									valueDeleted = item.Value;
-								}
-								else
-								{
-									if (!pValuesDeleted)
-									{
-										pValuesDeleted = valueListPool.newObject();
-
-										pValuesDeleted->addValue(valueDeleted);
-									}
-
-									pValuesDeleted->addValue(item.Value);
-								}
+								resValueInserted = 0;
+								resValueDeleted = item.Value;
 							}
 						}
 					}
@@ -786,50 +730,18 @@ public:
 				}
 			}
 		}
-
-		if (!pValuesInserted)
-		{
-			resValueTypeInserted = VALUE_TYPE;
-
-			resValueInserted = valueInserted;
-		}
-		else
-		{
-			resValueTypeInserted = VALUE_LIST_TYPE;
-
-			resValueInserted = (uint)pValuesInserted;
-		}
-
-		if (!pValuesDeleted)
-		{
-			resValueTypeDeleted = VALUE_TYPE;
-
-			resValueDeleted = valueDeleted;
-		}
-		else
-		{
-			resValueTypeDeleted = VALUE_LIST_TYPE;
-
-			resValueDeleted = (uint)pValuesDeleted;
-		}
 	}
 
-	uint getValueByKey(bool isHA1,
-		uint* key,
-		uint keyLen,
-		uchar& valueType,
-		uchar readModeType = 0,
-		ReadedList* pReadedList = 0)
+	uint getValueByKey1(uint* key,
+						uint keyLen,
+						uchar& valueType)
 	{
 		if (ParentTranID)
 		{
 			//all data in grand parent tran
-			return pGrandParentTran->getValueByKey(isHA1,
-				key,
-				keyLen,
-				valueType,
-				readModeType,
-				pReadedList);
+			return pGrandParentTran->getValueByKey1(key,
+												keyLen,
+												valueType);
 		}
 
 		uchar tranValueTypeInserted;
@@ -841,36 +753,17 @@ public:
 		uchar storeValueType;
 		uint storeValue;
 
-		if (isHA1)
-		{
-			getValueByKey1(key,
-				keyLen,
-				tranValueInserted,
-				tranValueTypeInserted,
-				tranValueDeleted,
-				tranValueTypeDeleted);
+		getValueByKey1(key,
+					keyLen,
+					tranValueInserted,
+					tranValueTypeInserted,
+					tranValueDeleted,
+					tranValueTypeDeleted);
 
-			storeValue = has1[CollID]->getValueByKey(key,
-				keyLen,
-				storeValueType);
-		}
-		else
-		{
-			getValueByKey2(key,
-				keyLen,
-				tranValueInserted,
-				tranValueTypeInserted,
-				tranValueDeleted,
-				tranValueTypeDeleted);
-
-			storeValue = has2[CollID]->getValueByKey(key,
-				keyLen,
-				storeValueType,
-				readModeType,
-				TranID,
-				&readedList);
-		}
-
+		storeValue = has1[CollID]->getValueByKey(key,
+												keyLen,
+												storeValueType);
+		
 		//0. There is no value
 		if (!tranValueInserted && !storeValue)
 		{
@@ -1110,6 +1003,57 @@ public:
 				}
 			}
 		}
+	}
+
+	uint getValueByKey2(uint* key,
+						uint keyLen,
+						uchar& valueType,
+						uchar readModeType = 0,
+						ReadedList* pReadedList = 0)
+	{
+		if (ParentTranID)
+		{
+			//all data in grand parent tran
+			return pGrandParentTran->getValueByKey2(key,
+													keyLen,
+													valueType,
+													readModeType,
+													pReadedList);
+		}
+
+		uint tranValueInserted;
+		uint tranValueDeleted;
+
+		uchar storeValueType;
+		uint storeValue;
+
+		getValueByKey2(key,
+					keyLen,
+					tranValueInserted,
+					tranValueDeleted);
+
+		storeValue = has2[CollID]->getValueByKey(key,
+				keyLen,
+				storeValueType,
+				readModeType,
+				TranID,
+				&readedList);
+		
+
+		//0. inserted in tran
+		if (tranValueInserted)
+		{
+			return tranValueInserted;
+		}
+
+		//1. deleted in tran
+		if (tranValueDeleted)
+		{
+			return tranValueDeleted;
+		}
+
+		//2. there is in store or no
+		return storeValue;
 	}
 
 	bool isModifyCellsOfOtherTrans()
@@ -1582,6 +1526,7 @@ public:
 
 		ParentTranID = 0;
 		pGrandParentTran = 0;
+		HasChilds = false;
 	}
 
 	void destroy()

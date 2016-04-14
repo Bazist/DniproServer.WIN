@@ -375,10 +375,6 @@ bool DniproDB::readTrans(char* filePath,
 					{
 						rollbackTran(tranID);
 					}
-					else
-					{
-						DniproError::Print(0, "DB File corrupted.");
-					}
 				}
 				else //query
 				{
@@ -411,15 +407,20 @@ bool DniproDB::readTrans(char* filePath,
 							_trans[tranID].TranIdentity = tranIdentity;
 							_trans[tranID].ParentTranID = parentTranID;
 
-							if (!_trans[parentTranID].pGrandParentTran)
+							if (parentTranID)
 							{
-								_trans[tranID].pGrandParentTran = &_trans[parentTranID];
-							}
-							else
-							{
-								_trans[tranID].pGrandParentTran = _trans[parentTranID].pGrandParentTran;
-							}
+								if (!_trans[parentTranID].pGrandParentTran)
+								{
+									_trans[tranID].pGrandParentTran = &_trans[parentTranID];
+								}
+								else
+								{
+									_trans[tranID].pGrandParentTran = _trans[parentTranID].pGrandParentTran;
+								}
 
+								_trans[tranID].pGrandParentTran->HasChilds = true;
+							}
+							
 							_trans[tranID].InUse = true;
 						}
 						else
@@ -434,13 +435,18 @@ bool DniproDB::readTrans(char* filePath,
 								_trans[tranID].TranIdentity = tranIdentity;
 								_trans[tranID].ParentTranID = parentTranID;
 
-								if (!_trans[parentTranID].pGrandParentTran)
+								if (parentTranID)
 								{
-									_trans[tranID].pGrandParentTran = &_trans[parentTranID];
-								}
-								else
-								{
-									_trans[tranID].pGrandParentTran = _trans[parentTranID].pGrandParentTran;
+									if (!_trans[parentTranID].pGrandParentTran)
+									{
+										_trans[tranID].pGrandParentTran = &_trans[parentTranID];
+									}
+									else
+									{
+										_trans[tranID].pGrandParentTran = _trans[parentTranID].pGrandParentTran;
+									}
+
+									_trans[tranID].pGrandParentTran->HasChilds = true;
 								}
 
 								_trans[tranID].InUse = true;
@@ -497,7 +503,7 @@ bool DniproDB::readTrans(char* filePath,
 					}
 					default:
 					{
-						DniproError::Print(0, "DB File corrupted.");
+						DniproError::Print(0, "DB File corrupted.\n");
 
 						break;
 					}
@@ -784,17 +790,18 @@ void DniproDB::rollbackTran(uint tranID)
 			}
 
 			//save rollback label
-			char commitLabel[14];
+			char rollbackLabel[10];
 
 			//len
-			*(uint*)&commitLabel[0] = 6;
+			*(uint*)&rollbackLabel[0] = 10;
 
-			commitLabel[4] = '*'; //rollback
-			commitLabel[5] = tran.TranID;				//tran ID
+			rollbackLabel[4] = '*'; //rollback
+			rollbackLabel[5] = tran.TranID;					//tran ID
+			*(uint*)&rollbackLabel[6] = tran.TranIdentity;	//time identity
 
 			EnterCriticalSection(&writeTranLock);
 
-			pTranLogFile->write(commitLabel, 6);
+			pTranLogFile->write(rollbackLabel, 10);
 			pTranLogFile->flush();
 
 			LeaveCriticalSection(&writeTranLock);
@@ -934,7 +941,7 @@ void DniproDB::commitTran(uint tranID)
 
 			EnterCriticalSection(&writeTranLock);
 
-			pTranLogFile->write(commitLabel, 10);
+			pTranLogFile->write(commitLabel, 14);
 			pTranLogFile->flush();
 
 			LeaveCriticalSection(&writeTranLock);
