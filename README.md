@@ -37,7 +37,7 @@ db.GetWhere("{'FirstName':'John'}")
          ("{'FirstName':$}{'Engine':$}{'City':$}");
 ```
 Few clicks by mouse and database is ready for using in your environment 
-(Ready for **Windows** platform and **.NET**, **Java** languages)
+(Ready for **Windows**/**Linux** platform and **.NET**, **Java** languages)
 
 **Learn more** ? Just download our comprehensive [Dnipro In Using](http://booben.com/DniproDB_In_Using_EN.PDF) book.
 
