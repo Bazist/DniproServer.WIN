@@ -39,7 +39,7 @@ db.GetWhere("{'FirstName':'John'}")
 Few clicks by mouse and database is ready for using in your environment 
 (Ready for **Windows**/**Linux** platform and **.NET**, **Java** languages)
 
-**Learn more** ? Just download our comprehensive [Dnipro In Using](http://booben.com/DniproDB_In_Using_EN.PDF) book.
+**Learn more** ? Just download our comprehensive [Dnipro In Use](http://booben.com/DniproDB_In_Use_EN.PDF) book.
 
 ## SO FAST
 
