@@ -657,9 +657,9 @@ public:
 		resValueInserted = 0;
 		resValueDeleted = 0;
 		
-		if (Count2 < 128)
+		if (Count2 <= 128)
 		{
-			for (uint i = 0; i < Count2; i++)
+			for (int i = Count2 - 1; i >= 0; i--)
 			{
 				HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
@@ -678,12 +678,41 @@ public:
 							resValueInserted = 0;
 							resValueDeleted = item.Value;
 						}
+
+						return;
 					}
 				}
 			}
 		}
 		else
 		{
+			//first, scan last block
+			for (int i = (Count2 & 0x7F) - 1; i >= 0; i--)
+			{
+				HArrayTranItem& item = pLastHArrayTranItems2->Items[i];
+
+				if (item.KeyLen == keyLen &&
+					item.CollID == CollID)
+				{
+					if (!memcmp(item.Key, key, item.KeyLen))
+					{
+						if (item.Type == 1) //inserted
+						{
+							resValueInserted = item.Value;
+							resValueDeleted = 0;
+						}
+						else if (item.Type == 2) //deleted
+						{
+							resValueInserted = 0;
+							resValueDeleted = item.Value;
+						}
+
+						return;
+					}
+				}
+			}
+
+			//not last, find
 			HArrayTranItems* pCurrHArrayTranItems = pHArrayTranItems2;
 			uint count = 128;
 
@@ -726,7 +755,7 @@ public:
 				}
 				else
 				{
-					count = Count2 & 0x7F; //last
+					break;
 				}
 			}
 		}

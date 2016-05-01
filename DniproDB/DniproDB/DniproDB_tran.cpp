@@ -7,8 +7,8 @@ std::atomic<uint> DniproDB::amountReaders = 0;
 std::atomic<uint> DniproDB::amountMarkIsReadedTrans = 0;
 std::atomic<uint> DniproDB::amountShapshotTrans = 0;
 
-uint DniproDB::tranLogSize = 0;
-uint DniproDB::blobLogSize = 0;
+ulong DniproDB::tranLogSize = 0;
+ulong DniproDB::blobLogSize = 0;
 
 std::atomic_int HArrayTran::testVal = 0;
 
@@ -26,7 +26,7 @@ WRITE_TRAN_LOG:
 
 	EnterCriticalSection(&writeTranLock);
 
-	uint oldCurrTranLogPos = currTranLogPos;
+	ulong oldCurrTranLogPos = currTranLogPos;
 
 	//packet len
 	uint* pLen = (uint*)&tranLog[currTranLogPos];
@@ -97,7 +97,7 @@ WRITE_TRAN_LOG:
 	//{
 	EnterCriticalSection(&writeTranLock);
 
-	uint newCurrTranLogPos = currTranLogPos;
+	ulong newCurrTranLogPos = currTranLogPos;
 
 	//len
 	uint* pLen = (uint*)&tranLog[currTranLogPos];

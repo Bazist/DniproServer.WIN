@@ -72,8 +72,8 @@ public:
 	uint tranIdentity;
 
 	bool writeTranOnHDD;
-	static uint tranLogSize;
-	static uint blobLogSize;
+	static ulong tranLogSize;
+	static ulong blobLogSize;
 
 	HArrayVarRAM* has1[MAX_CHAR];
 	HArrayVarRAM* has2[MAX_CHAR];
@@ -264,7 +264,8 @@ public:
 					uint collID = 0,
 					bool onlyValue = false,
 					ValueList** pDocIDs = 0,
-					uint* indexes = 0);
+					uint* indexes = 0,
+					uchar* collIDs = 0);
 	
 	uint delPartDoc(char* json,
 					uint rowNumOrDocID,
@@ -345,13 +346,15 @@ public:
 
 	uint getTotalMemory()
 	{
-		//return sizeof(DniproDB) +
-		//	   //attrValuesPool.getTotalMemory() +
-		//	   //valueListPool.getTotalMemory() +
-		//	   ha1.getTotalMemory() +
-		//	   ha2.getTotalMemory();
+		ulong totalCollsMemory = sizeof(DniproDB) + attrValuesPool.getTotalMemory(); // +valueListPool.getTotalMemory();
 
-		return 0;
+		for (uint i = 0; i < countColls; i++)
+		{
+			totalCollsMemory += has1[i]->getTotalMemory();
+			totalCollsMemory += has2[i]->getTotalMemory();
+		}
+
+		return totalCollsMemory;
 	}
 
 	/*void clearState()

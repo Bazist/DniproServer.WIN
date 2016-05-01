@@ -206,7 +206,7 @@ class Server
 								char* json = (pBuffer + i + sizeof(DniproPacket));
 
 								pDQ->TranID = pPacket->TranID;
-								pDQ->CollID = pPacket->CollID;
+								pDQ->DefCollID = pPacket->CollID;
 
 								switch (pPacket->MethodType)
 								{
@@ -362,7 +362,7 @@ class Server
 								{
 									json[pPacket->Tag1] = 0;
 
-									pDQ->join(json, json + pPacket->Tag1 + 1);
+									pDQ->join(json, json + pPacket->Tag1 + 1, pPacket->Tag2);
 
 									break;
 								}
@@ -553,6 +553,8 @@ class Server
 			TerminateThread(hServer, 0);
 
 			CloseHandle(hServer);
+
+			WSACleanup();
 
 			Sleep(1000);
 		}

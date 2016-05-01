@@ -38,11 +38,11 @@ class DniproInterpreter
 {
 public:
 	DniproInterpreter(DniproDB* pDB,
-					  char* jsonResult = 0,
-					  STOP_SERVER_FUNC* stopServer = 0)
+		char* jsonResult = 0,
+		STOP_SERVER_FUNC* stopServer = 0)
 	{
 		this->pDB = pDB;
-		
+
 		this->jsonResult = jsonResult;
 		jsonResultLen = 0;
 
@@ -51,7 +51,7 @@ public:
 		TranID = 0;
 		CollID = 0;
 	}
-	
+
 	STOP_SERVER_FUNC* stopServer;
 
 	DniproDB* pDB;
@@ -67,41 +67,34 @@ public:
 	uint TranID;
 	uint CollID;
 
+	static char CurrPath[512];
+
 	static void restartServer(DniproDB* pDB = 0,
-							  STOP_SERVER_FUNC* stopServer = 0,
-							  char* withParam = 0)
+		STOP_SERVER_FUNC* stopServer = 0,
+		char* withParam = 0)
 	{
-		TCHAR currPath[MAX_PATH];
+		char exePath[512];
 
-		// Will contain exe path
-		HMODULE hModule = GetModuleHandle(NULL);
-		if (hModule != NULL)
+		strcpy(exePath, CurrPath);
+
+		if (withParam)
 		{
-			// When passing NULL to GetModuleHandle, it returns handle of exe itself
-			GetModuleFileName(hModule, currPath, (sizeof(currPath)));
-
-			char exePath[1024];
-			wcstombs(exePath, currPath, wcslen(currPath) + 1);
-
-			if (withParam)
-			{
-				strcat(exePath, withParam);
-			}
-
-			if (stopServer)
-			{
-				(*stopServer)();
-			}
-
-			if (pDB)
-			{
-				pDB->destroy();
-
-				delete pDB;
-			}
-
-			system(exePath);
+			strcat(exePath, withParam);
 		}
+
+		if (stopServer)
+		{
+			(*stopServer)();
+		}
+
+		if (pDB)
+		{
+			pDB->destroy();
+
+			delete pDB;
+		}
+
+		system(exePath);
 
 		exit(0);
 
@@ -170,7 +163,7 @@ public:
 			}
 
 			char currLine[64];
-			
+
 			jsonResultLen += sprintf(currLine, " [Line %d]", CurrLine);
 
 			strcat(jsonResult, currLine);
@@ -479,8 +472,8 @@ public:
 		{
 			DniproQuery* pDQ = new DniproQuery(pDB);
 			pDQ->TranID = TranID;
-			pDQ->CollID = CollID;
-			
+			pDQ->DefCollID = CollID;
+
 			for (uint i = 0; i < methodCount; i++)
 			{
 				Method& method = methods[i];
@@ -775,6 +768,26 @@ public:
 							return false;
 						}
 					}
+					else if (!strcmp(method.MethodName, "GetInfo"))
+					{
+						if (method.ParamCount == 0)
+						{
+							DniproInfo::PrintLine();
+							DniproInfo::Print("Version: %s\n", DNIPRO_VERSION);
+							DniproInfo::Print("Amount documents: %u\n", pDB->lastDocID);
+							DniproInfo::Print("Amount collections: %u\n", pDB->countColls);
+							DniproInfo::Print("Total Memory (bytes): %u\n", pDB->getTotalMemory());
+							DniproInfo::Print("Tran Log size (bytes): %u\n", pDB->tranLogSize);
+							DniproInfo::Print("Tran Blob size (bytes): %u\n", pDB->blobLogSize);
+							DniproInfo::PrintLine();
+						}
+						else
+						{
+							printError("GetAll method has format: GetAll()");
+
+							return false;
+						}
+					}
 					else
 					{
 						printError("%s method is not supported.", method.MethodName);
@@ -841,7 +854,8 @@ public:
 							method.Params[1].Type == 1)
 						{
 							pDQ->join(method.Params[0].Value,
-								method.Params[1].Value);
+									method.Params[1].Value,
+									0);
 						}
 						else
 						{
@@ -867,7 +881,7 @@ public:
 						if (method.ParamCount == 1 &&
 							method.Params[0].Type == 4)
 						{
-							CollID = pDQ->CollID = pDB->getCollID(method.Params[0].Value);
+							CollID = pDQ->DefCollID = pDB->getCollID(method.Params[0].Value);
 
 							printResult("%s collection setted as default", method.Params[0].Value);
 						}
@@ -1152,6 +1166,50 @@ public:
 
 						printResult("Transaction has been rollbacked.");
 					}
+					else if (!strcmp(method.MethodName, "RestoreOnDate"))
+					{
+						if (method.ParamCount == 3 &&
+							method.Params[0].Type == 2 &&
+							method.Params[1].Type == 2 &&
+							method.Params[2].Type == 2)
+						{
+							char param[512];
+							sprintf(param, " -restoreondate %u %u %u %u %u %u",
+								method.Params[0].ValueInt,
+								method.Params[1].ValueInt,
+								method.Params[2].ValueInt,
+								0,
+								0,
+								0);
+
+							restartServer(pDB, stopServer, param);
+						}
+						else if (method.ParamCount == 6 &&
+							method.Params[0].Type == 2 &&
+							method.Params[1].Type == 2 &&
+							method.Params[2].Type == 2 &&
+							method.Params[3].Type == 2 &&
+							method.Params[4].Type == 2 &&
+							method.Params[5].Type == 2)
+						{
+							char param[512];
+							sprintf(param, " -restoreondate %u %u %u %u %u %u",
+								method.Params[0].ValueInt,
+								method.Params[1].ValueInt,
+								method.Params[2].ValueInt,
+								method.Params[3].ValueInt,
+								method.Params[4].ValueInt,
+								method.Params[5].ValueInt);
+
+							restartServer(pDB, stopServer, param);
+						}
+						else
+						{
+							printError("RestoreOnDate method has format: RestoreOnDate(year, month, day) or RestoreOnDate(year, month, day, hour, minute, second)");
+
+							return false;
+						}
+					}
 					else
 					{
 						printError("%s method is not supported.", method.MethodName);
@@ -1198,11 +1256,11 @@ public:
 
 					continue;
 				}
-				
+
 				if (query[i] == '\n')
 				{
 					i++;
-					
+
 					CurrLine++;
 
 					continue;
@@ -1216,7 +1274,7 @@ public:
 			{
 				break;
 			}
-				
+
 			if (!parseQuery(query, i))
 			{
 				return;

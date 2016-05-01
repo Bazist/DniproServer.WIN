@@ -14,6 +14,8 @@
 #include <string.h>
 #include <windows.h>
 
+#define DNIPRO_VERSION "v1.0.4"
+
 #define uint unsigned int
 #define ulong unsigned __int64
 #define ushort unsigned short
@@ -46,3 +48,5 @@ const uint COLL_ALREADY_EXISTS_ERROR = 3;
 const uint COLL_IS_NOT_FOUND_ERROR = 4;
 
 const uint TESTS_COUNT_KEYS = 1000000;
+
+const uint MAX_JOINED_DOCUMENTS = 16;

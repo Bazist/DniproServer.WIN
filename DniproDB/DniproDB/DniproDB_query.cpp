@@ -46,11 +46,16 @@ void DniproDB::procAlias(char* json,
 		{
 			if (pTran->TranType == READ_COMMITED_TRAN)
 			{
-				serPointer = pTran->getValueByKey2((uint*)key, currPos, valueType, 1); //1. Read data with check blocking (ha2)
+				serPointer = has2[pTran->CollID]->getValueByKey((uint*)key, currPos, valueType, 1); //1. Read data with check blocking (ha2)
 			}
 			else //pTran->TranType == REPEATABLE_READ_TRAN || pTran->TranType == SNAPSHOT_TRAN
 			{
-				serPointer = pTran->getValueByKey2((uint*)key, currPos, valueType, 2, &pTran->readedList); //2. Read data and check blocking and block with put to array blocked cell (ha2)
+				serPointer = has2[pTran->CollID]->getValueByKey((uint*)key,
+																currPos,
+																valueType,
+																2,
+																pTran->TranID,
+																&pTran->readedList); //2. Read data and check blocking and block with put to array blocked cell (ha2)
 			}
 		}
 
@@ -62,7 +67,7 @@ void DniproDB::procAlias(char* json,
 
 		if (!serPointer)
 		{
-			if (typeCommand)
+			if (typeCommand) //ins part doc, create array
 			{
 				pValue = (uint*)(pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos);
 
@@ -70,25 +75,36 @@ void DniproDB::procAlias(char* json,
 
 				*pValue = 0;
 
-				//if (pTran)
-				//{
-				
 				pTran->insertOrDelete2((uint*)key,
 									   currPos,
 									   attrValuesPool.toSerPointer(pTran->pAttrValuesPage, (char*)pValue),
-									   2,
+									   1,
 									   pTran->TranID);
-				
-				//}
-				/*else
-				{
-					ha2.insert((uint*)key, currPos, attrValuesPool.toSerPointer((char*)pValue));
-				}*/
 			}
 		}
 		else
 		{
-			pValue = (uint*)attrValuesPool.fromSerPointer(serPointer);
+			if (typeCommand) //ins part doc, amount of array items will be modified
+			{
+				//need clone Arr.Count value, to create new version of value
+				pValue = (uint*)(pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos);
+
+				pTran->pAttrValuesPage->CurrPos += 4;
+
+				//clone
+				*pValue = *(uint*)attrValuesPool.fromSerPointer(serPointer);
+
+				pTran->insertOrDelete2((uint*)key,
+										currPos,
+										attrValuesPool.toSerPointer(pTran->pAttrValuesPage, (char*)pValue),
+										1,
+										pTran->TranID);
+
+			}
+			else //get part doc
+			{
+				pValue = (uint*)attrValuesPool.fromSerPointer(serPointer);
+			}
 		}
 
 		arrayMaxPos[level] = pValue;
@@ -851,7 +867,8 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 						  uint collID,
 						  bool onlyValue,
 						  ValueList** pDocIDs,
-						  uint* indexes)
+						  uint* indexes,
+						  uchar* collIDs)
 {
 	bool hasBeginTran;
 
@@ -986,10 +1003,12 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 			{
 				if (!pDocIDs)
 				{
+					pTran->CollID = collID;
 					docID = rowNumOrDocID;
 				}
 				else
 				{
+					pTran->CollID = collIDs[tableIndex];
 					docID = pDocIDs[tableIndex++]->pValues[rowNumOrDocID]; //row number
 				}
 			}
@@ -1257,7 +1276,11 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 	{
 		pTran->clear();
 	}
-
+	else
+	{
+		pTran->CollID = collID; //restore default
+	}
+	
 	return j; //size of document
 }
 
@@ -1855,7 +1878,10 @@ uint DniproDB::updPartDoc(char* json,
 				//attrVal = attrValuesPool.fromSerPointer(pTran->getValueByKey(false, (uint*)key, currPos, valueType));
 				//delAttrVal = attrValuesPool.fromSerPointer(has2[pTran->CollID]->getValueByKey((uint*)key, currPos, valueType, 0, pTran->TranID));
 
-				delAttrVal = attrValuesPool.fromSerPointer(pTran->getValueByKey2((uint*)key, currPos, valueType, 0));
+				//delAttrVal = attrValuesPool.fromSerPointer(pTran->getValueByKey2((uint*)key, currPos, valueType, 0));
+
+				//optimization for SELFTEST
+				delAttrVal = attrValuesPool.fromSerPointer(has2[pTran->CollID]->getValueByKey((uint*)key, currPos, valueType, 0, pTran->TranID));
 
 				//}
 				//else

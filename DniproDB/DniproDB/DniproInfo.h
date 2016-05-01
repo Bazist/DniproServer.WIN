@@ -3,17 +3,31 @@
 struct DniproInfo
 {
 public:
-	static void Print(char* message, uint param = 0)
+	static void Print(const char* message, uint param = 0)
 	{
 		system("Color 0E");
 
 		if (!param)
 		{
-			printf(message, param);
+			printf(message);
 		}
 		else
 		{
+			printf(message, param);
+		}
+	}
+
+	static void Print(const char* message, char* param)
+	{
+		system("Color 0E");
+
+		if (!param)
+		{
 			printf(message);
+		}
+		else
+		{
+			printf(message, param);
 		}
 	}
 

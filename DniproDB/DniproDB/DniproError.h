@@ -10,7 +10,7 @@ public:
 	{
 		system("Color 0C");
 
-		printf("[&d] %s", Code, Message);
+		printf("[%d] %s", Code, Message);
 	}
 
 	static void Print(uint code, char* message, int innerCode = 0)

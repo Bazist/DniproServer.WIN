@@ -579,7 +579,11 @@ public:
 			delete[] pValueLists[i];
 		}
 
-		delete[] pValueLists;
+		if (pValueLists)
+		{
+			delete[] pValueLists;
+			pValueLists = 0;
+		}
 
 		Count = 0;
 		Size = 0;

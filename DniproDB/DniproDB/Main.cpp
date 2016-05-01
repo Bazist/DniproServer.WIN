@@ -15,6 +15,7 @@
 #include "Server.h"
 #include "Storage.h"
 #include "Test.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -1052,8 +1053,143 @@ void testCascadeTran()
 	db->getPartDoc("{'attr1':$, 'attr2':$, 'attr3':$}", jsonResult, docID, 0);
 }
 
+void quickSort2(char** strs, size_t* arr, int start, int end, bool isAsc)
+{
+	//[111 | 222]
+
+	char* tempStr;
+	char* middle = strs[(end - start) >> 1];
+
+	while (start < end)
+	{
+		if (strcmp(strs[start], middle) < 0)
+		{
+			tempStr = strs[start];
+			strs[start] = strs[end];
+			strs[end] = tempStr;
+		}
+
+		start++;
+		end--;
+	}
+}
+
+void quickSort(const char** strs, size_t* arr, uint count, bool isAsc)
+{
+	int i = 0, j = count - 1;	// поставить указатели на исходные места
+
+	size_t tempID;
+	char* tempStr;
+	const char* p = strs[arr[count >> 1]];	// центральный элемент
+								// процедура разделения
+	do
+	{
+		if (isAsc)
+		{
+			while (i < count && strcmp(strs[arr[i]], p) < 0)
+			{
+				i++;
+			}
+
+			while (j > 0 && strcmp(strs[arr[j]], p) > 0)
+			{
+				j--;
+			}
+		}
+		else
+		{
+			while (i < count && strcmp(strs[arr[i]], p) > 0)
+			{
+				i++;
+			}
+
+			while (j > 0 && strcmp(strs[arr[j]], p) < 0)
+			{
+				j--;
+			}
+		}
+
+		if (i <= j)
+		{
+			/*tempStr = strs[i];
+			strs[i] = strs[j];
+			strs[j] = tempStr;*/
+
+			tempID = arr[i];
+			arr[i] = arr[j];
+			arr[j] = tempID;
+
+			i++;
+			j--;
+		}
+	} while (i <= j);
+
+
+	// рекурсивные вызовы, если есть, что сортировать 
+	if (j > 0)
+	{
+		quickSort(strs, arr, j, isAsc);
+	}
+
+	if (count > i)
+	{
+		quickSort(strs, arr + i, count - i, isAsc);
+	}
+}
+
+void benchsort()
+{
+	clock_t start, finish;
+
+	const char *arr[] = { "a", "b", "c", "d", "e", "f", "g", "h" };
+
+	size_t idx[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+
+	int cnt = 0;
+
+	start = clock();
+
+	for (uint i = 0; i < 10000000; i++)
+	{
+
+		quickSort(arr, idx, 8, true);
+
+		quickSort(arr, idx, 8, false);
+
+		/*
+		//asc
+		std::sort(std::begin(idx), std::end(idx), [&arr](size_t idx1, size_t idx2)
+		{return strcmp(arr[idx1], arr[idx2]) < 0; });
+
+		//desc
+		std::sort(std::begin(idx), std::end(idx), [&arr](size_t idx1, size_t idx2)
+		{return strcmp(arr[idx1], arr[idx2]) > 0; });
+		*/
+	}
+
+	for (size_t i : idx)
+		std::cout << i << std::endl;
+
+	finish = clock();
+
+	printf("%d, %u ms", cnt, finish - start);
+
+	return;
+}
+
 int main(int argc, char** argv)
 {
+	/*DniproDB* db = new DniproDB();
+	db->init();
+
+	uint id = db->addDoc("{'Arr':[1,2]}");
+
+	db->insPartDoc("{'Arr':[Add,3]}", id);
+
+	return 0;*/
+
+	strcpy(DniproInterpreter::CurrPath, argv[0]);
+
 	//=====================================================
 
 	system("cls");
@@ -1062,7 +1198,9 @@ int main(int argc, char** argv)
 	{
 		//http://www.computerhope.com/color.htm
 		DniproInfo::PrintLine();
-		DniproInfo::Print("= DniproDB v1.0.4 [SELFTEST] (c)Booben.Com =\n");
+		DniproInfo::Print("= DniproDB ");
+		DniproInfo::Print(DNIPRO_VERSION);
+		DniproInfo::Print(" [SELFTEST] (c)Booben.Com =\n");
 		DniproInfo::PrintLine();
 
 		DniproDB* pDB = new DniproDB();
@@ -1127,7 +1265,10 @@ int main(int argc, char** argv)
 
 	//http://www.computerhope.com/color.htm
 	DniproInfo::PrintLine();
-	DniproInfo::Print("=      DniproDB v1.0.4 (c)Booben.Com      =\n");
+	DniproInfo::Print("=      DniproDB ");
+	DniproInfo::Print(DNIPRO_VERSION);
+	DniproInfo::Print(" (c)Booben.Com      =\n");
+
 	DniproInfo::PrintLine();
 
 	//create db

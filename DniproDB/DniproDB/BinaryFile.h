@@ -1,6 +1,8 @@
 #pragma once
 
-#include "stdafx.h"
+#ifndef _BINARY_FILE		// Allow use of features specific to Windows XP or later.                   
+#define _BINARY_FILE 0x0503	// Change this to the appropriate value to target other versions of Windows.
+#endif	
 
 class BinaryFile
 {

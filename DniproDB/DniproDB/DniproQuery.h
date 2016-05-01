@@ -15,8 +15,8 @@ public:
 		this->pDB = pDB;
 		CountValueList = 0;
 
-		CollID = 0;
-
+		DefCollID = 0;
+		
 		TranID = 0;
 
 		//memset(pValueList, 0, sizeof(uint) * 16);
@@ -25,10 +25,11 @@ public:
 
 	DniproDB* pDB;
 	
-	ValueList* pValueList[16];
-	ValueList* pIndexes[16];
+	ValueList* pValueList[MAX_JOINED_DOCUMENTS];
+	ValueList* pIndexes[MAX_JOINED_DOCUMENTS];
+	uchar CollIDs[MAX_JOINED_DOCUMENTS];
 
-	uint CollID;
+	uint DefCollID;
 	uint TranID;
 
 	bool hasBeginTran;
@@ -97,7 +98,7 @@ public:
 								jsonResult,
 								i,
 								TranID,
-								CollID,
+								CollIDs[index],
 								true,
 								pValueList);
 
@@ -170,10 +171,11 @@ public:
 			hasBeginTran = true;
 		}
 
+		this->CollIDs[0] = DefCollID;
 		this->pValueList[0] = pDB->getDocsByAttr(query,
 												 0,
 												 TranID,
-												 CollID);
+												 DefCollID);
 		this->pIndexes[0] = 0;
 		
 		this->CountValueList = 1;
@@ -195,10 +197,11 @@ public:
 			hasBeginTran = true;
 		}
 
+		this->CollIDs[0] = DefCollID;
 		this->pValueList[0] = pDB->getDocsByAttr(query,
 												 docID,
 												 TranID,
-												 CollID,
+												 DefCollID,
 												 &this->pIndexes[0]);
 		
 		this->CountValueList = 1;
@@ -216,21 +219,19 @@ public:
 			hasBeginTran = true;
 		}
 
-		uint index = 0;
-
-		if (pValueList[index])
+		if (pValueList[0])
 		{
-			ValueList* pAndValueList = pDB->getDocsByAttr(query, 0, TranID, CollID);
+			ValueList* pAndValueList = pDB->getDocsByAttr(query, 0, TranID, CollIDs[0]);
 
-			for (uint i = 0; i < pValueList[index]->Count; i++)
+			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
-				if (pValueList[index]->pValues[i])
+				if (pValueList[0]->pValues[i])
 				{
 					bool bFind = false;
 
 					for (uint j = 0; j < pAndValueList->Count; j++)
 					{
-						if (pAndValueList->pValues[j] == pValueList[index]->pValues[i])
+						if (pAndValueList->pValues[j] == pValueList[0]->pValues[i])
 						{
 							bFind = true;
 							break;
@@ -261,7 +262,6 @@ public:
 		return andWhereElems(query, 0);
 	}
 
-	//???
 	DniproQuery* andWhereElems(char* query, uint docID)
 	{
 		if (!TranID)
@@ -271,27 +271,26 @@ public:
 			hasBeginTran = true;
 		}
 
-		uint index = 0;
-
-		if (pValueList[index])
+		if (pValueList[0])
 		{
 			ValueList* pAndIndexes;
 			ValueList* pAndValueList = pDB->getDocsByAttr(query,
 														  docID,
 														  TranID,
-														  CollID, &pAndIndexes);
+														  CollIDs[0],
+														  &pAndIndexes);
 
-			for (uint i = 0; i < pValueList[index]->Count; i++)
+			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
-				if (pValueList[index]->pValues[i])
+				if (pValueList[0]->pValues[i])
 				{
 					bool bFind = false;
 
 					for (uint j = 0; j < pAndValueList->Count; j++)
 					{
-						if (pAndValueList->pValues[j] == pValueList[index]->pValues[i] &&
-							(!pIndexes[index] ||
-								isIndexesEquals((uint*)pAndIndexes->pValues[j], (uint*)pIndexes[index]->pValues[i])))
+						if (pAndValueList->pValues[j] == pValueList[0]->pValues[i] &&
+							(!pIndexes[0] ||
+								isIndexesEquals((uint*)pAndIndexes->pValues[j], (uint*)pIndexes[0]->pValues[i])))
 						{
 							bFind = true;
 							break;
@@ -313,7 +312,6 @@ public:
 		return this;
 	}
 
-	//???
 	DniproQuery* orWhere(char* query)
 	{
 		if (!TranID)
@@ -325,7 +323,7 @@ public:
 
 		if (CountValueList && pValueList[0])
 		{
-			ValueList* pOrValueList = pDB->getDocsByAttr(query, 0, TranID, CollID);
+			ValueList* pOrValueList = pDB->getDocsByAttr(query, 0, TranID, CollIDs[0]);
 
 			uint count = pValueList[0]->Count;
 
@@ -365,7 +363,6 @@ public:
 		return orWhereElems(query, 0);
 	}
 
-	//???
 	DniproQuery* orWhereElems(char* query, uint docID)
 	{
 		if (!TranID)
@@ -381,7 +378,7 @@ public:
 			ValueList* pOrValueList = pDB->getDocsByAttr(query,
 														 docID,
 														 TranID,
-														 CollID,
+														 CollIDs[0],
 														 &pOrIndexes);
 
 			uint count = pValueList[0]->Count;
@@ -422,7 +419,8 @@ public:
 	}
 
 	DniproQuery* join(char* query1,
-					  char* query2)
+					  char* query2,
+					  uchar rightCollID = 0)
 	{
 		if (!TranID)
 		{
@@ -434,15 +432,18 @@ public:
 		char outValue[256];
 		char queryTemp[1024];
 
+		uchar leftCollID = CollIDs[CountValueList - 1];
 		ValueList* pLeftValueList = pValueList[CountValueList - 1];
+		
 		//ValueList* pLeftIndexes = pIndexes[CountValueList - 1];
 
 		ValueList* pRightValueList = pDB->_trans[TranID].valueListPool.newObject();
 
 		pRightValueList->Count = pLeftValueList->Count;
 
+		CollIDs[CountValueList] = rightCollID;
 		pValueList[CountValueList++] = pRightValueList;
-
+		
 		for(uint i=0; i <pLeftValueList->Count; i++)
 		{
 			if(pLeftValueList->pValues[i])
@@ -452,7 +453,7 @@ public:
 								outValue,
 								pLeftValueList->pValues[i],
 								TranID,
-								CollID,
+								leftCollID,
 								true);
 
 				//create query
@@ -490,7 +491,7 @@ public:
 				ValueList* pTempValueList = pDB->getDocsByAttr(queryTemp,
 															   0,
 															   TranID,
-															   CollID);
+															   rightCollID);
 			
 				if(pTempValueList->Count == 1) //one to one
 				{
@@ -592,9 +593,11 @@ public:
 											  jsonResult + fullLen,
 											  i,
 											  TranID,
-											  CollID,
+											  DefCollID,
 											  onlyValue,
-											  pValueList);
+											  pValueList,
+											  0,
+											  CollIDs);
 					}
 					else
 					{
@@ -602,10 +605,11 @@ public:
 											  jsonResult + fullLen,
 											  i,
 											  TranID,
-											  CollID,
+											  DefCollID,
 											  onlyValue,
 											  pValueList,
-											  (uint*)pIndexes[index]->pValues[i]);
+											  (uint*)pIndexes[index]->pValues[i],
+											  CollIDs);
 					}
 
 					*pLen = len;
@@ -660,7 +664,7 @@ public:
 							jsonResult + fullLen,
 							i,
 							TranID,
-							CollID,
+							DefCollID,
 							onlyValue,
 							pValueList);
 					}
@@ -670,7 +674,7 @@ public:
 							jsonResult + fullLen,
 							i,
 							TranID,
-							CollID,
+							DefCollID,
 							onlyValue,
 							pValueList,
 							(uint*)pIndexes[index]->pValues[i]);
@@ -702,21 +706,19 @@ public:
 			hasBeginTran = true;
 		}
 
-		uint index = 0;
-
 		char jsonResult[246];
 
-		for(uint i=0; i<pValueList[index]->Count; i++)
+		for(uint i=0; i<pValueList[0]->Count; i++)
 		{
-			if(pValueList[index]->pValues[i])
+			if(pValueList[0]->pValues[i])
 			{
-				if(!pIndexes[index])
+				if(!pIndexes[0])
 				{
 					pDB->getPartDoc(query,
 									jsonResult,
 									i,
 									TranID,
-									CollID,
+									CollIDs[0],
 									false,
 									pValueList);
 				}
@@ -726,10 +728,10 @@ public:
 									jsonResult,
 									i,
 									TranID,
-									CollID,
+									CollIDs[0],
 									false,
 									pValueList,
-									(uint*)pIndexes[index]->pValues[i]);
+									(uint*)pIndexes[0]->pValues[i]);
 				}
 
 				printf("%s\n", jsonResult);
@@ -897,7 +899,7 @@ public:
 									strs[i],
 									i,
 									TranID,
-									CollID,
+									DefCollID,
 									true,
 									pValueList);
 				}
@@ -907,7 +909,7 @@ public:
 									strs[i],
 									i,
 									TranID,
-									CollID,
+									DefCollID,
 									true,
 									pValueList,
 									(uint*)pIndexes[0]->pValues[i]);
@@ -921,7 +923,7 @@ public:
 
 		//2. Sort all doc values
 		quickSort(strs, pValueList[0]->Count, isAsc);
-
+		
 		delete[] strs;
 		delete[] vals;
 
@@ -943,12 +945,12 @@ public:
 		{
 			if (isAsc)
 			{
-				while (strcmp(strs[i], p) < 0)
+				while (i < count && strcmp(strs[i], p) < 0)
 				{
 					i++;
 				}
 
-				while (strcmp(strs[j], p) > 0)
+				while (j > 0 && strcmp(strs[j], p) > 0)
 				{
 					j--;
 				}
@@ -982,8 +984,7 @@ public:
 			}
 		}
 		while (i <= j);
-
-
+		
 		// рекурсивные вызовы, если есть, что сортировать 
 		if (j > 0)
 		{
@@ -1016,20 +1017,18 @@ public:
 		}
 
 		//method
-		uint index = 0;
-
-		if (pValueList[index])
+		if (pValueList[0])
 		{
-			for (uint i = 0; i < pValueList[index]->Count; i++)
+			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
-				if (pValueList[index]->pValues[i])
+				if (pValueList[0]->pValues[i])
 				{
-					if (!pIndexes[index])
+					if (!pIndexes[0])
 					{
 						pDB->delPartDoc(query,
 										i,
 										TranID,
-										CollID,
+										CollIDs[0],
 										pValueList);
 					}
 					else
@@ -1037,9 +1036,9 @@ public:
 						pDB->delPartDoc(query,
 										i,
 										TranID,
-										CollID,
+										CollIDs[0],
 										pValueList,
-										(uint*)pIndexes[index]->pValues[i]);
+										(uint*)pIndexes[0]->pValues[i]);
 					}
 				}
 			}
@@ -1074,20 +1073,18 @@ public:
 		}
 
 		//method
-		uint index = 0;
-
-		if(pValueList[index])
+		if(pValueList[0])
 		{
-			for (uint i = 0; i < pValueList[index]->Count; i++)
+			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
-				if (pValueList[index]->pValues[i])
+				if (pValueList[0]->pValues[i])
 				{
-					if (!pIndexes[index])
+					if (!pIndexes[0])
 					{
 						pDB->updPartDoc(query,
 										i,
 										TranID,
-										CollID,
+										CollIDs[0],
 										pValueList);
 					}
 					else
@@ -1095,9 +1092,9 @@ public:
 						pDB->updPartDoc(query,
 										i,
 										TranID,
-										CollID,
+										CollIDs[0],
 										pValueList,
-										(uint*)pIndexes[index]->pValues[i]);
+										(uint*)pIndexes[0]->pValues[i]);
 					}
 				}
 			}
@@ -1134,20 +1131,18 @@ public:
 		}
 
 		//method
-		uint index = 0;
-
-		if (pValueList[index])
+		if (pValueList[0])
 		{
-			for (uint i = 0; i < pValueList[index]->Count; i++)
+			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
-				if (pValueList[index]->pValues[i])
+				if (pValueList[0]->pValues[i])
 				{
-					if (!pIndexes[index])
+					if (!pIndexes[0])
 					{
 						pDB->insPartDoc(query,
 										i,
 										TranID,
-										CollID,
+										CollIDs[0],
 										pValueList,
 										0);
 					}
@@ -1156,9 +1151,9 @@ public:
 						pDB->insPartDoc(query,
 										i,
 										TranID,
-										CollID,
+										CollIDs[0],
 										pValueList,
-										(uint*)pIndexes[index]->pValues[i]);
+										(uint*)pIndexes[0]->pValues[i]);
 					}
 				}
 			}
