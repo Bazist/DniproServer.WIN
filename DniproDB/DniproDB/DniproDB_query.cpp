@@ -137,12 +137,12 @@ void DniproDB::procAlias(char* json,
 
 		i += 5;
 	}
-	else if (nc == 'C') //Count
-	{
-		arrayPos[level] = 0;
+	//else if (nc == 'C') //Count //Supported only through GetAttrValue
+	//{
+	//	arrayPos[level] = 0;
 
-		i += 6;
-	}
+	//	i += 6;
+	//}
 	else if (nc == 'I') //In
 	{
 		typeCommand = 1;
@@ -168,10 +168,7 @@ void DniproDB::procAlias(char* json,
 
 		i += 2;
 
-		if (arrayMaxPos[level]) //possible only if there is array
-		{
-			repeatPos[level] = i;
-		}
+		repeatPos[level] = i;
 	}
 	else if (nc == 'P') //Portion
 	{
@@ -278,15 +275,15 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 	pTran->LastJson = json;
 
 	uint level = 0;
-	uint depthPos[10];
+	uint depthPos[MAX_DOC_DEPTH];
 	depthPos[0] = 0;
 
-	uint arrayPos[10];
+	uint arrayPos[MAX_DOC_DEPTH];
 	arrayPos[0] = 0;
 
 	uint arrayLevel = 0;
 
-	uint* arrayMaxPos[10];
+	uint* arrayMaxPos[MAX_DOC_DEPTH];
 
 	uint currPos = 0;
 
@@ -893,22 +890,20 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 
 	uint level = 0;
 
-	uint depthPos[10];
+	uint depthPos[MAX_DOC_DEPTH];
 	depthPos[0] = 0;
 
-	uint repeatPos[10];
+	uint repeatPos[MAX_DOC_DEPTH];
 	repeatPos[0] = 0;
 
-	uint arrayPos[10];
+	uint arrayPos[MAX_DOC_DEPTH];
 	arrayPos[0] = 0;
 
-	uint* arrayMaxPos[10];
+	uint* arrayMaxPos[MAX_DOC_DEPTH];
 
 	uint currPos = 0;
 
 	uint extractFromLevel = 0;
-
-	bool hasValue = false;
 
 	uchar typeCommand = 0;
 
@@ -940,7 +935,7 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 						pTran);
 
 			//if no elements in array, then skip all inside and write null
-			if (!arrayMaxPos[level])
+			if (!(*arrayMaxPos[level]))
 			{
 				if (jsonTemplate[i] != '[') //skip
 				{
@@ -959,10 +954,8 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 							break;
 					}
 
-					jsonResult[j++] = 'n';
-					jsonResult[j++] = 'u';
-					jsonResult[j++] = 'l';
-					jsonResult[j++] = 'l';
+					jsonResult[j++] = '[';
+					jsonResult[j++] = ']';
 
 					level--;
 
@@ -1056,8 +1049,6 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 
 			i++;
 
-			hasValue = true;
-
 			continue;
 		}
 		case '0':case'1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
@@ -1071,8 +1062,6 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 					jsonResult[j++] = jsonTemplate[i];
 				}
 			}
-
-			hasValue = true;
 
 			continue;
 		}
@@ -1091,8 +1080,6 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 					jsonResult[j++] = jsonTemplate[i];
 				}
 			}
-
-			hasValue = true;
 
 			continue;
 		}
@@ -1188,8 +1175,6 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 				jsonResult[j++] = '"';
 			}
 
-			hasValue = true;
-
 			i++;
 
 			if (onlyValue)
@@ -1212,8 +1197,6 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 		case '}':
 		case ',':
 		{
-			hasValue = false;
-
 			currPos = depthPos[level];
 
 			if (c == ',')
@@ -1361,13 +1344,13 @@ uint DniproDB::insPartDoc(char* json,
 
 	uint level = 0;
 
-	uint depthPos[10];
+	uint depthPos[MAX_DOC_DEPTH];
 	depthPos[0] = 0;
 
-	uint arrayPos[10];
+	uint arrayPos[MAX_DOC_DEPTH];
 	arrayPos[0] = 0;
 
-	uint* arrayMaxPos[10];
+	uint* arrayMaxPos[MAX_DOC_DEPTH];
 
 	uint currPos = 0;
 
@@ -1392,17 +1375,17 @@ uint DniproDB::insPartDoc(char* json,
 		{
 			depthPos[++level] = currPos;
 			procAlias(json,
-					key,
-					currPos,
-					arrayPos,
-					arrayMaxPos,
-					0,
-					level,
-					i,
-					docID,
-					typeCommand,
-					indexes,
-					pTran);
+						key,
+						currPos,
+						arrayPos,
+						arrayMaxPos,
+						0,
+						level,
+						i,
+						docID,
+						typeCommand,
+						indexes,
+						pTran);
 
 			attrCurrPos = currPos;
 			
@@ -1506,6 +1489,8 @@ uint DniproDB::insPartDoc(char* json,
 			 
 			pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
 
+			hasValue = false;
+
 			break;
 		}
 		case '}':
@@ -1588,14 +1573,21 @@ uint DniproDB::insPartDoc(char* json,
 				pTran->pAttrValuesPage = attrValuesPool.checkPage(pTran->pAttrValuesPage);
 
 				attrCurrPos = 0;
-
-				hasValue = false;
 			}
 
 			//update level
 			switch (c)
 			{
 			case ']':
+			{
+				if (attrCurrPos != currPos) //is not empty array
+				{
+					if (arrayPos[level] > *arrayMaxPos[level])
+					{
+						*arrayMaxPos[level] = arrayPos[level];
+					}
+				}
+			}
 			case '}':
 			{
 				currPos = depthPos[--level];
@@ -1628,6 +1620,8 @@ uint DniproDB::insPartDoc(char* json,
 			default:
 				break;
 			}
+
+			hasValue = false;
 
 			break;
 		}
@@ -1717,10 +1711,10 @@ uint DniproDB::updPartDoc(char* json,
 	uint tableIndex = 0;
 
 	uint level = 0;
-	uint depthPos[10];
+	uint depthPos[MAX_DOC_DEPTH];
 	depthPos[0] = 0;
 
-	uint arrayPos[10];
+	uint arrayPos[MAX_DOC_DEPTH];
 	arrayPos[0] = 0;
 
 	uint currPos = 0;

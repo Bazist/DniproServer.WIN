@@ -276,6 +276,8 @@ bool DniproDB::readTrans(char* filePath,
 
 	if (pFile->open())
 	{
+		bool oldWriteTranOnHDD = writeTranOnHDD;
+
 		writeTranOnHDD = false;
 
 		DniproInfo::Print("Read log ...\n");
@@ -568,7 +570,7 @@ bool DniproDB::readTrans(char* filePath,
 
 		DniproInfo::Print("Log readed.\n");
 
-		writeTranOnHDD = true;
+		writeTranOnHDD = oldWriteTranOnHDD;
 
 		return true;
 	}

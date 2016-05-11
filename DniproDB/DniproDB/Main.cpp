@@ -15,7 +15,6 @@
 #include "Server.h"
 #include "Storage.h"
 #include "Test.h"
-#include <algorithm>
 
 using namespace std;
 
@@ -1182,9 +1181,18 @@ int main(int argc, char** argv)
 	/*DniproDB* db = new DniproDB();
 	db->init();
 
-	uint id = db->addDoc("{'Arr':[1,2]}");
+	db->addDoc("{'Arr':[]}");
+	db->addDoc("{'Arr':[{'a':1}]}");
+	db->addDoc("{'Arr':[{'a':1},{'a':1}]}");
+	db->addDoc("{'Arr':[1]}");
+	db->addDoc("{'Arr':[1,2]}");
 
-	db->insPartDoc("{'Arr':[Add,3]}", id);
+	char buff[256];
+	db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 1);
+	db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 2);
+	db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 3);
+	db->getPartDoc("{'Arr':[R,$]}", buff, 4);
+	db->getPartDoc("{'Arr':[R,$]}", buff, 5);
 
 	return 0;*/
 

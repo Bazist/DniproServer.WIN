@@ -180,6 +180,13 @@ public:
 		
 		this->CountValueList = 1;
 
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
+		}
+
 		return this;
 	}
 
@@ -205,6 +212,13 @@ public:
 												 &this->pIndexes[0]);
 		
 		this->CountValueList = 1;
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
+		}
 
 		return this;
 	}
@@ -252,6 +266,13 @@ public:
 					}
 				}
 			}
+		}
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
 		}
 
 		return this;
@@ -309,6 +330,13 @@ public:
 			}
 		}
 
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
+		}
+
 		return this;
 	}
 
@@ -353,6 +381,13 @@ public:
 					}
 				}
 			}
+		}
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
 		}
 
 		return this;
@@ -413,6 +448,13 @@ public:
 					}
 				}
 			}
+		}
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
 		}
 
 		return this;
@@ -525,6 +567,13 @@ public:
 			}
 		}
 
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
+		}
+
 		return this;
 	}
 
@@ -537,7 +586,9 @@ public:
 			hasBeginTran = true;
 		}
 
-		pValueList[0] = pDB->_trans[TranID].valueListPool.newObject();
+		this->CollIDs[0] = DefCollID;
+		this->pValueList[0] = pDB->_trans[TranID].valueListPool.newObject();
+
 		this->CountValueList = 1;
 
 		pIndexes[0] = 0;
@@ -545,6 +596,13 @@ public:
 		for(uint i=1; i <= pDB->lastDocID; i++)
 		{
 			pValueList[0]->addValue(i, false);
+		}
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
 		}
 
 		return this;
@@ -840,6 +898,13 @@ public:
 			}
 		}
 
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
+		}
+
 		return this;
 	}
 
@@ -866,6 +931,13 @@ public:
 					}
 				}
 			}
+		}
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
 		}
 
 		return this;
@@ -901,7 +973,9 @@ public:
 									TranID,
 									DefCollID,
 									true,
-									pValueList);
+									pValueList,
+									0,
+									CollIDs);
 				}
 				else
 				{
@@ -912,7 +986,8 @@ public:
 									DefCollID,
 									true,
 									pValueList,
-									(uint*)pIndexes[0]->pValues[i]);
+									(uint*)pIndexes[0]->pValues[i],
+									CollIDs);
 				}
 			}
 			else
@@ -926,6 +1001,13 @@ public:
 		
 		delete[] strs;
 		delete[] vals;
+
+		if (hasBeginTran)
+		{
+			pDB->clearTran(TranID);
+
+			TranID = 0;
+		}
 
 		return this;
 	}

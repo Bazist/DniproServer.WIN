@@ -284,5 +284,43 @@ public:
 		total();
 	}
 
+	void testArrays()
+	{
+		/*
+		//test 1
+		uint id;
+
+		id = db->addDoc("{'Arr':[1]}");
+
+		char buff[128];
+		db->getPartDoc("{'Arr':[Count,$]}", buff, id);
+
+		//test 2
+		id = db->addDoc("{'Arr':[]}");
+
+		char buff[128];
+		db->getPartDoc("{'Arr':[Count,$]}", buff, id);
+
+		//test 3
+		id = db->addDoc("{'Arr':[1,2]}");
+
+		char buff[128];
+		db->getPartDoc("{'Arr':[Count,$]}", buff, id);
+
+		//test 4
+		id = db->addDoc("{'Arr':[{'a':1}]}");
+
+		char buff[128];
+		db->getPartDoc("{'Arr':[Count,$]}", buff, id);
+
+		//test 5
+		id = db->addDoc("{'Arr':[{'a':1},{'b':1}]}");
+
+		char buff[128];
+		db->getPartDoc("{'Arr':[Count,$]}", buff, id);
+		*/
+
+		return;
+	}
 	
 };

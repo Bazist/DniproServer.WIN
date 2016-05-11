@@ -50,3 +50,5 @@ const uint COLL_IS_NOT_FOUND_ERROR = 4;
 const uint TESTS_COUNT_KEYS = 1000000;
 
 const uint MAX_JOINED_DOCUMENTS = 16;
+
+const uint MAX_DOC_DEPTH = 32;

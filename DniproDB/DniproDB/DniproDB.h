@@ -155,7 +155,7 @@ public:
 				strcpy(dbBlobLogFileName, "dbBlobLog.dp");
 			}
 
-			writeTranOnHDD = true;
+			writeTranOnHDD = false;
 
 			//read trans from HDD
 			readTrans(dbTranLogFileName, onDate);
