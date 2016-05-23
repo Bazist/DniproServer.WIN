@@ -935,7 +935,7 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 						pTran);
 
 			//if no elements in array, then skip all inside and write null
-			if (!(*arrayMaxPos[level]))
+			if (!arrayMaxPos[level] || !(*arrayMaxPos[level]))
 			{
 				if (jsonTemplate[i] != '[') //skip
 				{
@@ -1295,7 +1295,7 @@ uint DniproDB::insPartDoc(char* json,
 						  uint tranID,
 						  uint collID,
 						  ValueList** pDocIDs,
-						  uint* indexes)
+						  ValueList** pIndexes)
 {
 	//begin tran
 	HArrayTran* pTran;
@@ -1341,6 +1341,7 @@ uint DniproDB::insPartDoc(char* json,
 	//method
 	uint docID = 0;
 	uint tableIndex = 0;
+	uint* indexes = 0;
 
 	uint level = 0;
 
@@ -1404,10 +1405,23 @@ uint DniproDB::insPartDoc(char* json,
 				if (!pDocIDs)
 				{
 					docID = rowNumOrDocID;
+					indexes = 0;
+
 				}
 				else
 				{
-					docID = pDocIDs[tableIndex++]->pValues[rowNumOrDocID]; //row number
+					docID = pDocIDs[tableIndex]->pValues[rowNumOrDocID]; //row number
+
+					if (pIndexes && pIndexes[tableIndex])
+					{
+						indexes = (uint*)pIndexes[tableIndex]->pValues[rowNumOrDocID];
+					}
+					else
+					{
+						indexes = 0;
+					}
+
+					tableIndex++;
 				}
 			}
 
@@ -1654,7 +1668,7 @@ uint DniproDB::updPartDoc(char* json,
 						uint tranID,
 						uint collID,
 						ValueList** pDocIDs,
-						uint* indexes,
+						ValueList** pIndexes,
 						bool onlyDelete)
 {
 	//begin tran
@@ -1708,6 +1722,7 @@ uint DniproDB::updPartDoc(char* json,
 
 	//method
 	uint docID = 0;
+	uint* indexes = 0;
 	uint tableIndex = 0;
 
 	uint level = 0;
@@ -1762,10 +1777,23 @@ uint DniproDB::updPartDoc(char* json,
 					if (!pDocIDs)
 					{
 						docID = rowNumOrDocID;
+						indexes = 0;
+
 					}
 					else
 					{
-						docID = pDocIDs[tableIndex++]->pValues[rowNumOrDocID]; //row number
+						docID = pDocIDs[tableIndex]->pValues[rowNumOrDocID]; //row number
+
+						if (pIndexes && pIndexes[tableIndex])
+						{
+							indexes = (uint*)pIndexes[tableIndex]->pValues[rowNumOrDocID];
+						}
+						else
+						{
+							indexes = 0;
+						}
+
+						tableIndex++;
 					}
 				}
 

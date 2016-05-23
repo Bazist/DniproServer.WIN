@@ -16,15 +16,17 @@ public:
 		CountValueList = 0;
 
 		DefCollID = 0;
-		
+
 		TranID = 0;
+
+		hasBeginTran = false;
 
 		//memset(pValueList, 0, sizeof(uint) * 16);
 		//memset(pIndexes, 0, sizeof(uint) * 16);
 	}
 
 	DniproDB* pDB;
-	
+
 	ValueList* pValueList[MAX_JOINED_DOCUMENTS];
 	ValueList* pIndexes[MAX_JOINED_DOCUMENTS];
 	uchar CollIDs[MAX_JOINED_DOCUMENTS];
@@ -38,12 +40,12 @@ public:
 
 	bool isIndexesEquals(uint* indexes1, uint* indexes2)
 	{
-		if(indexes1 && indexes2)
+		if (indexes1 && indexes2)
 		{
-			uint i=0;
-			while(indexes1[i] == indexes2[i])
+			uint i = 0;
+			while (indexes1[i] == indexes2[i])
 			{
-				if(!indexes1[i])
+				if (!indexes1[i])
 					return true;
 
 				i++;
@@ -90,17 +92,17 @@ public:
 
 		char jsonResult[128];
 
-		for(uint i=0; i<pValueList[index]->Count; i++)
+		for (uint i = 0; i < pValueList[index]->Count; i++)
 		{
-			if(pValueList[index]->pValues[i])
+			if (pValueList[index]->pValues[i])
 			{
 				pDB->getPartDoc(query,
-								jsonResult,
-								i,
-								TranID,
-								CollIDs[index],
-								true,
-								pValueList);
+					jsonResult,
+					i,
+					TranID,
+					CollIDs[index],
+					true,
+					pValueList);
 
 				sum += atoi(jsonResult);
 			}
@@ -111,6 +113,8 @@ public:
 			pDB->clearTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 
 		return sum;
@@ -126,7 +130,7 @@ public:
 			if(pValueList->pValues[i])
 			{
 				uint value = pDB->getAttrValueByDocID(query, pValueList->pValues[i]);
-				
+
 				if(value < minValue)
 				{
 					minValue = value;
@@ -146,7 +150,7 @@ public:
 			if(pValueList->pValues[i])
 			{
 				uint value = pDB->getAttrValueByDocID(query, pValueList->pValues[i]);
-				
+
 				if(value > maxValue)
 				{
 					maxValue = value;
@@ -173,19 +177,12 @@ public:
 
 		this->CollIDs[0] = DefCollID;
 		this->pValueList[0] = pDB->getDocsByAttr(query,
-												 0,
-												 TranID,
-												 DefCollID);
+			0,
+			TranID,
+			DefCollID);
 		this->pIndexes[0] = 0;
-		
+
 		this->CountValueList = 1;
-
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
-		}
 
 		return this;
 	}
@@ -206,19 +203,12 @@ public:
 
 		this->CollIDs[0] = DefCollID;
 		this->pValueList[0] = pDB->getDocsByAttr(query,
-												 docID,
-												 TranID,
-												 DefCollID,
-												 &this->pIndexes[0]);
-		
+			docID,
+			TranID,
+			DefCollID,
+			&this->pIndexes[0]);
+
 		this->CountValueList = 1;
-
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
-		}
 
 		return this;
 	}
@@ -268,13 +258,6 @@ public:
 			}
 		}
 
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
-		}
-
 		return this;
 	}
 
@@ -296,10 +279,10 @@ public:
 		{
 			ValueList* pAndIndexes;
 			ValueList* pAndValueList = pDB->getDocsByAttr(query,
-														  docID,
-														  TranID,
-														  CollIDs[0],
-														  &pAndIndexes);
+				docID,
+				TranID,
+				CollIDs[0],
+				&pAndIndexes);
 
 			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
@@ -328,13 +311,6 @@ public:
 					}
 				}
 			}
-		}
-
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
 		}
 
 		return this;
@@ -383,13 +359,6 @@ public:
 			}
 		}
 
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
-		}
-
 		return this;
 	}
 
@@ -411,10 +380,10 @@ public:
 		{
 			ValueList* pOrIndexes;
 			ValueList* pOrValueList = pDB->getDocsByAttr(query,
-														 docID,
-														 TranID,
-														 CollIDs[0],
-														 &pOrIndexes);
+				docID,
+				TranID,
+				CollIDs[0],
+				&pOrIndexes);
 
 			uint count = pValueList[0]->Count;
 
@@ -428,7 +397,7 @@ public:
 					{
 						if (pOrValueList->pValues[j] == pValueList[0]->pValues[i] &&
 							(!pIndexes[0] ||
-							 isIndexesEquals((uint*)pOrIndexes->pValues[j], (uint*)pIndexes[0]->pValues[i])))
+								isIndexesEquals((uint*)pOrIndexes->pValues[j], (uint*)pIndexes[0]->pValues[i])))
 						{
 							bFind = true;
 							break;
@@ -450,19 +419,12 @@ public:
 			}
 		}
 
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
-		}
-
 		return this;
 	}
 
 	DniproQuery* join(char* query1,
-					  char* query2,
-					  uchar rightCollID = 0)
+		char* query2,
+		uchar rightCollID = 0)
 	{
 		if (!TranID)
 		{
@@ -476,32 +438,50 @@ public:
 
 		uchar leftCollID = CollIDs[CountValueList - 1];
 		ValueList* pLeftValueList = pValueList[CountValueList - 1];
-		
-		//ValueList* pLeftIndexes = pIndexes[CountValueList - 1];
+
+		ValueList* pLeftIndexes = pIndexes[CountValueList - 1];
 
 		ValueList* pRightValueList = pDB->_trans[TranID].valueListPool.newObject();
 
 		pRightValueList->Count = pLeftValueList->Count;
 
 		CollIDs[CountValueList] = rightCollID;
-		pValueList[CountValueList++] = pRightValueList;
+		pValueList[CountValueList] = pRightValueList;
+		pIndexes[CountValueList] = 0;
+
+		CountValueList++;
 		
-		for(uint i=0; i <pLeftValueList->Count; i++)
+		for (uint i = 0; i < pLeftValueList->Count; i++)
 		{
-			if(pLeftValueList->pValues[i])
+			if (pLeftValueList->pValues[i])
 			{
-				//get attr value from left table
-				pDB->getPartDoc(query1,
-								outValue,
-								pLeftValueList->pValues[i],
-								TranID,
-								leftCollID,
-								true);
+				if (!pLeftIndexes)
+				{
+					//get attr value from left table
+					pDB->getPartDoc(query1,
+						outValue,
+						pLeftValueList->pValues[i],
+						TranID,
+						leftCollID,
+						true);
+				}
+				else
+				{
+					//get attr value from left table with index
+					pDB->getPartDoc(query1,
+						outValue,
+						pLeftValueList->pValues[i],
+						TranID,
+						leftCollID,
+						true,
+						0,
+						(uint*)pLeftIndexes->pValues[i]);
+				}
 
 				//create query
-				for(uint j=0; ; j++)
+				for (uint j = 0; ; j++)
 				{
-					if(query2[j] != '$')
+					if (query2[j] != '$')
 					{
 						queryTemp[j] = query2[j];
 					}
@@ -510,15 +490,15 @@ public:
 						queryTemp[j++] = '\'';
 
 						uint s = j;
-					
-						for(uint k=0; outValue[k] != 0; k++, j++)
+
+						for (uint k = 0; outValue[k] != 0; k++, j++)
 						{
 							queryTemp[j] = outValue[k];
 						}
 
 						queryTemp[j++] = '\'';
 
-						for(; query2[s] != 0; s++, j++)
+						for (; query2[s] != 0; s++, j++)
 						{
 							queryTemp[j] = query2[s];
 						}
@@ -531,29 +511,29 @@ public:
 
 				//join
 				ValueList* pTempValueList = pDB->getDocsByAttr(queryTemp,
-															   0,
-															   TranID,
-															   rightCollID);
-			
-				if(pTempValueList->Count == 1) //one to one
+					0,
+					TranID,
+					rightCollID);
+
+				if (pTempValueList->Count == 1) //one to one
 				{
 					pRightValueList->pValues[i] = pTempValueList->pValues[0];
 				}
-				else if(pTempValueList->Count > 1) //one to many
+				else if (pTempValueList->Count > 1) //one to many
 				{
-					for(uint j = 0; j < pTempValueList->Count; j++)
+					for (uint j = 0; j < pTempValueList->Count; j++)
 					{
 						pLeftValueList->addValue(0, false);
 						pRightValueList->addValue(0, false);
 					}
 
-					for(uint j = pLeftValueList->Count-1; j > i; j--)
+					for (uint j = pLeftValueList->Count - 1; j > i; j--)
 					{
 						pLeftValueList->pValues[j] = pLeftValueList->pValues[j - pTempValueList->Count];
 						pRightValueList->pValues[j] = pTempValueList->pValues[j - pTempValueList->Count];
 					}
 
-					for(uint j = 0; j < pTempValueList->Count; j++)
+					for (uint j = 0; j < pTempValueList->Count; j++)
 					{
 						pLeftValueList->pValues[i + j] = pLeftValueList->pValues[i];
 						pRightValueList->pValues[i + j] = pTempValueList->pValues[j];
@@ -565,13 +545,6 @@ public:
 					pRightValueList->pValues[i] = 0;
 				}
 			}
-		}
-
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
 		}
 
 		return this;
@@ -592,17 +565,10 @@ public:
 		this->CountValueList = 1;
 
 		pIndexes[0] = 0;
-		
-		for(uint i=1; i <= pDB->lastDocID; i++)
+
+		for (uint i = 1; i <= pDB->lastDocID; i++)
 		{
 			pValueList[0]->addValue(i, false);
-		}
-
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
 		}
 
 		return this;
@@ -614,9 +580,9 @@ public:
 	}
 
 	uint select(char* query,
-				char* jsonResult,
-				bool isDistinct,
-				bool onlyValue)
+		char* jsonResult,
+		bool isDistinct,
+		bool onlyValue)
 	{
 		if (!TranID)
 		{
@@ -633,11 +599,11 @@ public:
 		uint* pCount = (uint*)jsonResult;
 		*pCount = 0;
 
-		if(pValueList[index])
+		if (pValueList[index])
 		{
-			for(uint i=0; i<pValueList[index]->Count; i++)
+			for (uint i = 0; i < pValueList[index]->Count; i++)
 			{
-				if(pValueList[index]->pValues[i])
+				if (pValueList[index]->pValues[i])
 				{
 					ushort* pLen = (ushort*)(jsonResult + fullLen);
 
@@ -645,29 +611,29 @@ public:
 
 					uint len;
 
-					if(!pIndexes[index])
+					if (!pIndexes[index])
 					{
 						len = pDB->getPartDoc(query,
-											  jsonResult + fullLen,
-											  i,
-											  TranID,
-											  DefCollID,
-											  onlyValue,
-											  pValueList,
-											  0,
-											  CollIDs);
+							jsonResult + fullLen,
+							i,
+							TranID,
+							DefCollID,
+							onlyValue,
+							pValueList,
+							0,
+							CollIDs);
 					}
 					else
 					{
 						len = pDB->getPartDoc(query,
-											  jsonResult + fullLen,
-											  i,
-											  TranID,
-											  DefCollID,
-											  onlyValue,
-											  pValueList,
-											  (uint*)pIndexes[index]->pValues[i],
-											  CollIDs);
+							jsonResult + fullLen,
+							i,
+							TranID,
+							DefCollID,
+							onlyValue,
+							pValueList,
+							(uint*)pIndexes[index]->pValues[i],
+							CollIDs);
 					}
 
 					*pLen = len;
@@ -685,6 +651,8 @@ public:
 			pDB->clearTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 
 		return fullLen;
@@ -692,9 +660,9 @@ public:
 
 	//all results in one str with ';' delimeter
 	uint selectStr(char* query,
-					char* jsonResult,
-					bool isDistinct = false,
-					bool onlyValue = false)
+		char* jsonResult,
+		bool isDistinct = false,
+		bool onlyValue = false)
 	{
 		if (!TranID)
 		{
@@ -710,7 +678,7 @@ public:
 
 		if (pValueList[index])
 		{
-			for (uint i = 0; i<pValueList[index]->Count; i++)
+			for (uint i = 0; i < pValueList[index]->Count; i++)
 			{
 				if (pValueList[index]->pValues[i])
 				{
@@ -750,6 +718,8 @@ public:
 			pDB->clearTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 
 		return fullLen;
@@ -766,30 +736,30 @@ public:
 
 		char jsonResult[246];
 
-		for(uint i=0; i<pValueList[0]->Count; i++)
+		for (uint i = 0; i < pValueList[0]->Count; i++)
 		{
-			if(pValueList[0]->pValues[i])
+			if (pValueList[0]->pValues[i])
 			{
-				if(!pIndexes[0])
+				if (!pIndexes[0])
 				{
 					pDB->getPartDoc(query,
-									jsonResult,
-									i,
-									TranID,
-									CollIDs[0],
-									false,
-									pValueList);
+						jsonResult,
+						i,
+						TranID,
+						CollIDs[0],
+						false,
+						pValueList);
 				}
 				else
 				{
 					pDB->getPartDoc(query,
-									jsonResult,
-									i,
-									TranID,
-									CollIDs[0],
-									false,
-									pValueList,
-									(uint*)pIndexes[0]->pValues[i]);
+						jsonResult,
+						i,
+						TranID,
+						CollIDs[0],
+						false,
+						pValueList,
+						(uint*)pIndexes[0]->pValues[i]);
 				}
 
 				printf("%s\n", jsonResult);
@@ -801,6 +771,8 @@ public:
 			pDB->clearTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 
 		return;
@@ -880,29 +852,22 @@ public:
 			hasBeginTran = true;
 		}
 
-		if(CountValueList && pValueList[0]->Count < count)
+		if (CountValueList && pValueList[0]->Count < count)
 		{
 			count = pValueList[0]->Count;
 		}
 
-		for(uint i=0; i < count; i++)
+		for (uint i = 0; i < count; i++)
 		{
-			for(uint j=0; j<CountValueList; j++)
+			for (uint j = 0; j < CountValueList; j++)
 			{
 				pValueList[j]->pValues[i] = 0;
 
-				if(!pIndexes[j])
+				if (!pIndexes[j])
 				{
 					pIndexes[j]->pValues[i] = 0;
 				}
 			}
-		}
-
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
 		}
 
 		return this;
@@ -933,13 +898,6 @@ public:
 			}
 		}
 
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
-		}
-
 		return this;
 	}
 
@@ -959,7 +917,7 @@ public:
 		char** strs = new char*[pValueList[0]->Count];
 		char* vals = new char[pValueList[0]->Count * 256];
 
-		for (uint i = 0; i<pValueList[0]->Count; i++)
+		for (uint i = 0; i < pValueList[0]->Count; i++)
 		{
 			strs[i] = vals + (i * 256); //init values
 
@@ -968,26 +926,26 @@ public:
 				if (!pIndexes[0])
 				{
 					pDB->getPartDoc(query,
-									strs[i],
-									i,
-									TranID,
-									DefCollID,
-									true,
-									pValueList,
-									0,
-									CollIDs);
+						strs[i],
+						i,
+						TranID,
+						DefCollID,
+						true,
+						pValueList,
+						0,
+						CollIDs);
 				}
 				else
 				{
 					pDB->getPartDoc(query,
-									strs[i],
-									i,
-									TranID,
-									DefCollID,
-									true,
-									pValueList,
-									(uint*)pIndexes[0]->pValues[i],
-									CollIDs);
+						strs[i],
+						i,
+						TranID,
+						DefCollID,
+						true,
+						pValueList,
+						(uint*)pIndexes[0]->pValues[i],
+						CollIDs);
 				}
 			}
 			else
@@ -998,16 +956,9 @@ public:
 
 		//2. Sort all doc values
 		quickSort(strs, pValueList[0]->Count, isAsc);
-		
+
 		delete[] strs;
 		delete[] vals;
-
-		if (hasBeginTran)
-		{
-			pDB->clearTran(TranID);
-
-			TranID = 0;
-		}
 
 		return this;
 	}
@@ -1015,7 +966,7 @@ public:
 	void quickSort(char** strs, uint count, bool isAsc)
 	{
 		int i = 0, j = count - 1;	// поставить указатели на исходные места
-		
+
 		uint tempID;
 		char* tempStr;
 		char* p;
@@ -1050,11 +1001,11 @@ public:
 				}
 			}
 
-			if (i <= j) 
+			if (i <= j)
 			{
 				tempStr = strs[i];
 				tempID = pValueList[0]->pValues[i];
-				
+
 				strs[i] = strs[j];
 				pValueList[0]->pValues[i] = pValueList[0]->pValues[j];
 
@@ -1064,9 +1015,8 @@ public:
 				i++;
 				j--;
 			}
-		}
-		while (i <= j);
-		
+		} while (i <= j);
+
 		// рекурсивные вызовы, если есть, что сортировать 
 		if (j > 0)
 		{
@@ -1094,8 +1044,6 @@ public:
 			{
 				pDB->_trans[TranID].TranType = READ_COMMITED_TRAN; //commitable tran
 			}
-
-			hasBeginTran = false;
 		}
 
 		//method
@@ -1105,23 +1053,12 @@ public:
 			{
 				if (pValueList[0]->pValues[i])
 				{
-					if (!pIndexes[0])
-					{
-						pDB->delPartDoc(query,
-										i,
-										TranID,
-										CollIDs[0],
-										pValueList);
-					}
-					else
-					{
-						pDB->delPartDoc(query,
-										i,
-										TranID,
-										CollIDs[0],
-										pValueList,
-										(uint*)pIndexes[0]->pValues[i]);
-					}
+					pDB->delPartDoc(query,
+							i,
+							TranID,
+							CollIDs[0],
+							pValueList,
+							pIndexes);
 				}
 			}
 		}
@@ -1132,6 +1069,8 @@ public:
 			pDB->commitTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 	}
 
@@ -1150,34 +1089,21 @@ public:
 			{
 				pDB->_trans[TranID].TranType = READ_COMMITED_TRAN; //commitable tran
 			}
-
-			hasBeginTran = false;
 		}
 
 		//method
-		if(pValueList[0])
+		if (pValueList[0])
 		{
 			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
 				if (pValueList[0]->pValues[i])
 				{
-					if (!pIndexes[0])
-					{
-						pDB->updPartDoc(query,
-										i,
-										TranID,
-										CollIDs[0],
-										pValueList);
-					}
-					else
-					{
-						pDB->updPartDoc(query,
-										i,
-										TranID,
-										CollIDs[0],
-										pValueList,
-										(uint*)pIndexes[0]->pValues[i]);
-					}
+					pDB->updPartDoc(query,
+									i,
+									TranID,
+									CollIDs[0],
+									pValueList,
+									pIndexes);
 				}
 			}
 		}
@@ -1188,6 +1114,8 @@ public:
 			pDB->commitTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 
 		return;
@@ -1208,8 +1136,6 @@ public:
 			{
 				pDB->_trans[TranID].TranType = READ_COMMITED_TRAN; //commitable tran
 			}
-
-			hasBeginTran = false;
 		}
 
 		//method
@@ -1217,27 +1143,12 @@ public:
 		{
 			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
-				if (pValueList[0]->pValues[i])
-				{
-					if (!pIndexes[0])
-					{
-						pDB->insPartDoc(query,
-										i,
-										TranID,
-										CollIDs[0],
-										pValueList,
-										0);
-					}
-					else
-					{
-						pDB->insPartDoc(query,
-										i,
-										TranID,
-										CollIDs[0],
-										pValueList,
-										(uint*)pIndexes[0]->pValues[i]);
-					}
-				}
+				pDB->insPartDoc(query,
+								i,
+								TranID,
+								CollIDs[0],
+								pValueList,
+								pIndexes);
 			}
 		}
 
@@ -1247,11 +1158,13 @@ public:
 			pDB->commitTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 
 		return;
 	}
-	
+
 	uint count()
 	{
 		if (!TranID)
@@ -1279,6 +1192,8 @@ public:
 			pDB->clearTran(TranID);
 
 			TranID = 0;
+
+			hasBeginTran = false;
 		}
 
 		return cnt;

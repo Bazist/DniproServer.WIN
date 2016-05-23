@@ -272,14 +272,14 @@ public:
 					uint tranID = 0,
 					uint collID = 0,
 					ValueList** pDocIDs = 0,
-					uint* indexes = 0)
+					ValueList** pIndexes = 0)
 	{
 		return updPartDoc(json,
 			  			  rowNumOrDocID,
 						  tranID,
 						  collID,
 						  pDocIDs,
-						  indexes,
+						  pIndexes,
 						  true);
 	}
 
@@ -288,7 +288,7 @@ public:
 					uint tranID = 0,
 					uint collID = 0,
 					ValueList** pDocIDs = 0,
-					uint* indexes = 0,
+					ValueList** pIndexes = 0,
 					bool onlyDelete = false);
 
 	uint insPartDoc(char* json,
@@ -296,7 +296,7 @@ public:
 					uint tranID = 0,
 					uint collID = 0,
 					ValueList** pDocIDs = 0,
-					uint* indexes = 0);
+					ValueList** pIndexes = 0);
 	
 	static void onContentCellMoved(uchar tranID,
 									std::atomic<uchar>* oldAddress,

@@ -976,6 +976,21 @@ public:
 							return false;
 						}
 					}
+					else if (!strcmp(method.MethodName, "Profiler"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 3 &&
+							!strcmp(method.Params[0].Value, "true"))
+						{
+							restartServer(pDB, stopServer, " -selftest");
+						}
+						else
+						{
+							printError("Profiler method has format: Profiler(bool)");
+
+							return false;
+						}
+					}
 					else
 					{
 						printError("%s method is not supported.", method.MethodName);
