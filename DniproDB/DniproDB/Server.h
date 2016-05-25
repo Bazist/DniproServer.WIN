@@ -205,7 +205,12 @@ class Server
 								DniproPacket* pPacket = (DniproPacket*)(pBuffer + i);
 								char* json = (pBuffer + i + sizeof(DniproPacket));
 
-								pDQ->TranID = pPacket->TranID;
+								//init if tran exists
+								if (pPacket->TranID)
+								{
+									pDQ->TranID = pPacket->TranID;
+								}
+
 								pDQ->DefCollID = pPacket->CollID;
 
 								switch (pPacket->MethodType)
@@ -276,33 +281,15 @@ class Server
 
 									break;
 								}
-								case 8: //getWhereElems
-								{
-									pDQ->getWhereElems(json, pPacket->Tag1);
-
-									break;
-								}
 								case 9: //andWhere
 								{
 									pDQ->andWhere(json);
 
 									break;
 								}
-								case 10: //andWhereElems
-								{
-									pDQ->andWhereElems(json, pPacket->Tag1);
-
-									break;
-								}
 								case 11: //orWhere
 								{
 									pDQ->orWhere(json);
-
-									break;
-								}
-								case 12: //orWhereElems
-								{
-									pDQ->orWhereElems(json, pPacket->Tag1);
 
 									break;
 								}

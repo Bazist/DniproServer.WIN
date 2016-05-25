@@ -1181,19 +1181,19 @@ int main(int argc, char** argv)
 	/*DniproDB* db = new DniproDB();
 	db->init();
 
-	db->addDoc("{'Arr':[]}");
-	db->addDoc("{'Arr':[{'a':1}]}");
-	db->addDoc("{'Arr':[{'a':1},{'a':1}]}");
-	db->addDoc("{'Arr':[1]}");
-	db->addDoc("{'Arr':[1,2]}");
+	db->addDoc("{'i':1,'a':[{'i':2}]}");
+
+	db->addDoc("{'i':2,'eeee':[]}");
+
+	DniproQuery dq(db);
+
+	dq.getWhereElems("{'a':[{'i':2}]}")->
+	   join("{'a':[{'i':$}]}", "{'i':$}")->
+	   insert("{}{'eeee':[Add,1111]}");
 
 	char buff[256];
-	db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 1);
-	db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 2);
-	db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 3);
-	db->getPartDoc("{'Arr':[R,$]}", buff, 4);
-	db->getPartDoc("{'Arr':[R,$]}", buff, 5);
-
+	db->getPartDoc("{'eeee':[$]}", buff, 2);
+	
 	return 0;*/
 
 	strcpy(DniproInterpreter::CurrPath, argv[0]);

@@ -168,31 +168,10 @@ public:
 
 	DniproQuery* getWhere(char* query)
 	{
-		if (!TranID)
-		{
-			TranID = pDB->beginTran(READONLY_TRAN); //readonly tran
-
-			hasBeginTran = true;
-		}
-
-		this->CollIDs[0] = DefCollID;
-		this->pValueList[0] = pDB->getDocsByAttr(query,
-			0,
-			TranID,
-			DefCollID);
-		this->pIndexes[0] = 0;
-
-		this->CountValueList = 1;
-
-		return this;
+		return getWhere(query, 0);
 	}
 
-	DniproQuery* getWhereElems(char* query)
-	{
-		return getWhereElems(query, 0);
-	}
-
-	DniproQuery* getWhereElems(char* query, uint docID)
+	DniproQuery* getWhere(char* query, uint docID)
 	{
 		if (!TranID)
 		{
@@ -213,60 +192,12 @@ public:
 		return this;
 	}
 
-	//???
 	DniproQuery* andWhere(char* query)
 	{
-		if (!TranID)
-		{
-			TranID = pDB->beginTran(READONLY_TRAN); //readonly tran
-
-			hasBeginTran = true;
-		}
-
-		if (pValueList[0])
-		{
-			ValueList* pAndValueList = pDB->getDocsByAttr(query, 0, TranID, CollIDs[0]);
-
-			for (uint i = 0; i < pValueList[0]->Count; i++)
-			{
-				if (pValueList[0]->pValues[i])
-				{
-					bool bFind = false;
-
-					for (uint j = 0; j < pAndValueList->Count; j++)
-					{
-						if (pAndValueList->pValues[j] == pValueList[0]->pValues[i])
-						{
-							bFind = true;
-							break;
-						}
-					}
-
-					if (!bFind)
-					{
-						for (uint j = 0; j < CountValueList; j++)
-						{
-							pValueList[j]->pValues[i] = 0;
-
-							if (pIndexes[j])
-							{
-								pIndexes[j]->pValues[i] = 0;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return this;
+		return andWhere(query, 0);
 	}
 
-	DniproQuery* andWhereElems(char* query)
-	{
-		return andWhereElems(query, 0);
-	}
-
-	DniproQuery* andWhereElems(char* query, uint docID)
+	DniproQuery* andWhere(char* query, uint docID)
 	{
 		if (!TranID)
 		{
@@ -318,56 +249,10 @@ public:
 
 	DniproQuery* orWhere(char* query)
 	{
-		if (!TranID)
-		{
-			TranID = pDB->beginTran(READONLY_TRAN); //readonly tran
-
-			hasBeginTran = true;
-		}
-
-		if (CountValueList && pValueList[0])
-		{
-			ValueList* pOrValueList = pDB->getDocsByAttr(query, 0, TranID, CollIDs[0]);
-
-			uint count = pValueList[0]->Count;
-
-			for (uint i = 0; i < pOrValueList->Count; i++)
-			{
-				if (pOrValueList->pValues[i])
-				{
-					bool bFind = false;
-
-					for (uint j = 0; j < count; j++)
-					{
-						if (pValueList[0]->pValues[j] == pOrValueList->pValues[i])
-						{
-							bFind = true;
-							break;
-						}
-					}
-
-					if (!bFind)
-					{
-						pValueList[0]->addValue(pOrValueList->pValues[i], false);
-
-						if (pIndexes[0])
-						{
-							pIndexes[0]->addValue(0, false);
-						}
-					}
-				}
-			}
-		}
-
-		return this;
+		return orWhere(query, 0);
 	}
 
-	DniproQuery* orWhereElems(char* query)
-	{
-		return orWhereElems(query, 0);
-	}
-
-	DniproQuery* orWhereElems(char* query, uint docID)
+	DniproQuery* orWhere(char* query, uint docID)
 	{
 		if (!TranID)
 		{

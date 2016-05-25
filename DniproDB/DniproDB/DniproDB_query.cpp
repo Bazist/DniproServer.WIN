@@ -254,7 +254,7 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 									uint docID ,
 									uint tranID,
 									uint collID,
-									ValueList** pIndexes)
+									ValueList** pQueryIndexes)
 {
 	bool hasBeginTran;
 
@@ -294,22 +294,12 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 	ValueList* pValueListCommand[16];
 	ValueList* pIndexesListCommand[16];
 
+	ValueList** pIndexes = 0;
+
 	uint valueListCommandCount = 0;
 
 	ScanKeyData scanKeyData;
-	if (pIndexes)
-	{
-		//*pIndexes = valueListPool.newObject();
-
-		//scanKeyData.pValueList = valueListPool.newObject();
-										//scanKeyData.pIndexes = *pIndexes;
-
-		scanKeyData.DocID = docID;
-		scanKeyData.pValueListPool = &has1[pTran->CollID]->valueListPool;
-		scanKeyData.pIndexesPool = &pTran->indexesPool;
-		scanKeyData.pTran = pTran;
-	}
-
+	
 	/*scanKeyData.Scans = 0;
 									scanKeyData.Bitmap = new char[100000];
 									memset(scanKeyData.Bitmap, 0, 100000);*/
@@ -339,6 +329,17 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 				typeCommand,
 				0,
 				pTran);
+
+			//need indexes
+			if (!pIndexes && pQueryIndexes)
+			{
+				scanKeyData.DocID = docID;
+				scanKeyData.pValueListPool = &has1[pTran->CollID]->valueListPool;
+				scanKeyData.pIndexesPool = &pTran->indexesPool;
+				scanKeyData.pTran = pTran;
+
+				pIndexes = pQueryIndexes;
+			}
 
 			break;
 		}
@@ -726,6 +727,12 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 		i++;
 	}
 
+	//no indexes
+	if (!pIndexes && pQueryIndexes)
+	{
+		*pQueryIndexes = 0;
+	}
+
 	//merge results
 	if (valueListCommandCount)
 	{
@@ -785,15 +792,18 @@ ValueList* DniproDB::getDocsByAttr(char* json,
 						{
 							if (pValueListCommand[j]->pValues[k] == pValueListCommand[lastIdx]->pValues[i]) //check DocID
 							{
-								//check indexes
-								uint* indexes1 = (uint*)pIndexesListCommand[lastIdx]->pValues[i];
-								uint* indexes2 = (uint*)pIndexesListCommand[j]->pValues[k];
-
-								for (uint l = 0; indexes2[l]; l++)
+								if (pIndexesListCommand[lastIdx] && pIndexesListCommand[j])
 								{
-									if (indexes1[l] != indexes2[l])
+									//check indexes
+									uint* indexes1 = (uint*)pIndexesListCommand[lastIdx]->pValues[i];
+									uint* indexes2 = (uint*)pIndexesListCommand[j]->pValues[k];
+
+									for (uint l = 0; indexes2[l]; l++)
 									{
-										goto NOT_FOUND;
+										if (indexes1[l] != indexes2[l])
+										{
+											goto NOT_FOUND;
+										}
 									}
 								}
 

@@ -512,27 +512,6 @@ public:
 							return false;
 						}
 					}
-					else if (!strcmp(method.MethodName, "AndWhereElems"))
-					{
-						if (method.ParamCount == 1 &&
-							method.Params[0].Type == 1)
-						{
-							pDQ->andWhereElems(method.Params[0].Value);
-						}
-						else if (method.ParamCount == 2 &&
-							method.Params[0].Type == 1 &&
-							method.Params[1].Type == 2)
-						{
-							pDQ->andWhereElems(method.Params[0].Value,
-								method.Params[1].ValueInt);
-						}
-						else
-						{
-							printError("AndWhereElems method has format: AndWhereElems(json) or AndWhereElems(json, docID)");
-
-							return false;
-						}
-					}
 					else if (!strcmp(method.MethodName, "Avg"))
 					{
 						if (method.ParamCount == 1 &&
@@ -734,27 +713,6 @@ public:
 							return false;
 						}
 					}
-					else if (!strcmp(method.MethodName, "GetWhereElems"))
-					{
-						if (method.ParamCount == 1 &&
-							method.Params[0].Type == 1)
-						{
-							pDQ->getWhereElems(method.Params[0].Value);
-						}
-						else if (method.ParamCount == 2 &&
-							method.Params[0].Type == 1 &&
-							method.Params[1].Type == 2)
-						{
-							pDQ->getWhereElems(method.Params[0].Value,
-								method.Params[1].ValueInt);
-						}
-						else
-						{
-							printError("getWhereElems method has format: GetWhereElems(json) or GetWhereElems(json, docID)");
-
-							return false;
-						}
-					}
 					else if (!strcmp(method.MethodName, "GetAll"))
 					{
 						if (method.ParamCount == 0)
@@ -810,27 +768,6 @@ public:
 						else
 						{
 							printError("OrWhere method has format: OrWhere(json)");
-
-							return false;
-						}
-					}
-					else if (!strcmp(method.MethodName, "OrWhereElems"))
-					{
-						if (method.ParamCount == 1 &&
-							method.Params[0].Type == 1)
-						{
-							pDQ->orWhereElems(method.Params[0].Value);
-						}
-						else if (method.ParamCount == 2 &&
-							method.Params[0].Type == 1 &&
-							method.Params[1].Type == 2)
-						{
-							pDQ->orWhereElems(method.Params[0].Value,
-								method.Params[1].ValueInt);
-						}
-						else
-						{
-							printError("OrWhereElems method has format: OrWhereElems(json) or OrWhereElems(json, docID)");
 
 							return false;
 						}
