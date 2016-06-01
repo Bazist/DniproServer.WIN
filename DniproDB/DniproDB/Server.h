@@ -205,6 +205,12 @@ class Server
 								DniproPacket* pPacket = (DniproPacket*)(pBuffer + i);
 								char* json = (pBuffer + i + sizeof(DniproPacket));
 
+								if (DniproInterpreter::IsProfilerActive)
+								{
+									DniproInfo::Print("%s\n", json);
+									DniproInfo::PrintLine();
+								}
+
 								//init if tran exists
 								if (pPacket->TranID)
 								{
@@ -361,13 +367,13 @@ class Server
 								}
 								case 23: //drop
 								{
-									pDQ->drop(json);
+									pDQ->drop(json, pPacket->Tag1);
 
 									break;
 								}
 								case 24: //update
 								{
-									pDQ->update(json);
+									pDQ->update(json, pPacket->Tag1);
 
 									break;
 								}
@@ -379,7 +385,7 @@ class Server
 								}
 								case 26: //insert
 								{
-									pDQ->insert(json);
+									pDQ->insert(json, pPacket->Tag1);
 
 									break;
 								}

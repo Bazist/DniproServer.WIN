@@ -68,6 +68,7 @@ public:
 	uint CollID;
 
 	static char CurrPath[512];
+	static bool IsProfilerActive;
 
 	static void restartServer(DniproDB* pDB = 0,
 		STOP_SERVER_FUNC* stopServer = 0,
@@ -913,21 +914,6 @@ public:
 							return false;
 						}
 					}
-					else if (!strcmp(method.MethodName, "Profiler"))
-					{
-						if (method.ParamCount == 1 &&
-							method.Params[0].Type == 3 &&
-							!strcmp(method.Params[0].Value, "true"))
-						{
-							restartServer(pDB, stopServer, " -selftest");
-						}
-						else
-						{
-							printError("Profiler method has format: Profiler(bool)");
-
-							return false;
-						}
-					}
 					else
 					{
 						printError("%s method is not supported.", method.MethodName);
@@ -1033,6 +1019,31 @@ public:
 						else
 						{
 							printError("Print method has format: Print(json)");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "Profiler"))
+					{
+						if (method.ParamCount == 1 &&
+							method.Params[0].Type == 3)
+						{
+							if (!strcmp(method.Params[0].Value, "true"))
+							{
+								IsProfilerActive = true;
+
+								printResult("Profiler turned on");
+							}
+							else
+							{
+								IsProfilerActive = false;
+
+								printResult("Profiler turned off");
+							}
+						}
+						else
+						{
+							printError("Profiler method has format: Profiler(bool)");
 
 							return false;
 						}

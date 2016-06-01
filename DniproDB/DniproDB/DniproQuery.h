@@ -914,7 +914,8 @@ public:
 		}
 	}
 
-	void drop(char* query)
+	void drop(char* query,
+			  uint tableIndex = 0)
 	{
 		//begin tran
 		if (!TranID)
@@ -938,12 +939,22 @@ public:
 			{
 				if (pValueList[0]->pValues[i])
 				{
-					pDB->delPartDoc(query,
-							i,
+					if (pIndexes && pIndexes[tableIndex])
+					{
+						pDB->delPartDoc(query,
+							pValueList[tableIndex]->pValues[i],
 							TranID,
-							CollIDs[0],
-							pValueList,
-							pIndexes);
+							CollIDs[tableIndex],
+							(uint*)pIndexes[tableIndex]->pValues[i]);
+					}
+					else
+					{
+						pDB->delPartDoc(query,
+							pValueList[tableIndex]->pValues[i],
+							TranID,
+							CollIDs[tableIndex],
+							0);
+					}
 				}
 			}
 		}
@@ -959,7 +970,8 @@ public:
 		}
 	}
 
-	void update(char* query)
+	void update(char* query,
+				uint tableIndex = 0)
 	{
 		//begin tran
 		if (!TranID)
@@ -983,12 +995,22 @@ public:
 			{
 				if (pValueList[0]->pValues[i])
 				{
-					pDB->updPartDoc(query,
-									i,
-									TranID,
-									CollIDs[0],
-									pValueList,
-									pIndexes);
+					if (pIndexes && pIndexes[tableIndex])
+					{
+						pDB->updPartDoc(query,
+							pValueList[tableIndex]->pValues[i],
+							TranID,
+							CollIDs[tableIndex],
+							(uint*)pIndexes[tableIndex]->pValues[i]);
+					}
+					else
+					{
+						pDB->updPartDoc(query,
+							pValueList[tableIndex]->pValues[i],
+							TranID,
+							CollIDs[tableIndex],
+							0);
+					}
 				}
 			}
 		}
@@ -1006,7 +1028,8 @@ public:
 		return;
 	}
 
-	void insert(char* query)
+	void insert(char* query,
+				uint tableIndex = 0)
 	{
 		//begin tran
 		if (!TranID)
@@ -1028,12 +1051,22 @@ public:
 		{
 			for (uint i = 0; i < pValueList[0]->Count; i++)
 			{
-				pDB->insPartDoc(query,
-								i,
-								TranID,
-								CollIDs[0],
-								pValueList,
-								pIndexes);
+				if (pIndexes && pIndexes[tableIndex])
+				{
+					pDB->insPartDoc(query,
+						pValueList[tableIndex]->pValues[i],
+						TranID,
+						CollIDs[tableIndex],
+						(uint*)pIndexes[tableIndex]->pValues[i]);
+				}
+				else
+				{
+					pDB->insPartDoc(query,
+						pValueList[tableIndex]->pValues[i],
+						TranID,
+						CollIDs[tableIndex],
+						0);
+				}
 			}
 		}
 

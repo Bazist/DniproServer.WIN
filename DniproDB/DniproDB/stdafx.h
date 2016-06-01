@@ -14,7 +14,7 @@
 #include <string.h>
 #include <windows.h>
 
-#define DNIPRO_VERSION "v1.0.4"
+#define DNIPRO_VERSION "v1.0.5"
 
 #define uint unsigned int
 #define ulong unsigned __int64

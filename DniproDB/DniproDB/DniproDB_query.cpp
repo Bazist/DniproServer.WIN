@@ -1176,6 +1176,12 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 			{
 				while (attrValue[k])
 				{
+					if (attrValue[k] == '"' ||
+						attrValue[k] == '\'')
+					{
+						jsonResult[j++] = '\\'; //encode
+					}
+
 					jsonResult[j++] = attrValue[k++];
 				}
 			}
@@ -1301,11 +1307,10 @@ uint DniproDB::addDocFromFile(char* fileName)
 }
 
 uint DniproDB::insPartDoc(char* json,
-						  uint rowNumOrDocID,
+						  uint docID,
 						  uint tranID,
 						  uint collID,
-						  ValueList** pDocIDs,
-						  ValueList** pIndexes)
+						  uint* indexes)
 {
 	//begin tran
 	HArrayTran* pTran;
@@ -1336,7 +1341,7 @@ uint DniproDB::insPartDoc(char* json,
 			pTran->IsWritable = true;
 
 			//add tran log
-			addTranLog('i', json, rowNumOrDocID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
+			addTranLog('i', json, docID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
 
 			pTran->LastWritedOnTranPage = amountWritedTranPages;
 		}
@@ -1349,10 +1354,6 @@ uint DniproDB::insPartDoc(char* json,
 	pTran->pAttrValuesPage = attrValuesPool.checkPage(pTran->pAttrValuesPage);
 
 	//method
-	uint docID = 0;
-	uint tableIndex = 0;
-	uint* indexes = 0;
-
 	uint level = 0;
 
 	uint depthPos[MAX_DOC_DEPTH];
@@ -1409,32 +1410,6 @@ uint DniproDB::insPartDoc(char* json,
 		}
 		case '{':
 		{
-			//next join table
-			if (!level)
-			{
-				if (!pDocIDs)
-				{
-					docID = rowNumOrDocID;
-					indexes = 0;
-
-				}
-				else
-				{
-					docID = pDocIDs[tableIndex]->pValues[rowNumOrDocID]; //row number
-
-					if (pIndexes && pIndexes[tableIndex])
-					{
-						indexes = (uint*)pIndexes[tableIndex]->pValues[rowNumOrDocID];
-					}
-					else
-					{
-						indexes = 0;
-					}
-
-					tableIndex++;
-				}
-			}
-
 			depthPos[++level] = currPos;
 			arrayPos[level] = 0;
 
@@ -1664,7 +1639,9 @@ uint DniproDB::insPartDoc(char* json,
 		//add tran log
 		if (writeTranOnHDD)
 		{
-			addTranLogWithCommit('i', json, rowNumOrDocID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
+			uint docID;
+
+			addTranLogWithCommit('i', json, docID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
 		}
 
 		commitTran(tranID);
@@ -1674,11 +1651,10 @@ uint DniproDB::insPartDoc(char* json,
 }
 
 uint DniproDB::updPartDoc(char* json,
-						uint rowNumOrDocID,
+						uint docID,
 						uint tranID,
 						uint collID,
-						ValueList** pDocIDs,
-						ValueList** pIndexes,
+						uint* indexes,
 						bool onlyDelete)
 {
 	//begin tran
@@ -1712,11 +1688,11 @@ uint DniproDB::updPartDoc(char* json,
 			//add tranLog
 			if (!onlyDelete)
 			{
-				addTranLog('u', json, rowNumOrDocID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
+				addTranLog('u', json, docID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
 			}
 			else
 			{
-				addTranLog('d', json, rowNumOrDocID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
+				addTranLog('d', json, docID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
 			}
 
 			pTran->LastWritedOnTranPage = amountWritedTranPages;
@@ -1731,10 +1707,6 @@ uint DniproDB::updPartDoc(char* json,
 	pTran->pAttrValuesPage = attrValuesPool.checkPage(pTran->pAttrValuesPage);
 
 	//method
-	uint docID = 0;
-	uint* indexes = 0;
-	uint tableIndex = 0;
-
 	uint level = 0;
 	uint depthPos[MAX_DOC_DEPTH];
 	depthPos[0] = 0;
@@ -1781,32 +1753,6 @@ uint DniproDB::updPartDoc(char* json,
 			}
 			case '{':
 			{
-				//next join table
-				if (!level)
-				{
-					if (!pDocIDs)
-					{
-						docID = rowNumOrDocID;
-						indexes = 0;
-
-					}
-					else
-					{
-						docID = pDocIDs[tableIndex]->pValues[rowNumOrDocID]; //row number
-
-						if (pIndexes && pIndexes[tableIndex])
-						{
-							indexes = (uint*)pIndexes[tableIndex]->pValues[rowNumOrDocID];
-						}
-						else
-						{
-							indexes = 0;
-						}
-
-						tableIndex++;
-					}
-				}
-
 				depthPos[++level] = currPos;
 				arrayPos[level] = 0;
 
@@ -2099,11 +2045,11 @@ uint DniproDB::updPartDoc(char* json,
 
 			if (!onlyDelete)
 			{
-				addTranLogWithCommit('u', json, rowNumOrDocID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
+				addTranLogWithCommit('u', json, docID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
 			}
 			else
 			{
-				addTranLogWithCommit('d', json, rowNumOrDocID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
+				addTranLogWithCommit('d', json, docID, pTran->TranID, collID, pTran->ParentTranID, pTran->TranIdentity);
 			}
 		}
 		

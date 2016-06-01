@@ -1181,18 +1181,17 @@ int main(int argc, char** argv)
 	/*DniproDB* db = new DniproDB();
 	db->init();
 
-	db->addDoc("{'i':1,'a':[{'i':2}]}");
-
-	db->addDoc("{'i':2,'eeee':[]}");
+	db->addDoc("{'a':'1'}");
+	db->addDoc("{'b':'1'}");
 
 	DniproQuery dq(db);
 
-	dq.getWhereElems("{'a':[{'i':2}]}")->
-	   join("{'a':[{'i':$}]}", "{'i':$}")->
-	   insert("{}{'eeee':[Add,1111]}");
+	dq.getWhere("{'a':'1'}")->
+	   join("{'a':$}", "{'b':$}")->
+	   insert("{'c':'5'}", 1);
 
 	char buff[256];
-	db->getPartDoc("{'eeee':[$]}", buff, 2);
+	db->getPartDoc("{'c':$}", buff, 2);
 	
 	return 0;*/
 

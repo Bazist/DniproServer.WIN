@@ -318,6 +318,19 @@ public:
 
 		char buff[128];
 		db->getPartDoc("{'Arr':[Count,$]}", buff, id);
+
+		db->addDoc("{'Arr':[]}");
+		db->addDoc("{'Arr':[{'a':1}]}");
+		db->addDoc("{'Arr':[{'a':1},{'a':1}]}");
+		db->addDoc("{'Arr':[1]}");
+		db->addDoc("{'Arr':[1,2]}");
+
+		char buff[256];
+		db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 1);
+		db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 2);
+		db->getPartDoc("{'Arr':[R,{'a':$}]}", buff, 3);
+		db->getPartDoc("{'Arr':[R,$]}", buff, 4);
+		db->getPartDoc("{'Arr':[R,$]}", buff, 5);
 		*/
 
 		return;
