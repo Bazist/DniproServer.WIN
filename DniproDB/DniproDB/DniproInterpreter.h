@@ -814,7 +814,22 @@ public:
 
 				case 'S':
 				{
-					if (!strcmp(method.MethodName, "SetDefColl"))
+					if (!strcmp(method.MethodName, "Shrink"))
+					{
+						if (method.ParamCount == 0)
+						{
+							uint percents = pDB->shrink();
+
+							printResult("Database is reduced on %s%%.", percents);
+						}
+						else
+						{
+							printError("Shrink method has format: Shrink()");
+
+							return false;
+						}
+					}
+					else if (!strcmp(method.MethodName, "SetDefColl"))
 					{
 						if (method.ParamCount == 1 &&
 							method.Params[0].Type == 4)

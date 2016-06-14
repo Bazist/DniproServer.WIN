@@ -16,29 +16,38 @@
 
 struct ScanKeyData
 {
-	public:
-		ValueList* pValueList;
-		ValueList* pIndexes;
-		char MethodType;
-		char Operand1Str[128];
-		char Operand2Str[128];
-		
-		uint Operand1Len;
-		uint Operand2Len;
-		
-		uint Operand1;
-		uint Operand2;
-		
-		uint KeyLen;
-		uint DocID;
+public:
+	ValueList* pValueList;
+	ValueList* pIndexes;
+	char MethodType;
+	char Operand1Str[128];
+	char Operand2Str[128];
 
-		ValueListPool* pValueListPool;
-		IndexesPool* pIndexesPool;
+	uint Operand1Len;
+	uint Operand2Len;
 
-		HArrayTran* pTran;
+	uint Operand1;
+	uint Operand2;
 
-		/*uint Scans;
-		char* Bitmap;*/
+	uint KeyLen;
+	uint DocID;
+
+	ValueListPool* pValueListPool;
+	IndexesPool* pIndexesPool;
+
+	HArrayTran* pTran;
+
+	/*uint Scans;
+	char* Bitmap;*/
+};
+
+struct ScanShrinkKeyData
+{
+public:
+	HArrayVarRAM* pNewHA1;
+	HArrayVarRAM* pNewHA2;
+
+	HArrayVarRAM* pOldHA2;
 };
 
 class DniproDB
@@ -55,7 +64,7 @@ public:
 	static std::atomic<uint> amountReaders;
 	static std::atomic<uint> amountMarkIsReadedTrans;
 	static std::atomic<uint> amountShapshotTrans;
-	
+
 	std::atomic<uint> amountWritedTranPages;
 
 	CRITICAL_SECTION writeTranLock;
@@ -82,7 +91,6 @@ public:
 	uint currTime;
 
 	HArrayTranItemsPool* pHArrayTranItemsPool;
-	AttrValuesPool attrValuesPool;
 
 	static HArrayTran _trans[MAX_TRANS]; //all trans in pool
 
@@ -90,6 +98,53 @@ public:
 
 	bool readTrans(char* filePath, uint maxDate);
 	bool readBlobs(char* filePath);
+
+	//static bool shrinkKeyHA1(uint* key,
+	//						uint keyLen,
+	//						uint value,
+	//						uchar valueType,
+	//						void* pData)
+	//{
+	//	if (value)
+	//	{
+	//		keyLen <<= 2; //keyLen * 4
+
+	//		ScanShrinkKeyData* pScanKeyData = (ScanShrinkKeyData*)pData;
+
+	//		if (valueType == VALUE_TYPE)
+	//		{
+	//			pScanKeyData->pHA->insert(key, keyLen, value);
+	//		}
+	//		else if (valueType == VALUE_LIST_TYPE)
+	//		{
+	//			ValueList* pValueList = pScanKeyData->pValueListPool->fromSerPointer(value);
+
+	//			for (uint i = 0; i < pValueList->Count; i++)
+	//			{
+	//				if (pValueList->pValues[i])
+	//				{
+	//					pScanKeyData->pHA->insert(key, keyLen, pValueList->pValues[i]);
+	//				}
+	//			}
+	//		}
+	//	}
+
+	//	return true;
+	//}
+
+	static uint getAmountKeyIndexes(HArrayVarRAM* pHA,
+		uint* key,
+		uint keyLen,
+		uint& fullKeyLen,
+		uint* indexes);
+
+	static bool shrinkKeyHA(uint* key,
+		uint keyLen,
+		uint value,
+		uchar valueType,
+		void* pData);
+
+	uint shrink();
 
 	void read(BinaryFile* pFile)
 	{
@@ -105,12 +160,11 @@ public:
 
 		return pFile->writeInt(&val);
 	}
-	
+
 	void init(char* dbFolder = 0,
-			  uint onDate = 0)
+		uint onDate = 0)
 	{
 		pHArrayTranItemsPool = new HArrayTranItemsPool();
-		attrValuesPool.init();
 
 		lastDocID = 0;
 		currTranLogPos = 0;
@@ -141,7 +195,7 @@ public:
 		tranLog = 0;
 		currTranLogPos = 0;
 		amountWritedTranPages = 0;
-		
+
 		if (dbFolder)
 		{
 			if (strlen(dbFolder) > 0)
@@ -155,7 +209,7 @@ public:
 				strcpy(dbBlobLogFileName, "dbBlobLog.dp");
 			}
 
-			writeTranOnHDD = false;
+			writeTranOnHDD = true;
 
 			//read trans from HDD
 			readTrans(dbTranLogFileName, onDate);
@@ -168,7 +222,7 @@ public:
 				0,                      // use default creation flags 
 				0);					 // returns the thread identifier 
 		}
-		
+
 		Sleep(10); //wait until thread started
 	}
 
@@ -179,33 +233,35 @@ public:
 	void clearParts(uint tranID);
 
 	uint beginTran(uchar tranType = READ_COMMITED_TRAN,
-	 			   uchar parentTranID = 0);
+		uchar parentTranID = 0);
 
 	void rollbackTran(uint tranID);
 
 	void clearTran(uint tranID);
 
 	void commitTran(uint tranID);
-	
+
 	void addTranLog(char type,
-					char* json,
-					uint docID,
-					uchar tranID,
-					uchar collID,
-					uchar parentTranID,
-					uint tranIdenity);
+		char* json,
+		uint docID,
+		uchar tranID,
+		uchar collID,
+		uchar parentTranID,
+		uint tranIdenity,
+		uint* indexes);
 
 	void addTranLogWithCommit(char type,
-							  char* json,
-							  uint docID,
-							  uchar tranID,
-							  uchar collID,
-							  uchar parentTranID,
-							  uint tranIdentity);
-	
+		char* json,
+		uint docID,
+		uchar tranID,
+		uchar collID,
+		uchar parentTranID,
+		uint tranIdentity,
+		uint* indexes);
+
 	uint addDoc(char* json,
-				uint tranID = 0,
-				uint collID = 0)
+		uint tranID = 0,
+		uint collID = 0)
 	{
 		insPartDoc(json, ++lastDocID, tranID, collID);
 
@@ -215,88 +271,88 @@ public:
 	uint addDocFromFile(char* fileName);
 
 	inline void procAlias(char* json,
-						  char* key,
-						  uint currPos,
-						  uint* arrayPos,
-						  uint** arrayMaxPos,
-						  uint* repeatPos,
-						  uint level,
-						  uint& i,
-						  uint docID,
-						  uchar& typeCommand,
-						  uint* indexes,
-						  HArrayTran* pTran);
+		char* key,
+		uint currPos,
+		uint* arrayPos,
+		uint** arrayMaxPos,
+		uint* repeatPos,
+		uint level,
+		uint& i,
+		uint docID,
+		uchar& typeCommand,
+		uint* indexes,
+		HArrayTran* pTran);
 
 	inline void setPathIndexes(uint* arrayPos,
-							   uint* indexes,
-							   char* key,
-							   uint level,
-							   uint& currPos);
-	
+		uint* indexes,
+		char* key,
+		uint level,
+		uint& currPos);
+
 	ValueList* getDocsByAttr(char* json,
-							 uint docID = 0,
-							 uint tranID = 0,
-							 uint collID = 0,
-							 ValueList** pIndexes = 0);
+		uint docID = 0,
+		uint tranID = 0,
+		uint collID = 0,
+		ValueList** pIndexes = 0);
 
 	static bool getDocsByAttr_scanKey(uint* key,
-									  uint keyLen,
-									  uint value,
-									  uchar valueType,
-									  void* pData);
-	
+		uint keyLen,
+		uint value,
+		uchar valueType,
+		void* pData);
+
 	static bool getDocsByAttr_scanIn(uint* key,
-									 uint keyLen,
-									 uint value,
-									 uchar valueType,
-									 void* pData);
+		uint keyLen,
+		uint value,
+		uchar valueType,
+		void* pData);
 
 	static bool getDocsByAttr_scanCond(uint* key,
-									   uint keyLen,
-									   uint value,
-									   uchar valueType,
-									   void* pData);
-	
+		uint keyLen,
+		uint value,
+		uchar valueType,
+		void* pData);
+
 	uint getPartDoc(char* jsonTemplate,
-					char* jsonResult,
-					uint rowNumOrDocID,
-					uint tranID = 0,
-					uint collID = 0,
-					bool onlyValue = false,
-					ValueList** pDocIDs = 0,
-					uint* indexes = 0,
-					uchar* collIDs = 0);
-	
+		char* jsonResult,
+		uint rowNumOrDocID,
+		uint tranID = 0,
+		uint collID = 0,
+		bool onlyValue = false,
+		ValueList** pDocIDs = 0,
+		uint* indexes = 0,
+		uchar* collIDs = 0);
+
 	uint delPartDoc(char* json,
-					uint docID,
-					uint tranID = 0,
-					uint collID = 0,
-					uint* indexes = 0)
+		uint docID,
+		uint tranID = 0,
+		uint collID = 0,
+		uint* indexes = 0)
 	{
 		return updPartDoc(json,
-			  			  docID,
-						  tranID,
-						  collID,
-						  indexes,
-						  true);
+			docID,
+			tranID,
+			collID,
+			indexes,
+			true);
 	}
 
 	uint updPartDoc(char* json,
-					uint docID,
-					uint tranID = 0,
-					uint collID = 0,
-					uint* indexes = 0,
-					bool onlyDelete = false);
+		uint docID,
+		uint tranID = 0,
+		uint collID = 0,
+		uint* indexes = 0,
+		bool onlyDelete = false);
 
 	uint insPartDoc(char* json,
-					uint rowNumOrDocID = 0,
-					uint tranID = 0,
-					uint collID = 0,
-					uint* indexes = 0);
-	
+		uint rowNumOrDocID = 0,
+		uint tranID = 0,
+		uint collID = 0,
+		uint* indexes = 0);
+
 	static void onContentCellMoved(uchar tranID,
-									std::atomic<uchar>* oldAddress,
-									std::atomic<uchar>* newAddress)
+		std::atomic<uchar>* oldAddress,
+		std::atomic<uchar>* newAddress)
 	{
 		_trans[tranID].readedList.replaceAddress(oldAddress, newAddress);
 	}
@@ -306,11 +362,11 @@ public:
 		return;
 
 		uint* str = (uint*)key;
-		for(int i=0; i<len/4; i++)
+		for (int i = 0; i < len / 4; i++)
 		{
 			printf("%d ", str[i]);
 		}
-		
+
 		printf("(%d)", level);
 
 		printf("\n");
@@ -319,7 +375,7 @@ public:
 	inline void print2(char* key, uint len, uint level)
 	{
 		uint* str = (uint*)key;
-		for (int i = 0; i<len / 4; i++)
+		for (int i = 0; i < len / 4; i++)
 		{
 			printf("%d ", str[i]);
 		}
@@ -328,7 +384,7 @@ public:
 
 		printf("\n");
 	}
-	
+
 	inline void printMemory()
 	{
 		printf("TOTAL MEMORY: %d\n", getTotalMemory());
@@ -340,23 +396,36 @@ public:
 		//ha2.printMemory();
 	}
 
-	uint getTotalMemory()
+	uint getUsedMemory()
 	{
-		ulong totalCollsMemory = sizeof(DniproDB) + attrValuesPool.getTotalMemory(); // +valueListPool.getTotalMemory();
+		ulong usedMemory = sizeof(DniproDB); // +valueListPool.getTotalMemory();
 
 		for (uint i = 0; i < countColls; i++)
 		{
-			totalCollsMemory += has1[i]->getTotalMemory();
-			totalCollsMemory += has2[i]->getTotalMemory();
+			usedMemory += has1[i]->getUsedMemory();
+			usedMemory += has2[i]->getUsedMemory();
 		}
 
-		return totalCollsMemory;
+		return usedMemory;
+	}
+
+	uint getTotalMemory()
+	{
+		ulong totalMemory = sizeof(DniproDB); // +valueListPool.getTotalMemory();
+
+		for (uint i = 0; i < countColls; i++)
+		{
+			totalMemory += has1[i]->getTotalMemory();
+			totalMemory += has2[i]->getTotalMemory();
+		}
+
+		return totalMemory;
 	}
 
 	/*void clearState()
 	{
-		valueListPool.clear();
-		indexesPool.clear();
+	valueListPool.clear();
+	indexesPool.clear();
 	}*/
 
 	uint addBlobValue(char* value, uint len, char* label)
@@ -397,10 +466,37 @@ public:
 		return false;
 	}
 
+	HArrayVarRAM* createHA1(char* name)
+	{
+		HArrayVarRAM* pHA1 = new HArrayVarRAM();
+
+		strcpy(pHA1->Name, name);
+
+		pHA1->init(4, 16);
+		pHA1->AllowValueList = true;
+
+		return pHA1;
+	}
+
+	HArrayVarRAM* createHA2(char* name)
+	{
+		HArrayVarRAM* pHA2 = new HArrayVarRAM();
+
+		strcpy(pHA2->Name, name);
+
+		pHA2->init(4, 16);
+		pHA2->AllowValueList = false;
+
+		pHA2->onContentCellMovedFunc = onContentCellMoved;
+		pHA2->checkDeadlockFunc = checkDeadlock;
+
+		return pHA2;
+	}
+
 	uint addColl(char* name)
 	{
 		for (uint i = 0; i < countColls; i++)
-		{ 
+		{
 			if (!strcmp(has1[i]->Name, name))
 			{
 				DniproError de;
@@ -411,26 +507,13 @@ public:
 			}
 		}
 
-		has1[countColls] = new HArrayVarRAM();
+		has1[countColls] = createHA1(name);
 
-		strcpy(has1[countColls]->Name, name);
-		
-		has1[countColls]->init(4, 16);
-		has1[countColls]->AllowValueList = true;
-
-		has2[countColls] = new HArrayVarRAM();
-
-		strcpy(has2[countColls]->Name, name);
-
-		has2[countColls]->init(4, 16);
-		has2[countColls]->AllowValueList = false;
-
-		has2[countColls]->onContentCellMovedFunc = onContentCellMoved;
-		has2[countColls]->checkDeadlockFunc = checkDeadlock;
+		has2[countColls] = createHA2(name);
 
 		if (writeTranOnHDD)
 		{
-			addTranLog('c', name, 0, 0, countColls, 0, 0);
+			addTranLog('c', name, 0, 0, countColls, 0, 0, 0);
 		}
 
 		countColls++;
@@ -472,7 +555,7 @@ public:
 
 					if (writeTranOnHDD)
 					{
-						addTranLog('r', name, 0, 0, countColls, 0, 0);
+						addTranLog('r', name, 0, 0, countColls, 0, 0, 0);
 					}
 
 					return strlen(name);
@@ -526,8 +609,6 @@ public:
 		block();
 
 		//clear all db
-		attrValuesPool.clear();
-
 		for (uint i = 0; i < MAX_TRANS; i++)
 		{
 			_trans[i].clear();
@@ -541,12 +622,12 @@ public:
 			has1[i]->AllowValueList = true;
 			has2[i]->AllowValueList = false;
 		}
-		
+
 		lastDocID = 0;
 
 		unblock();
 	}
-	
+
 	void destroy()
 	{
 		block();
@@ -556,7 +637,6 @@ public:
 		Sleep(10); //wait until finished
 
 		delete pHArrayTranItemsPool;
-		attrValuesPool.destroy();
 
 		for (uint i = 0; i < MAX_TRANS; i++)
 		{

@@ -111,7 +111,7 @@ public:
 		uint keyLen,
 		uint value,
 		uint* pIndexInVL,
-		uchar itemType,
+		HArrayTranItemType itemType,
 		uchar tranID)
 	{
 		if (ParentTranID)
@@ -232,7 +232,7 @@ public:
 	bool insertOrDelete2(uint* key,
 		uint keyLen,
 		uint value,
-		uchar itemType,
+		HArrayTranItemType itemType,
 		uchar tranID)
 	{
 		if (ParentTranID)
@@ -343,7 +343,7 @@ public:
 	bool hasKeyAndValue1(uint* key,
 		uint keyLen,
 		uint value,
-		uchar itemType)
+		HArrayTranItemType itemType)
 	{
 		if (ParentTranID)
 		{
@@ -429,7 +429,7 @@ public:
 			{
 				HArrayTranItem& item = pHArrayTranItems1->Items[i];
 
-				if (item.Type == 1 &&
+				if (item.Type == Inserted &&
 					item.CollID == CollID)
 				{
 					if (!memcmp(key, item.Key, keyLen))
@@ -450,7 +450,7 @@ public:
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-					if (item.Type == 1 &&
+					if (item.Type == Inserted &&
 						item.CollID == CollID)
 					{
 						if (!memcmp(key, item.Key, keyLen))
@@ -507,7 +507,7 @@ public:
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
-						if (item.Type == 1) //inserted
+						if (item.Type == Inserted) //inserted
 						{
 							if (!valueInserted)
 							{
@@ -525,7 +525,7 @@ public:
 								pValuesInserted->addValue(item.Value);
 							}
 						}
-						else if(item.Type == 2) //deleted
+						else if(item.Type == Deleted) //deleted
 						{
 							if (!valueDeleted)
 							{
@@ -563,7 +563,7 @@ public:
 					{
 						if (!memcmp(item.Key, key, item.KeyLen))
 						{
-							if (item.Type == 1) //inserted
+							if (item.Type == Inserted) //inserted
 							{
 								if (!valueInserted)
 								{
@@ -581,7 +581,7 @@ public:
 									pValuesInserted->addValue(item.Value);
 								}
 							}
-							else if(item.Type == 2) //deleted
+							else if(item.Type == Deleted) //deleted
 							{
 								if (!valueDeleted)
 								{
@@ -668,12 +668,12 @@ public:
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
-						if (item.Type == 1) //inserted
+						if (item.Type == Inserted) //inserted
 						{
 							resValueInserted = item.Value;
 							resValueDeleted = 0;
 						}
-						else if(item.Type == 2) //deleted
+						else if(item.Type == Deleted) //deleted
 						{
 							resValueInserted = 0;
 							resValueDeleted = item.Value;
@@ -696,12 +696,12 @@ public:
 				{
 					if (!memcmp(item.Key, key, item.KeyLen))
 					{
-						if (item.Type == 1) //inserted
+						if (item.Type == Inserted) //inserted
 						{
 							resValueInserted = item.Value;
 							resValueDeleted = 0;
 						}
-						else if (item.Type == 2) //deleted
+						else if (item.Type == Deleted) //deleted
 						{
 							resValueInserted = 0;
 							resValueDeleted = item.Value;
@@ -727,12 +727,12 @@ public:
 					{
 						if (!memcmp(item.Key, key, item.KeyLen))
 						{
-							if (item.Type == 1) //inserted
+							if (item.Type == Inserted) //inserted
 							{
 								resValueInserted = item.Value;
 								resValueDeleted = 0;
 							}
-							else if (item.Type == 2) //deleted
+							else if (item.Type == Deleted) //deleted
 							{
 								resValueInserted = 0;
 								resValueDeleted = item.Value;
@@ -1214,12 +1214,12 @@ public:
 			{
 				HArrayTranItem& item = pHArrayTranItems1->Items[i];
 
-				if (item.Type == 1) //inserted
+				if (item.Type == Inserted) //inserted
 				{
 					//save ha1DocIndex in attrvalues
 					*item.pIndexInVL = has1[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 				}
-				else if(item.Type == 2) //deleted
+				else if(item.Type == Deleted) //deleted
 				{
 					has1[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 				}
@@ -1238,11 +1238,11 @@ public:
 				{
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-					if (item.Type == 1) //inserted
+					if (item.Type == Inserted) //inserted
 					{
 						*item.pIndexInVL = has1[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
-					else if(item.Type == 2) //deleted
+					else if(item.Type == Deleted) //deleted
 					{
 						has1[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value, *item.pIndexInVL);
 					}
@@ -1282,11 +1282,11 @@ public:
 				{
 					HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
-					if (item.Type == 1) //inserted
+					if (item.Type == Inserted) //inserted
 					{
 						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
-					else if(item.Type == 2) //deleted
+					else if(item.Type == Deleted) //deleted
 					{
 						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
@@ -1298,11 +1298,11 @@ public:
 				{
 					HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
-					if (item.Type == 1) //inserted
+					if (item.Type == Inserted) //inserted
 					{
 						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
-					else if(item.Type == 2) //deleted
+					else if(item.Type == Deleted) //deleted
 					{
 						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
@@ -1322,11 +1322,11 @@ public:
 					{
 						HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-						if (item.Type == 1) //inserted
+						if (item.Type == Inserted) //inserted
 						{
 							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
-						else if(item.Type == 2) //deleted
+						else if(item.Type == Deleted) //deleted
 						{
 							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
@@ -1338,11 +1338,11 @@ public:
 					{
 						HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
-						if (item.Type == 1) //inserted
+						if (item.Type == Inserted) //inserted
 						{
 							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
-						else if(item.Type == 2) //deleted
+						else if(item.Type == Deleted) //deleted
 						{
 							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
@@ -1387,7 +1387,7 @@ public:
 
 				if (item.TranID == tranID)
 				{
-					item.Type = 3; //rollbacked
+					item.Type = Rollbacked; //rollbacked
 				}
 			}
 		}
@@ -1404,7 +1404,7 @@ public:
 
 					if (item.TranID == tranID)
 					{
-						item.Type = 3; //rollbacked
+						item.Type = Rollbacked; //rollbacked
 					}
 				}
 
@@ -1442,7 +1442,7 @@ public:
 
 				if (item.TranID == tranID)
 				{
-					item.Type = 3; //rollbacked
+					item.Type = Rollbacked; //rollbacked
 				}
 			}
 		}
@@ -1459,7 +1459,7 @@ public:
 
 					if (item.TranID == tranID)
 					{
-						item.Type = 3; //rollbacked
+						item.Type = Rollbacked; //rollbacked
 					}
 				}
 

@@ -83,6 +83,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -119,7 +120,9 @@
     <ClCompile Include="BinaryFile.cpp" />
     <ClCompile Include="DniproDB_query.cpp" />
     <ClCompile Include="DniproDB_scan.cpp" />
+    <ClCompile Include="DniproDB_shrink.cpp" />
     <ClCompile Include="DniproDB_tran.cpp" />
+    <ClCompile Include="DniproInterpreter.cpp" />
     <ClCompile Include="HArrayVarRAM_delValueByKey.cpp" />
     <ClCompile Include="HArrayVarRAM_getKeysAndValuesByRange.cpp" />
     <ClCompile Include="HArrayVarRAM_getValueByKey.cpp" />

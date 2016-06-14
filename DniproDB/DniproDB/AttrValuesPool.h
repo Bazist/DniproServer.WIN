@@ -16,6 +16,16 @@ public:
 	ushort Index;
 	uint CurrPos;
 	char* Values;
+
+	uint getUsedMemory()
+	{
+		return CurrPos;
+	}
+
+	uint getTotalMemory()
+	{
+		return MAX_SHORT;
+	}
 };
 
 class AttrValuesPool
@@ -30,12 +40,14 @@ public:
 
 	void init()
 	{
+		attrValues[0].Type = 0;
 		attrValues[0].CurrPos = 1;
 		attrValues[0].Values = new char[MAX_SHORT];
 		attrValues[0].Values[0] = 0;
 
-		for (uint i = 0; i < MAX_ATTR_VALUES_PAGES; i++)
+		for (uint i = 1; i < MAX_ATTR_VALUES_PAGES; i++)
 		{
+			attrValues[i].Type = 0;
 			attrValues[i].Index = i;
 			attrValues[i].Values = 0;
 		}
@@ -150,9 +162,28 @@ public:
 		return true;
 	}
 
+	uint getUsedMemory()
+	{
+		uint usedMemory = sizeof(AttrValuesPool);
+
+		for (uint i = 0; i < CountPage; i++)
+		{
+			usedMemory += attrValues[i].getUsedMemory();
+		}
+
+		return usedMemory;
+	}
+
 	uint getTotalMemory()
 	{
-		return sizeof(AttrValuesPool) + (CountPage * (sizeof(AttrValuesPage) + MAX_SHORT));
+		uint usedMemory = sizeof(AttrValuesPool);
+
+		for (uint i = 0; i < CountPage; i++)
+		{
+			usedMemory += attrValues[i].getTotalMemory();
+		}
+
+		return usedMemory;
 	}
 
 	void printMemory()
@@ -172,12 +203,9 @@ public:
 
 	void destroy()
 	{
-		for(uint i=0; i < MAX_ATTR_VALUES_PAGES; i++)
+		for(uint i=0; i < CountPage; i++)
 		{
-			if (attrValues[i].Values)
-			{
-				delete[] attrValues[i].Values;
-			}
+			delete[] attrValues[i].Values;
 		}
 	}
 };

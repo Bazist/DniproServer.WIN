@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "BinaryFile.h"
 #include "ReadedList.h"
+#include "AttrValuesPool.h"
 
 //#define _RELEASE 0x1234567
 

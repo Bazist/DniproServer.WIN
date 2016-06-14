@@ -18,7 +18,8 @@ void DniproDB::addTranLog(char type,
 	uchar tranID,
 	uchar collID,
 	uchar parentTranID,
-	uint tranIdentity)
+	uint tranIdentity,
+	uint* indexes)
 {
 	//if (tranStarted)
 	//{
@@ -53,6 +54,25 @@ WRITE_TRAN_LOG:
 	*(uint*)&tranLog[currTranLogPos] = tranIdentity;
 
 	currTranLogPos += 4;
+
+	//indexes
+	if (!indexes)
+	{
+		tranLog[currTranLogPos++] = 0;
+	}
+	else
+	{
+		uchar* countIndexes = (uchar*)&tranLog[currTranLogPos++];
+
+		uchar i = 0;
+
+		for (; indexes[i]; i++, currTranLogPos += 4)
+		{
+			*(uint*)&tranLog[currTranLogPos] = indexes[i];
+		}
+
+		*countIndexes = i;
+	}
 
 	//json
 	for (uint i = 0; json[i]; currTranLogPos++, i++)
@@ -89,7 +109,8 @@ void DniproDB::addTranLogWithCommit(char type,
 	uchar tranID,
 	uchar collID,
 	uchar parentTranID,
-	uint tranIdentity)
+	uint tranIdentity,
+	uint* indexes)
 {
 WRITE_TRAN_LOG:
 
@@ -123,6 +144,25 @@ WRITE_TRAN_LOG:
 	//unique identifier tran
 	*(uint*)&tranLog[newCurrTranLogPos] = tranIdentity;
 	newCurrTranLogPos += 4;
+
+	//indexes
+	if (!indexes)
+	{
+		tranLog[newCurrTranLogPos++] = 0;
+	}
+	else
+	{
+		uchar* countIndexes = (uchar*)&tranLog[newCurrTranLogPos++];
+
+		uchar i = 0;
+
+		for (; indexes[i]; i++, newCurrTranLogPos += 4)
+		{
+			*(uint*)&tranLog[newCurrTranLogPos] = indexes[i];
+		}
+
+		*countIndexes = i;
+	}
 
 	//json
 	for (uint i = 0; json[i]; newCurrTranLogPos++, i++)
@@ -286,6 +326,8 @@ bool DniproDB::readTrans(char* filePath,
 
 		char* buff = new char[buffSize];
 
+		uint indexes[256];
+
 		uint safeLen = buffSize - WRITE_TRANS_BUFFER_SIZE;
 
 		uint pos = 0;
@@ -395,6 +437,21 @@ bool DniproDB::readTrans(char* filePath,
 					uint tranIdentity = *(uint*)(buff + i);
 					i += 4;
 
+					//format countIndexes|indexes
+					uchar countIndexes = *(uchar*)(buff + i);
+					i++;
+
+					uchar j = 0;
+
+					for (; j < countIndexes; j++)
+					{
+						indexes[j] = *(uint*)(buff + i);
+
+						i += 4;
+					}
+
+					indexes[j] = 0;
+					
 					if (tranIdentity > this->tranIdentity)
 					{
 						this->tranIdentity = tranIdentity;
@@ -460,7 +517,7 @@ bool DniproDB::readTrans(char* filePath,
 					{
 					case 'i':
 					{
-						i += insPartDoc(buff + i, docID, tranID, collID);
+						i += insPartDoc(buff + i, docID, tranID, collID, indexes);
 
 						if (docID > lastDocID)
 						{
@@ -473,7 +530,7 @@ bool DniproDB::readTrans(char* filePath,
 					}
 					case 'u':
 					{
-						i += updPartDoc(buff + i, docID, tranID, collID);
+						i += updPartDoc(buff + i, docID, tranID, collID, indexes);
 
 						i++; //zero terminated
 
@@ -481,7 +538,7 @@ bool DniproDB::readTrans(char* filePath,
 					}
 					case 'd':
 					{
-						i += delPartDoc(buff + i, docID, tranID, collID);
+						i += delPartDoc(buff + i, docID, tranID, collID, indexes);
 
 						i++; //zero terminated
 

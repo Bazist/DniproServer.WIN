@@ -62,6 +62,7 @@ public:
 	bool AllowValueList;
 
 	ValueListPool valueListPool;
+	AttrValuesPool attrValuesPool;
 	
 	void init(uint valueLen, 
 			  uchar headerBase)
@@ -161,6 +162,8 @@ public:
 
 		checkDeadlockFunc = 0;
 		onContentCellMovedFunc = 0;
+
+		attrValuesPool.init();
 	}
 
 	uint lastContentOffset;
@@ -208,7 +211,8 @@ public:
 				getVarSize() + 
 				getBranchSize() +
 				getBlockSize() + 
-				valueListPool.getUsedMemory();
+				valueListPool.getUsedMemory() +
+				attrValuesPool.getUsedMemory();
 	}
 
 	uint getTotalMemory()
@@ -217,8 +221,9 @@ public:
 				getContentSize() + 
 				getVarSize() + 
 				getBranchSize() +
-				getBlockSize();
-				//valueListPool.getTotalMemory();
+				getBlockSize() + 
+				valueListPool.getTotalMemory() +
+				attrValuesPool.getTotalMemory();
 	}
 
 	void printMemory()
@@ -230,8 +235,10 @@ public:
 		printf("Branch size: %d\n", getBranchSize());
 		printf("Block size: %d\n", getBlockSize());
 		printf("Value list pool size: %d\n", valueListPool.getTotalMemory());
+		printf("Attr value pool size: %d\n", attrValuesPool.getTotalMemory());
 		printf("Total size: %d\n", getTotalMemory());
 		valueListPool.printMemory();
+		attrValuesPool.printMemory();
 	}
 
 	void clear()
@@ -303,6 +310,7 @@ public:
 
 		//value lists
 		valueListPool.read(pValueListFile);
+		//attrValuesPool.read
 
 		return true;
 	}
@@ -792,10 +800,14 @@ public:
 						   HARRAY_ITEM_VISIT_FUNC visitor,
 						   void* pData);
 	
-	uint HArrayVarRAM::scanKeysAndValues(uint* key, 
-										 uint keyLen,
-										 HARRAY_ITEM_VISIT_FUNC visitor,
-										 void* pData);
+	uint scanKeysAndValues(uint* key, 
+						   uint keyLen,
+						   HARRAY_ITEM_VISIT_FUNC visitor,
+						   void* pData);
+
+	uint scanKeysAndValues(uint* key,
+						   HARRAY_ITEM_VISIT_FUNC visitor,
+						   void* pData);
 
 	//=============================================================================================================
 
@@ -853,6 +865,7 @@ public:
 
 		delete[] freeBranchCells;
 
-		//valueListPool.destroy();
+		valueListPool.destroy();
+		attrValuesPool.destroy();
 	}
 };

@@ -8,7 +8,7 @@ bool DniproDB::getDocsByAttr_scanKey(uint* key,
 {
 	ScanKeyData* pScanKeyData = (ScanKeyData*)pData;
 
-	if (pScanKeyData->pTran && pScanKeyData->pTran->hasKeyAndValue1(key, keyLen, value, false)) //is deleted in tran
+	if (pScanKeyData->pTran && pScanKeyData->pTran->hasKeyAndValue1(key, keyLen, value, Deleted)) //is deleted in tran
 	{
 		return true; 
 	}
@@ -58,7 +58,7 @@ bool DniproDB::getDocsByAttr_scanIn(uint* key,
 {
 	ScanKeyData* pScanKeyData = (ScanKeyData*)pData;
 
-	if (pScanKeyData->pTran && pScanKeyData->pTran->hasKeyAndValue1(key, keyLen, value, false)) //is deleted in tran
+	if (pScanKeyData->pTran && pScanKeyData->pTran->hasKeyAndValue1(key, keyLen, value, Deleted)) //is deleted in tran
 	{
 		return true;
 	}
@@ -92,7 +92,7 @@ bool DniproDB::getDocsByAttr_scanCond(uint* key,
 {
 	ScanKeyData* pScanKeyData = (ScanKeyData*)pData;
 
-	if (pScanKeyData->pTran && pScanKeyData->pTran->hasKeyAndValue1(key, keyLen, value, false)) //is deleted in tran
+	if (pScanKeyData->pTran && pScanKeyData->pTran->hasKeyAndValue1(key, keyLen, value, Deleted)) //is deleted in tran
 	{
 		return true;
 	}

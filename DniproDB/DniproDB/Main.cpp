@@ -1181,17 +1181,12 @@ int main(int argc, char** argv)
 	/*DniproDB* db = new DniproDB();
 	db->init();
 
-	db->addDoc("{'a':'1'}");
-	db->addDoc("{'b':'1'}");
-
-	DniproQuery dq(db);
-
-	dq.getWhere("{'a':'1'}")->
-	   join("{'a':$}", "{'b':$}")->
-	   insert("{'c':'5'}", 1);
+	db->addDoc("{'a':[1,2,3]}");
+	
+	db->shrink();
 
 	char buff[256];
-	db->getPartDoc("{'c':$}", buff, 2);
+	db->getPartDoc("{'a':[$,$,$]}", buff, 1);
 	
 	return 0;*/
 
