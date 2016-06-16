@@ -1,11 +1,11 @@
 #include "StdAfx.h"
 #include "HArrayVarRAM.h"
 
-bool HArrayVarRAM::insert(uint* key,
+uint HArrayVarRAM::insert(uint* key,
 						  uint keyLen,
 						  uint value)
 {
 	//Key\Value storage
 
-	return true;
+	return 0;
 }

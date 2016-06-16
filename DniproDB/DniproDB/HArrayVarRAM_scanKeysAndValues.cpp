@@ -29,3 +29,10 @@ uint HArrayVarRAM::scanKeysAndValues(uint* key,
 
 	return 0;
 }
+
+uint HArrayVarRAM::scanKeysAndValues(uint* key,
+									HARRAY_ITEM_VISIT_FUNC visitor,
+									void* pData)
+{
+	return 0;
+}

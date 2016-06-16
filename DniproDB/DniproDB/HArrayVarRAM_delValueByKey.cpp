@@ -1,9 +1,7 @@
 #include "StdAfx.h"
 #include "HArrayVarRAM.h"
 
-void HArrayVarRAM::detValueByKey(uint* key,
-								 uint keyLen,
-								 uint value)
+void HArrayVarRAM::delValueByKey(uint* key, uint keyLen, uint value, uint index)
 {
 	//Key\Value storage
 
