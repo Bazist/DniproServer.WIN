@@ -308,7 +308,7 @@ DWORD WINAPI DniproDB::writeTrans(LPVOID lpParam)
 }
 
 bool DniproDB::readTrans(char* filePath,
-	uint onDate = 0)
+						 uint onDate = 0)
 {
 	const uint buffSize = 10 * WRITE_TRANS_BUFFER_SIZE;
 
@@ -331,6 +331,7 @@ bool DniproDB::readTrans(char* filePath,
 		uint safeLen = buffSize - WRITE_TRANS_BUFFER_SIZE;
 
 		uint pos = 0;
+		uint startTranPos = 0;
 
 		while (true)
 		{
@@ -354,7 +355,8 @@ bool DniproDB::readTrans(char* filePath,
 				{
 					uint* pLen = (uint*)&buff[i];
 
-					if (i + *pLen > len)
+					if (i + *pLen > len ||
+						*pLen == 0) //empty file
 					{
 						break; //corrupted
 					}
@@ -400,6 +402,9 @@ bool DniproDB::readTrans(char* filePath,
 					{
 						rollbackTran(tranID);
 					}
+
+					//start next tran pos
+					startTranPos = i + 1;
 				}
 				else if (commandType == '*') //rollback
 				{
@@ -604,15 +609,17 @@ bool DniproDB::readTrans(char* filePath,
 		//need shrink file
 		if (onDate)
 		{
-			BinaryFile* pFile = new BinaryFile(filePath, true, true);
+			BinaryFile* pFile = new BinaryFile(filePath, true, false);
 
 			if (pFile->open())
 			{
-				uint blank = 0;
+				pFile->setPosition(startTranPos);
 
-				for (uint i = tranLogSize; i < fileSize; i += 4)
+				uchar blank = 0;
+
+				for (uint i = startTranPos; i < fileSize; i++)
 				{
-					pFile->writeInt(&blank);
+					pFile->writeChar(&blank);
 				}
 
 				//pFile->flush();

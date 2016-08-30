@@ -202,6 +202,19 @@ void BinaryFile::writeLong(const ulong* pValue,
 	fwrite (pValue, 8, 1, m_file);
 }
 
+void BinaryFile::writeChar(const uchar* pValue)
+{
+	fwrite(pValue, 1, 1, m_file);
+}
+
+void BinaryFile::writeChar(const uchar* pValue,
+						   const ulong position)
+{
+	setPosition(position);
+	fwrite(pValue, 1, 1, m_file);
+}
+
+
 void BinaryFile::writeInts(const uint* pValues, 
 						   const uint length)
 {

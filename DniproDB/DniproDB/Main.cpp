@@ -862,23 +862,28 @@ void testDniproTranReadCommited()
 void testDniproTranRepeatableRead()
 {
 	DniproDB db;
-	db.init("c:\\fts\\bla.dp");
+	db.init();
 
 	clock_t start, finish;
 
-	initJsons();
+	//initJsons();
 
 	start = clock();
 
 	uint tranID = 0;
 	
-	//tranID = db.beginTran(REPEATABLE_READ_TRAN);
+	tranID = db.beginTran(REPEATABLE_READ_TRAN);
 		
 	//ValueList* vl = db.getDocsByAttr("{'name':'bill'}", 0, tranID);
 	
-	for (uint i = 0; i<1000000; i++)
+	for (uint i = 0; i<5000000; i++)
 	{
 		db.addDoc("{'name':'bill', 'type':'person'}", tranID);
+
+		/*if (i % 100 == 0)
+		{
+			printf("%u\n", i);
+		}*/
 	}
 
 	db.commitTran(tranID);
@@ -1178,15 +1183,23 @@ void benchsort()
 
 int main(int argc, char** argv)
 {
+
+	/*testDniproTranRepeatableRead();
+
+	return 0;*/
+
 	/*DniproDB* db = new DniproDB();
 	db->init();
 
-	db->addDoc("{'a':[1,2,3]}");
+	db->addDoc("{'a':[{'x':[{'b':5}]}]}");
 	
 	db->shrink();
 
 	char buff[256];
-	db->getPartDoc("{'a':[$,$,$]}", buff, 1);
+	
+	DniproQuery dq(db);
+
+	uint count = dq.getWhere("{'a':[{'x':[{'b':5}]}]}")->count();
 	
 	return 0;*/
 

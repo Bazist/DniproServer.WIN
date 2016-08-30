@@ -83,7 +83,7 @@ public:
 	bool writeTranOnHDD;
 	static ulong tranLogSize;
 	static ulong blobLogSize;
-
+	
 	HArrayVarRAM* has1[MAX_CHAR];
 	HArrayVarRAM* has2[MAX_CHAR];
 
@@ -132,17 +132,11 @@ public:
 	//	return true;
 	//}
 
-	static uint getAmountKeyIndexes(HArrayVarRAM* pHA,
-		uint* key,
-		uint keyLen,
-		uint& fullKeyLen,
-		uint* indexes);
-
 	static bool shrinkKeyHA(uint* key,
-		uint keyLen,
-		uint value,
-		uchar valueType,
-		void* pData);
+							uint keyLen,
+							uint value,
+							uchar valueType,
+							void* pData);
 
 	uint shrink();
 
@@ -162,7 +156,7 @@ public:
 	}
 
 	void init(char* dbFolder = 0,
-		uint onDate = 0)
+			  uint onDate = 0)
 	{
 		pHArrayTranItemsPool = new HArrayTranItemsPool();
 
@@ -283,7 +277,7 @@ public:
 		uint* indexes,
 		HArrayTran* pTran);
 
-	inline void setPathIndexes(uint* arrayPos,
+	inline uint setPathIndexes(uint* arrayPos,
 		uint* indexes,
 		char* key,
 		uint level,
@@ -424,6 +418,7 @@ public:
 
 	/*void clearState()
 	{
+	tranItemKeysPool.clear();
 	valueListPool.clear();
 	indexesPool.clear();
 	}*/

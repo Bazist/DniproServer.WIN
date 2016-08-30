@@ -494,7 +494,7 @@ public:
 						}
 						else
 						{
-							printError("AddDoc method has format: AddDoc(json)");
+							printError("AddDoc method has format: db.AddDoc(json)");
 
 							return false;
 						}
@@ -508,7 +508,7 @@ public:
 						}
 						else
 						{
-							printError("AndWhere method has format: AndWhere(json)");
+							printError("AndWhere method has format: db.AndWhere(json)");
 
 							return false;
 						}
@@ -522,7 +522,7 @@ public:
 						}
 						else
 						{
-							printError("Avg method has format: Avg(json)");
+							printError("Avg method has format: db.Avg(json)");
 
 							return false;
 						}
@@ -538,7 +538,7 @@ public:
 						}
 						else
 						{
-							printError("AddColl method has format: AddColl(name)");
+							printError("AddColl method has format: db.AddColl(name)");
 
 							return false;
 						}
@@ -567,7 +567,7 @@ public:
 						}
 						else
 						{
-							printError("InsPartDoc method has format: InsPartDoc(json, docID)");
+							printError("InsPartDoc method has format: db.InsPartDoc(json, docID)");
 
 							return false;
 						}
@@ -581,7 +581,7 @@ public:
 						}
 						else
 						{
-							printError("Insert method has format: Insert(json)");
+							printError("Insert method has format: db.Insert(json)");
 
 							return false;
 						}
@@ -610,7 +610,7 @@ public:
 						}
 						else
 						{
-							printError("UpdPartDoc method has format: UpdPartDoc(json, docID)");
+							printError("UpdPartDoc method has format: db.UpdPartDoc(json, docID)");
 
 							return false;
 						}
@@ -624,7 +624,7 @@ public:
 						}
 						else
 						{
-							printError("Update method has format: Update(json)");
+							printError("Update method has format: db.Update(json)");
 
 							return false;
 						}
@@ -653,7 +653,7 @@ public:
 						}
 						else
 						{
-							printError("DelPartDoc method has format: DelPartDoc(json, docID)");
+							printError("DelPartDoc method has format: db.DelPartDoc(json, docID)");
 
 							return false;
 						}
@@ -667,7 +667,7 @@ public:
 						}
 						else
 						{
-							printError("Delete method has format: Delete(json)");
+							printError("Delete method has format: db.Delete(json)");
 
 							return false;
 						}
@@ -683,7 +683,7 @@ public:
 						}
 						else
 						{
-							printError("DelColl method has format: DelColl(name)");
+							printError("DelColl method has format: db.DelColl(name)");
 
 							return false;
 						}
@@ -709,7 +709,7 @@ public:
 						}
 						else
 						{
-							printError("GetWhere method has format: GetWhere(json)");
+							printError("GetWhere method has format: db.GetWhere(json)");
 
 							return false;
 						}
@@ -722,7 +722,7 @@ public:
 						}
 						else
 						{
-							printError("GetAll method has format: GetAll()");
+							printError("GetAll method has format: db.GetAll()");
 
 							return false;
 						}
@@ -742,7 +742,7 @@ public:
 						}
 						else
 						{
-							printError("GetAll method has format: GetAll()");
+							printError("GetAll method has format: db.GetAll()");
 
 							return false;
 						}
@@ -768,7 +768,7 @@ public:
 						}
 						else
 						{
-							printError("OrWhere method has format: OrWhere(json)");
+							printError("OrWhere method has format: db.OrWhere(json)");
 
 							return false;
 						}
@@ -797,7 +797,7 @@ public:
 						}
 						else
 						{
-							printError("Join method has format: Join(json1, json2)");
+							printError("Join method has format: db.Join(json1, json2)");
 
 							return false;
 						}
@@ -824,7 +824,7 @@ public:
 						}
 						else
 						{
-							printError("Shrink method has format: Shrink()");
+							printError("Shrink method has format: db.Shrink()");
 
 							return false;
 						}
@@ -840,7 +840,7 @@ public:
 						}
 						else
 						{
-							printError("SetDefColl method has format: SetDefColl(name)");
+							printError("SetDefColl method has format: db.SetDefColl(name)");
 
 							return false;
 						}
@@ -854,7 +854,7 @@ public:
 						}
 						else
 						{
-							printError("Skip method has format: Skip(amount)");
+							printError("Skip method has format: db.Skip(amount)");
 
 							return false;
 						}
@@ -875,7 +875,7 @@ public:
 						}
 						else
 						{
-							printError("Sort method has format: Sort(json) or Sort(json, isAscending)");
+							printError("Sort method has format: db.Sort(json) or db.Sort(json, isAscending)");
 
 							return false;
 						}
@@ -889,7 +889,7 @@ public:
 						}
 						else
 						{
-							printError("Sum method has format: Sum(json)");
+							printError("Sum method has format: db.Sum(json)");
 
 							return false;
 						}
@@ -911,7 +911,7 @@ public:
 						}
 						else
 						{
-							printError("Select method has format: Select(json)");
+							printError("Select method has format: db.Select(json)");
 
 							return false;
 						}
@@ -924,7 +924,7 @@ public:
 						}
 						else
 						{
-							printError("SelfTest method has format: SelfTest()");
+							printError("SelfTest method has format: db.SelfTest()");
 
 							return false;
 						}
@@ -950,7 +950,7 @@ public:
 						}
 						else
 						{
-							printError("Skip method has format: Take(amount)");
+							printError("Skip method has format: db.Take(amount)");
 
 							return false;
 						}
@@ -975,7 +975,7 @@ public:
 						}
 						else
 						{
-							printError("Count method has format: Count()");
+							printError("Count method has format: db.Count()");
 
 							return false;
 						}
@@ -988,7 +988,7 @@ public:
 						}
 						else
 						{
-							printError("CommitTran method has format CommitTran()");
+							printError("CommitTran method has format db.CommitTran()");
 
 							return false;
 						}
@@ -1008,7 +1008,7 @@ public:
 						}
 						else
 						{
-							printError("Clear method has format Clear()");
+							printError("Clear method has format db.Clear()");
 
 							return false;
 						}
@@ -1033,7 +1033,7 @@ public:
 						}
 						else
 						{
-							printError("Print method has format: Print(json)");
+							printError("Print method has format: db.Print(json)");
 
 							return false;
 						}
@@ -1058,7 +1058,7 @@ public:
 						}
 						else
 						{
-							printError("Profiler method has format: Profiler(bool)");
+							printError("Profiler method has format: db.Profiler(bool)");
 
 							return false;
 						}
@@ -1098,14 +1098,14 @@ public:
 							}
 							else
 							{
-								printError("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
+								printError("BeginTran method has format db.BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
 
 								return false;
 							}
 						}
 						else
 						{
-							printError("BeginTran method has format BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
+							printError("BeginTran method has format db.BeginTran(TranType.ReadCommited | TranType.RepeatableRead | TranType.Snapshot)");
 
 							return false;
 						}
@@ -1134,7 +1134,7 @@ public:
 						}
 						else
 						{
-							printError("RollbackTran method has format RollbackTran()");
+							printError("RollbackTran method has format db.RollbackTran()");
 
 							return false;
 						}
@@ -1183,7 +1183,7 @@ public:
 						}
 						else
 						{
-							printError("RestoreOnDate method has format: RestoreOnDate(year, month, day) or RestoreOnDate(year, month, day, hour, minute, second)");
+							printError("RestoreOnDate method has format: db.RestoreOnDate(year, month, day) or db.RestoreOnDate(year, month, day, hour, minute, second)");
 
 							return false;
 						}

@@ -69,6 +69,9 @@ public:
 	void writeLong(const ulong* pValue);
 	void writeLong(const ulong* pValue, const ulong position);
 
+	void writeChar(const uchar* pValue);
+	void writeChar(const uchar* pValue, const ulong position);
+
 	void writeInts(const uint* pValues, const uint length);
 
 	void flush()
