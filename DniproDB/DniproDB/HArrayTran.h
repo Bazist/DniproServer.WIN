@@ -1,3 +1,21 @@
+/*
+# Copyright(C) 2010-2016 Vyacheslav Makoveychuk (email: slv709@gmail.com, skype: vyacheslavm81)
+# This file is part of DniproDB.
+#
+# DniproDB is free software : you can redistribute it and / or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# DniproDB is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #pragma once
 #include <atomic>
 #include "HArrayVarRAM.h"
@@ -35,12 +53,16 @@ public:
 	ON_CONTENT_CELL_MOVED_FUNC* onContentCellMovedFunc;
 
 	HArrayTranItemsPool* pHArrayTranItemsPool;
+	
 	HArrayVarRAM** has1;
 	HArrayVarRAM** has2;
 
 	IndexesPool indexesPool;
 	AttrValuesPage* pAttrValuesPage;
+	
+	HArrayTranItemKeysPool tranItemKeysPool;
 	ValueListPool valueListPool;
+
 	ReadedList readedList;
 
 	uint tempInt;
@@ -71,7 +93,7 @@ public:
 		pGrandParentTran = 0;
 
 		this->pHArrayTranItemsPool = pHArrayTranItemsPool;
-
+		
 		this->has1 = has1;
 		this->has2 = has2;
 
@@ -150,7 +172,7 @@ public:
 			item.CollID = CollID;
 			item.Type = itemType;
 			item.pIndexInVL = pIndexInVL;
-			memcpy(item.Key, key, keyLen);
+			item.setKey(tranItemKeysPool, key, keyLen);
 			item.KeyLen = keyLen;
 			item.Value = value;
 		}
@@ -218,7 +240,7 @@ public:
 			item.CollID = CollID;
 			item.Type = itemType;
 			item.pIndexInVL = pIndexInVL;
-			memcpy(item.Key, key, keyLen);
+			item.setKey(tranItemKeysPool, key, keyLen);
 			item.KeyLen = keyLen;
 			item.Value = value;
 		}
@@ -267,7 +289,7 @@ public:
 
 			HArrayTranItem& item = pHArrayTranItems2->Items[Count2];
 
-			memcpy(item.Key, key, keyLen);
+			item.setKey(tranItemKeysPool, key, keyLen);
 			item.TranID = tranID;
 			item.CollID = CollID;
 			item.Type = itemType;
@@ -330,7 +352,7 @@ public:
 			item.Type = itemType;
 			item.TranID = tranID;
 			item.CollID = CollID;
-			memcpy(item.Key, key, keyLen);
+			item.setKey(tranItemKeysPool, key, keyLen);
 			item.KeyLen = keyLen;
 			item.Value = value;
 		}
@@ -1540,6 +1562,8 @@ public:
 
 			indexesPool.clear();
 			//attrValuesPool.clear();
+			
+			tranItemKeysPool.clear();
 			valueListPool.clear();
 
 			if (pAttrValuesPage)
@@ -1561,6 +1585,8 @@ public:
 	void destroy()
 	{
 		indexesPool.destroy();
+
+		tranItemKeysPool.clear();
 		valueListPool.destroy();
 	}
 };

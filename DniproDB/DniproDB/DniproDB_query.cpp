@@ -1,3 +1,21 @@
+/*
+# Copyright(C) 2010-2016 Vyacheslav Makoveychuk (email: slv709@gmail.com, skype: vyacheslavm81)
+# This file is part of DniproDB.
+#
+# DniproDB is free software : you can redistribute it and / or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# DniproDB is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "DniproDB.h"
 
 void DniproDB::procAlias(char* json,
@@ -222,12 +240,14 @@ void DniproDB::procAlias(char* json,
 	}
 }
 
-void DniproDB::setPathIndexes(uint* arrayPos,
+uint DniproDB::setPathIndexes(uint* arrayPos,
 								uint* indexes,
 								char* key,
 								uint level,
 								uint& currPos)
 {
+	uint amountIndexes = 0;
+
 	uint currIndex = 0;
 
 	for (uint i = 1; i <= level; i++)
@@ -246,8 +266,12 @@ void DniproDB::setPathIndexes(uint* arrayPos,
 			}
 
 			currPos += 4;
+
+			amountIndexes++;
 		}
 	}
+
+	return amountIndexes;
 }
 
 ValueList* DniproDB::getDocsByAttr(char* json,
@@ -1148,7 +1172,7 @@ uint DniproDB::getPartDoc(char* jsonTemplate,
 			//copy value
 			if (attrValue)
 			{
-				attrValue += 4; //skip ha1DocIndex, 4 bytes
+				attrValue += 5; //reserve 4 bytes for ha1DocIndex and 1 bytes for amount indexes
 
 				if ((attrValue[0] == 't' && strcmp(attrValue, "true") == 0) ||
 					(attrValue[0] == 'f' && strcmp(attrValue, "false") == 0) ||
@@ -1404,7 +1428,7 @@ uint DniproDB::insPartDoc(char* json,
 			//format attr value: ha1DocIndex(4 bytes) | attr value
 			attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
 
-			pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
+			pTran->pAttrValuesPage->CurrPos += 5; //reserve 4 bytes for ha1DocIndex and 1 bytes for amount indexes
 
 			break;
 		}
@@ -1486,7 +1510,7 @@ uint DniproDB::insPartDoc(char* json,
 			//format attr value: ha1DocIndex(4 bytes) | attr value
 			attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
 			 
-			pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
+			pTran->pAttrValuesPage->CurrPos += 5; //reserve 4 bytes for ha1DocIndex and 1 bytes for amount indexes
 
 			hasValue = false;
 
@@ -1545,7 +1569,7 @@ uint DniproDB::insPartDoc(char* json,
 
 				attrCurrPos += 4;
 
-				setPathIndexes(arrayPos, indexes, key, level, attrCurrPos);
+				*(uchar*)(attrValue + 4) = setPathIndexes(arrayPos, indexes, key, level, attrCurrPos);
 
 				print(key, attrCurrPos, level);
 
@@ -1554,6 +1578,7 @@ uint DniproDB::insPartDoc(char* json,
 				//if (pTran)
 				//{
 				
+				//key has format: path + docID + indexes | ha1docIndex + amountIndexes + value
 				pTran->insertOrDelete2((uint*)key,
 										attrCurrPos,
 										has2[pTran->CollID]->attrValuesPool.toSerPointer(pTran->pAttrValuesPage, attrValue),
@@ -1604,7 +1629,7 @@ uint DniproDB::insPartDoc(char* json,
 					//format attr value: ha1DocIndex(4 bytes) | attr value
 					attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
 
-					pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
+					pTran->pAttrValuesPage->CurrPos += 5; //reserve 4 bytes for ha1DocIndex and 1 bytes for amount indexes
 
 					arrayPos[level]++;
 
@@ -1827,7 +1852,7 @@ uint DniproDB::updPartDoc(char* json,
 				//format attr value: ha1DocIndex(4 bytes) | attr value
 				attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
 
-				pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
+				pTran->pAttrValuesPage->CurrPos += 5; //reserve 4 bytes for ha1DocIndex and 1 bytes for amount indexes
 
 				//get value
 				*(uint*)&key[currPos] = docID;
@@ -1870,7 +1895,7 @@ uint DniproDB::updPartDoc(char* json,
 				if (delAttrVal)
 				{
 					char* delAttrValStr = delAttrVal;
-					delAttrValStr += 4; //skip ha1DocIndex
+					delAttrValStr += 5; //skip ha1DocIndex
 					
 					if (delAttrValStr[0])
 					{
@@ -1961,13 +1986,14 @@ uint DniproDB::updPartDoc(char* json,
 
 					attrCurrPos += 4;
 
-					setPathIndexes(arrayPos, indexes, key, level, attrCurrPos);
+					*(uchar*)(attrValue + 4) = setPathIndexes(arrayPos, indexes, key, level, attrCurrPos);
 
 					print(key, currPos, level);
 
 					//if (pTran)
 					//{
-						
+					
+					//key has format: path + docID + indexes | ha1docIndex + amountIndexes + value
 					pTran->insertOrDelete2((uint*)key,
 											attrCurrPos,
 											has2[pTran->CollID]->attrValuesPool.toSerPointer(pTran->pAttrValuesPage, attrValue),
@@ -2012,7 +2038,7 @@ uint DniproDB::updPartDoc(char* json,
 							//format attr value: ha1DocIndex(4 bytes) | attr value
 							attrValue = pTran->pAttrValuesPage->Values + pTran->pAttrValuesPage->CurrPos;
 
-							pTran->pAttrValuesPage->CurrPos += 4; //reserve 4 bytes for ha1DocIndex
+							pTran->pAttrValuesPage->CurrPos += 5; //reserve 4 bytes for ha1DocIndex and 1 bytes for amount indexes
 
 							arrayPos[level]++;
 						}

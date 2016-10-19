@@ -1,34 +1,22 @@
+/*
+# Copyright(C) 2010-2016 Vyacheslav Makoveychuk (email: slv709@gmail.com, skype: vyacheslavm81)
+# This file is part of DniproDB.
+#
+# DniproDB is free software : you can redistribute it and / or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# DniproDB is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "DniproDB.h"
-
-uint DniproDB::getAmountKeyIndexes(HArrayVarRAM* pHA,
-									uint* key,
-									uint keyLen,
-									uint& fullKeyLen,
-									uint* indexes)
-{
-	uint amountKeyIndexes = 0;
-
-	for (uint i = keyLen - 1; i >= 0; i--, amountKeyIndexes++, fullKeyLen -= 4)
-	{
-		indexes[amountKeyIndexes] = key[i];
-
-		key[i] = 0;
-
-		uchar valueType;
-
-		//this key should contain count of array items
-		uint arrayCount = pHA->getValueByKey(key, fullKeyLen, valueType);
-
-		if (arrayCount == 0)
-		{
-			key[i] = indexes[amountKeyIndexes]; //it's docID, repair key
-
-			break;
-		}
-	}
-
-	return amountKeyIndexes;
-}
 
 bool DniproDB::shrinkKeyHA(uint* key,
 							uint keyLen,
@@ -55,24 +43,32 @@ bool DniproDB::shrinkKeyHA(uint* key,
 		{
 			char* charKey = (char*)key;
 
-			//reservce first 4 bytes for index in ha1 KeyValueList
-			pAttrValuesPage->CurrPos += 4;
-
 			//insert value in ha2
 			pScanKeyData->pNewHA2->insert(key, fullKeyLen, newValue);
 
+			uchar amountShrinkKeyIndexes = *(uchar*)(attrValue + 4);
+
+			//reservce first 4 bytes for index in ha1 KeyValueList
+			pAttrValuesPage->CurrPos += 4;
+
+			//reserve first byte for amount indexes
+			pAttrValuesPage->Values[pAttrValuesPage->CurrPos++] = amountShrinkKeyIndexes;
+
 			uint indexes[MAX_DOC_DEPTH];
 
-			uint amountKeyIndexes = getAmountKeyIndexes(pScanKeyData->pOldHA2, key, keyLen, fullKeyLen, indexes);
+			for (uint i = 0, currKeyLen = keyLen - amountShrinkKeyIndexes; i < amountShrinkKeyIndexes; i++, currKeyLen++)
+			{
+				indexes[i] = key[currKeyLen];
+			}
 
-			uint docIDKeyPos = keyLen - amountKeyIndexes - 1;
+			uint docIDKeyPos = keyLen - amountShrinkKeyIndexes - 1;
 
 			uint docID = key[docIDKeyPos];
 
-			fullKeyLen -= 4; //override docID
+			fullKeyLen -= ((amountShrinkKeyIndexes * 4) + 4); //override docID and indexes
 
-			//copy string
-			for (uint i = 4; attrValue[i]; i++, pAttrValuesPage->CurrPos++, fullKeyLen++)
+			//copy string, 5 chars skip 4 bytes ha1 KeyValueList + 1 byte amount indexes
+			for (uint i = 5; attrValue[i]; i++, pAttrValuesPage->CurrPos++, fullKeyLen++)
 			{
 				pAttrValuesPage->Values[pAttrValuesPage->CurrPos] = attrValue[i];
 
@@ -90,7 +86,7 @@ bool DniproDB::shrinkKeyHA(uint* key,
 			//add indexes
 			keyLen = (fullKeyLen >> 2);
 
-			for (uint i = 0; i < amountKeyIndexes; i++, keyLen++, fullKeyLen += 4)
+			for (uint i = 0; i < amountShrinkKeyIndexes; i++, keyLen++, fullKeyLen += 4)
 			{
 				key[keyLen] = indexes[i];
 			}
@@ -101,7 +97,7 @@ bool DniproDB::shrinkKeyHA(uint* key,
 			//restore key
 			key[docIDKeyPos] = docID;
 
-			for (uint i = 0; i < amountKeyIndexes; i++)
+			for (uint i = 0; i < amountShrinkKeyIndexes; i++)
 			{
 				key[++docIDKeyPos] = indexes[i];
 			}
@@ -133,6 +129,10 @@ uint DniproDB::shrink()
 	{
 		ScanShrinkKeyData scanKeyData;
 
+		//destroy ha1
+		has1[i]->destroy();
+		delete has1[i];
+
 		//init
 		scanKeyData.pNewHA1 = createHA1(has1[i]->Name);
 		scanKeyData.pNewHA2 = createHA2(has2[i]->Name);
@@ -142,14 +142,11 @@ uint DniproDB::shrink()
 		//scan
 		has2[i]->scanKeysAndValues(key, &shrinkKeyHA, &scanKeyData);
 
-		//destroy
-		has1[i]->destroy();
+		//destroy ha2
 		has2[i]->destroy();
-
-		delete has1[i];
 		delete has2[i];
 
-		//copy
+		//replace
 		has1[i] = scanKeyData.pNewHA1;
 		has2[i] = scanKeyData.pNewHA2;
 	}
