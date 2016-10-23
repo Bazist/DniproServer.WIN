@@ -81,6 +81,9 @@
     <ClInclude Include="Test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HArrayTranItemKeysPool.h">
+      <Filter>Header Files\Transaction</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">

@@ -105,6 +105,7 @@
     <ClInclude Include="DniproInterpreter.h" />
     <ClInclude Include="DniproQuery.h" />
     <ClInclude Include="HArrayFixBase.h" />
+    <ClInclude Include="HArrayTranItemKeysPool.h" />
     <ClInclude Include="HArrayTranItems.h" />
     <ClInclude Include="HArrayTranItemsPool.h" />
     <ClInclude Include="HArrayVarRAM.h" />
