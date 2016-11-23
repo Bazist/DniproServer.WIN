@@ -30,9 +30,6 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BinaryFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DniproDB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,12 +81,12 @@
     <ClInclude Include="HArrayTranItemKeysPool.h">
       <Filter>Header Files\Transaction</Filter>
     </ClInclude>
+    <ClInclude Include="BinFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BinaryFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DniproDB_scan.cpp">

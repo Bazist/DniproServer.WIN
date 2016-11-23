@@ -35,6 +35,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#pragma comment(lib, "Ws2_32.lib")
 
 #define uint32 unsigned __int32
 #define ulong64 unsigned __int64

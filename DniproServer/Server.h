@@ -109,9 +109,23 @@ class Server
 
 			// Create a SOCKET for listening for
 			// incoming connection requests
+			#ifdef _WIN32
+			SOCKET listenSocket;
+			#endif
+
+			#ifdef __linux__
 			int listenSocket;
+			#endif
+			
 			listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			
+			#ifdef _WIN32
+			if (listenSocket == SOCKET_ERROR)
+			#endif
+			
+			#ifdef __linux__
 			if (listenSocket == -1)
+			#endif
 			{
 				#ifdef _WIN32
 				DniproError::Print(CONNECTION_ERROR, "Error at socket(): %ld.\n", WSAGetLastError());
@@ -145,23 +159,24 @@ class Server
 
 			#ifdef _WIN32
 			// Bind the socket.
-			if (bind(listenSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
+			if (bind(listenSocket, (SOCKADDR*)&service, sizeof(service)) == -1)
 			{
 				DniproError::Print(CONNECTION_ERROR, "bind() failed.\n");
 
-				closesocket(ListenSocket);
+				closesocket(listenSocket);
 
 				return 0;
 			}
 
 			// Listen for incoming connection requests on the created socket
-			if (listen(listenSocket, 10) == SOCKET_ERROR)
+			if (listen(listenSocket, 10) == -1)
 			{
 				DniproError::Print(CONNECTION_ERROR, "Server: Error listening on socket.\n");
 				
 				return 0;
 			}
 
+			SOCKET acceptSocket;
 			#endif
 
 			#ifdef __linux__
@@ -176,10 +191,11 @@ class Server
 
 			// Listen for incoming connection requests on the created socket
 			listen(listenSocket, 3);
+
+			int acceptSocket;
 			#endif
 
 			// Create a SOCKET for accepting incoming requests.
-			int acceptSocket;
 			DniproInfo::Print("Server started (port 4477)...\n");
 
 			bool useExistingConnection = false;
@@ -190,7 +206,13 @@ class Server
 			{
 			NEXT_CLIENT:
 				
+				#ifdef _WIN32
+				acceptSocket = SOCKET_ERROR;
+				#endif
+
+				#ifdef __linux__
 				acceptSocket = -1;
+				#endif
 
 				//ACCEPT CONNECTION ============================================================
 				acceptSocket = accept(listenSocket, NULL, NULL);
@@ -639,7 +661,7 @@ class Server
 
 			WSACleanup();
 
-			msleep(1000);
+			Sleep(1000);
 			#endif
 
 			#ifdef __linux__
