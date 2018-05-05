@@ -110,7 +110,7 @@ public:
 	static ulong64 blobLogSize;
 	
 	HArrayVarRAM* has1[MAX_CHAR];
-	HArrayVarRAM* has2[MAX_CHAR];
+	//HArrayVarRAM* has2[MAX_CHAR];
 
 	uint32 countColls;
 	uint32 currTime;
@@ -197,7 +197,7 @@ public:
 
 		for (uchar8 i = 1; i < MAX_TRANS; i++)
 		{
-			_trans[i].init(i, pHArrayTranItemsPool, has1, has2, onContentCellMoved);
+			_trans[i].init(i, pHArrayTranItemsPool, has1, 0, onContentCellMoved);
 		}
 
 		blockReaders = false;
@@ -452,7 +452,7 @@ public:
 		for (uint32 i = 0; i < countColls; i++)
 		{
 			usedMemory += has1[i]->getUsedMemory();
-			usedMemory += has2[i]->getUsedMemory();
+			//usedMemory += has2[i]->getUsedMemory();
 		}
 
 		return usedMemory;
@@ -465,7 +465,7 @@ public:
 		for (uint32 i = 0; i < countColls; i++)
 		{
 			totalMemory += has1[i]->getTotalMemory();
-			totalMemory += has2[i]->getTotalMemory();
+			//totalMemory += has2[i]->getTotalMemory();
 		}
 
 		return totalMemory;
@@ -540,7 +540,7 @@ public:
 		return pHA1;
 	}
 
-	HArrayVarRAM* createHA2(char* name)
+	/*HArrayVarRAM* createHA2(char* name)
 	{
 		HArrayVarRAM* pHA2 = new HArrayVarRAM();
 
@@ -553,7 +553,7 @@ public:
 		pHA2->checkDeadlockFunc = checkDeadlock;
 
 		return pHA2;
-	}
+	}*/
 
 	uint32 addColl(char* name)
 	{
@@ -571,7 +571,7 @@ public:
 
 		has1[countColls] = createHA1(name);
 
-		has2[countColls] = createHA2(name);
+		//has2[countColls] = createHA2(name);
 
 		if (writeTranOnHDD)
 		{
@@ -607,13 +607,13 @@ public:
 		{
 			if (!strcmp(has1[i]->Name, name))
 			{
-				if (has1[i] && has2[i])
+				if (has1[i]) //&& has2[i])
 				{
 					has1[i]->destroy();
-					has2[i]->destroy();
+					//has2[i]->destroy();
 
 					has1[i] = 0;
-					has2[i] = 0;
+					//has2[i] = 0;
 
 					if (writeTranOnHDD)
 					{
@@ -679,10 +679,10 @@ public:
 		for (uint32 i = 0; i < countColls; i++)
 		{
 			has1[i]->clear();
-			has2[i]->clear();
+			//has2[i]->clear();
 
 			has1[i]->AllowValueList = true;
-			has2[i]->AllowValueList = false;
+			//has2[i]->AllowValueList = false;
 		}
 
 		lastDocID = 0;
@@ -708,7 +708,7 @@ public:
 		for (uint32 i = 0; i < countColls; i++)
 		{
 			has1[i]->destroy();
-			has2[i]->destroy();
+			//has2[i]->destroy();
 		}
 	}
 };

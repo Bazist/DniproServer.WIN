@@ -135,20 +135,20 @@ uint32 DniproDB::shrink()
 
 		//init
 		scanKeyData.pNewHA1 = createHA1(has1[i]->Name);
-		scanKeyData.pNewHA2 = createHA2(has2[i]->Name);
+		//scanKeyData.pNewHA2 = createHA2(has2[i]->Name);
 
-		scanKeyData.pOldHA2 = has2[i];
+		//scanKeyData.pOldHA2 = has2[i];
 
 		//scan
-		has2[i]->scanKeysAndValues(key, &shrinkKeyHA, &scanKeyData);
+		//has2[i]->scanKeysAndValues(key, &shrinkKeyHA, &scanKeyData);
 
 		//destroy ha2
-		has2[i]->destroy();
-		delete has2[i];
+		//has2[i]->destroy();
+		//delete has2[i];
 
 		//replace
 		has1[i] = scanKeyData.pNewHA1;
-		has2[i] = scanKeyData.pNewHA2;
+		//has2[i] = scanKeyData.pNewHA2;
 	}
 
 	ulong64 afterMemory = getUsedMemory();

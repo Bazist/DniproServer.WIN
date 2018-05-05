@@ -55,7 +55,7 @@ public:
 	HArrayTranItemsPool* pHArrayTranItemsPool;
 	
 	HArrayVarRAM** has1;
-	HArrayVarRAM** has2;
+	//HArrayVarRAM** has2;
 
 	IndexesPool indexesPool;
 	AttrValuesPage* pAttrValuesPage;
@@ -95,7 +95,7 @@ public:
 		this->pHArrayTranItemsPool = pHArrayTranItemsPool;
 		
 		this->has1 = has1;
-		this->has2 = has2;
+		//this->has2 = has2;
 
 		pHArrayTranItems1 = pHArrayTranItemsPool->newObject();
 		pHArrayTranItems2 = pHArrayTranItemsPool->newObject();
@@ -1083,12 +1083,12 @@ public:
 					tranValueInserted,
 					tranValueDeleted);
 
-		storeValue = has2[CollID]->getValueByKey(key,
+		/*storeValue = has2[CollID]->getValueByKey(key,
 				keyLen,
 				storeValueType,
 				readModeType,
 				TranID,
-				&readedList);
+				&readedList);*/
 		
 
 		//0. inserted in tran
@@ -1116,10 +1116,10 @@ public:
 				HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
 				uchar8 valueType;
-				if (has2[item.CollID]->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
-				{
+				//if (has2[item.CollID]->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
+				//{
 					return true;
-				}
+				//}
 			}
 		}
 		else
@@ -1134,10 +1134,10 @@ public:
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
 					uchar8 valueType;
-					if (has2[item.CollID]->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
-					{
+					//if (has2[item.CollID]->getValueByKey(item.Key, item.KeyLen, valueType, 3)) //3. Check if key blocked (ha2 for commit)
+					//{
 						return true;
-					}
+					//}
 				}
 
 				//next block
@@ -1166,15 +1166,15 @@ public:
 				HArrayTranItem& item = pHArrayTranItems2->Items[i];
 
 				uchar8 valueType;
-				if (has2[CollID]->getValueByKey(item.Key,
-					item.KeyLen,
-					valueType,
-					4,
-					TranID,
-					&readedList)) //4. Check if key blocked, but excluded my cells
-				{
+				//if (has2[CollID]->getValueByKey(item.Key,
+				//	item.KeyLen,
+				//	valueType,
+				//	4,
+				//	TranID,
+				//	&readedList)) //4. Check if key blocked, but excluded my cells
+				//{
 					return true;
-				}
+				//}
 			}
 		}
 		else
@@ -1189,15 +1189,15 @@ public:
 					HArrayTranItem& item = pCurrHArrayTranItems->Items[i];
 
 					uchar8 valueType;
-					if (has2[CollID]->getValueByKey(item.Key,
-						item.KeyLen,
-						valueType,
-						4,
-						TranID,
-						&readedList)) //4. Check if key blocked, but excluded my cells
-					{
+					//if (has2[CollID]->getValueByKey(item.Key,
+					//	item.KeyLen,
+					//	valueType,
+					//	4,
+					//	TranID,
+					//	&readedList)) //4. Check if key blocked, but excluded my cells
+					//{
 						return true;
-					}
+					//}
 				}
 
 				//next block
@@ -1306,11 +1306,11 @@ public:
 
 					if (item.Type == Inserted) //inserted
 					{
-						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
+						//has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
 					else if(item.Type == Deleted) //deleted
 					{
-						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
+						//has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
 				}
 			}
@@ -1322,11 +1322,11 @@ public:
 
 					if (item.Type == Inserted) //inserted
 					{
-						has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
+						//has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 					}
 					else if(item.Type == Deleted) //deleted
 					{
-						has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
+						//has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 					}
 				}
 			}
@@ -1346,11 +1346,11 @@ public:
 
 						if (item.Type == Inserted) //inserted
 						{
-							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
+							//has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
 						else if(item.Type == Deleted) //deleted
 						{
-							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
+							//has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
 					}
 				}
@@ -1362,11 +1362,11 @@ public:
 
 						if (item.Type == Inserted) //inserted
 						{
-							has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
+							//has2[item.CollID]->insert(item.Key, item.KeyLen, item.Value);
 						}
 						else if(item.Type == Deleted) //deleted
 						{
-							has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
+							//has2[item.CollID]->delValueByKey(item.Key, item.KeyLen, item.Value);
 						}
 					}
 				}
