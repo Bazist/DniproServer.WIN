@@ -1,5 +1,5 @@
 /*
-# Copyright(C) 2010-2016 Vyacheslav Makoveychuk (email: slv709@gmail.com, skype: vyacheslavm81)
+# Copyright(C) 2010-2016 Viacheslav Makoveichuk (email: slv709@gmail.com, skype: vyacheslavm81)
 # This file is part of DniproDB.
 #
 # DniproDB is free software : you can redistribute it and / or modify
