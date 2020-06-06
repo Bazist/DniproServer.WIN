@@ -721,7 +721,7 @@ bool DniproDB::readTrans(char* filePath,
 			DniproInfo::Print("Log restored on date: %s\n", ctime(&tm));
 		}
 
-		DniproInfo::Print("Log readed.\n");
+		DniproInfo::Print("Log read successful.\n");
 
 		writeTranOnHDD = oldWriteTranOnHDD;
 

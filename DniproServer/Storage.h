@@ -544,7 +544,7 @@ public:
 
 			delete[] buff;
 
-			printf("Log readed.\n");
+			printf("Log read successful.\n");
 
 			return true;
 		}
