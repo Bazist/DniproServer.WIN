@@ -20,9 +20,9 @@ And that's all ! We indexed the object with all attributes and saved it in convi
 
 ```C#
 User[] users = 
-db.GetWhere("{'FirstName':'John'})")
-  .AndWhere("{'Address':{'Country':'UK'}})"
-	  .Select<User>("{'FirstName':$,'LastName':$}");
+db.GetWhere(new { FirstName = "John" })")
+  .AndWhere(new { Address = new { Country = "UK"}})"
+	  .Select<User>();
 ```
 
 You have opportunities to load and update your object partially with minimum traffic. You can do searches by documents and do searches inside one document.
@@ -30,7 +30,7 @@ You have opportunities to load and update your object partially with minimum tra
 And, of course, perfect **JOIN** ...
 ```C#
 JoinResult[] jrs =
-db.GetWhere("{'FirstName':'John'}")
+db.GetWhere(new { FirstName = "John" })
   .Join("{'CarModel':$}","{'Type':'Car', 'Model':$}")
   .Join("{'Company':$}","{'Type':'Company', 'Name':$}")
   .Select<JoinResult>
