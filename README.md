@@ -20,8 +20,8 @@ And that's all ! We indexed the object with all attributes and saved it in convi
 
 ```C#
 User[] users = 
-db.GetWhere(new { FirstName = "John" })")
-  .AndWhere(new { Address = new { Country = "UK"}})"
+db.GetWhere(new { FirstName = "John" })
+  .AndWhere(new { Address = new { Country = "UK"}})
 	  .Select<User>();
 ```
 
