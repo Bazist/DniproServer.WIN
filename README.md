@@ -31,10 +31,9 @@ And, of course, perfect **JOIN** ...
 ```C#
 JoinResult[] jrs =
 db.GetWhere(new { FirstName = "John" })
-  .Join("{'CarModel':$}","{'Type':'Car', 'Model':$}")
-  .Join("{'Company':$}","{'Type':'Company', 'Name':$}")
-  .Select<JoinResult>
-         ("{'FirstName':$}{'Engine':$}{'City':$}");
+  .Join(new { CarModel = "" }, new {Type = "Car", Model = ""})
+  .Join(new { Company = "" }, new {Type = "Company", Name = ""})
+  .Select<JoinResult>("{'FirstName':$}{'Engine':$}{'City':$}");
 ```
 Few clicks by mouse and database is ready for using in your environment 
 (Ready for **Windows**/**Linux** platform and **.NET**, **Java** languages)
