@@ -1,2 +1,2 @@
-# DniproClient.NET
-.NET Client for DniproDB
+# BigDocClient
+.NET Client for BigDoc
