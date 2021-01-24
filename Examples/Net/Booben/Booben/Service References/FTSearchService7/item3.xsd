@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://tempuri.org/" elementFormDefault="qualified" targetNamespace="http://tempuri.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import schemaLocation="http://localhost:5056/?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/FTSearchWCF" />
+  <xs:import schemaLocation="http://localhost:5056/?xsd=xsd3" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+  <xs:element name="StemContent">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="contentText" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="StemContentResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="StemContentResult" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="IndexText">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="aliasName" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="contentText" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="IndexTextResponse">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchPhrase">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="phrase" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="minPage" type="xs:unsignedInt" />
+        <xs:element minOccurs="0" name="maxPage" type="xs:unsignedInt" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchPhraseResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q1="http://schemas.datacontract.org/2004/07/FTSearchWCF" minOccurs="0" name="SearchPhraseResult" nillable="true" type="q1:FTSearch.RelevantResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchPhraseRel">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="phrase" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="minPage" type="xs:unsignedInt" />
+        <xs:element minOccurs="0" name="maxPage" type="xs:unsignedInt" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchPhraseRelResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q2="http://schemas.datacontract.org/2004/07/FTSearchWCF" minOccurs="0" name="SearchPhraseRelResult" nillable="true" type="q2:FTSearch.RelevantResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchQuery">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q3="http://schemas.datacontract.org/2004/07/FTSearchWCF" minOccurs="0" name="selectors" nillable="true" type="q3:ArrayOfFTSearch.Selector" />
+        <xs:element minOccurs="0" name="minPage" type="xs:unsignedInt" />
+        <xs:element minOccurs="0" name="maxPage" type="xs:unsignedInt" />
+        <xs:element minOccurs="0" name="skip" type="xs:unsignedInt" />
+        <xs:element minOccurs="0" name="agregateBySubject" type="xs:boolean" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchQueryResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q4="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="SearchQueryResult" nillable="true" type="q4:ArrayOfstring" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchNewMems">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="startDate1" type="xs:dateTime" />
+        <xs:element minOccurs="0" name="startDate2" type="xs:dateTime" />
+        <xs:element minOccurs="0" name="endDate2" type="xs:dateTime" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchNewMemsResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q5="http://schemas.datacontract.org/2004/07/FTSearchWCF" minOccurs="0" name="SearchNewMemsResult" nillable="true" type="q5:FTSearch.RelevantResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CalculateTrend">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="phrase" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="count" type="xs:unsignedInt" />
+        <xs:element minOccurs="0" name="minPage" type="xs:unsignedInt" />
+        <xs:element minOccurs="0" name="maxPage" type="xs:unsignedInt" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CalculateTrendResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="CalculateTrendResult" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetInfo">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetInfoResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q6="http://schemas.datacontract.org/2004/07/FTSearchWCF" minOccurs="0" name="GetInfoResult" type="q6:FTSearch.FTSInstanceInfo" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchHtmlSeldomWords">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="text" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SearchHtmlSeldomWordsResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q7="http://schemas.datacontract.org/2004/07/FTSearchWCF" minOccurs="0" name="SearchHtmlSeldomWordsResult" nillable="true" type="q7:FTSearch.RelevantResult" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SaveIndex">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SaveIndexResponse">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

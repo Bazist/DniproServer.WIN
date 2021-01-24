@@ -1,0 +1,103 @@
+{
+   'Author':{
+      'IsActive':'true'
+   },
+   'Login':'booben',
+   'Password':'booben',
+   'From':'booben',
+   'Email':'booben@gmail.com',
+   'Sex':'male',
+   'Age':'21',
+   'SecKey':'e7592cc003874e52a6276d3dfbdcd0c2',
+   'Contract':{
+      
+   },
+   'Groups':[
+      {
+         'Author':{
+            'IsActive':'true'
+         },
+         'Reference':{
+            
+         },
+         'Name':'Media',
+         'Robots':[
+            {
+               'Author':{
+                  'IsActive':'true'
+               },
+               'Name':'Coub',
+               'Period':{
+                  
+               },
+               'Source':{
+                  'Type':'All'
+               },
+               'Conditions':[
+                  {
+                     'Library':{
+                        
+                     }
+                  }
+               ],
+               'Output':{
+                  'Type':'coub'
+               },
+               'Price':{
+                  
+               }
+            },
+            {
+               'Author':{
+                  'IsActive':'true'
+               },
+               'Name':'Gif',
+               'Period':{
+                  
+               },
+               'Source':{
+                  'Type':'All'
+               },
+               'Conditions':[
+                  {
+                     'Library':{
+                        
+                     }
+                  }
+               ],
+               'Output':{
+                  'Type':'gif'
+               },
+               'Price':{
+                  
+               }
+            },
+            {
+               'Author':{
+                  'IsActive':'true'
+               },
+               'Name':'Video',
+               'Period':{
+                  
+               },
+               'Source':{
+                  'Type':'All'
+               },
+               'Conditions':[
+                  {
+                     'Library':{
+                        
+                     }
+                  }
+               ],
+               'Output':{
+                  'Type':'video'
+               },
+               'Price':{
+                  
+               }
+            }
+         ]
+      }
+   ]
+}

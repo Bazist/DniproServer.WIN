@@ -1,0 +1,67 @@
+﻿@using Booben.Models;
+@model Booben.Models.User
+@{
+    Layout = null;
+}
+
+<table border="1">
+    <tr>
+        <td>
+            @Model.Picture
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=edituser&retop=@ViewBag.ReturnOperation&key=@Model.SecKey">Edit profile</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=favourits&retop=@ViewBag.ReturnOperation&key=@Model.SecKey">Favourits</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=markasread&retop=@ViewBag.ReturnOperation&key=@Model.SecKey">Mark all as read</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=newstars&retop=@ViewBag.ReturnOperation&key=@Model.SecKey">New likes (@Model.GetAmountNewLikes())</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=newcomments&retop=@ViewBag.ReturnOperation&key=@Model.SecKey">New comments (@Model.GetAmountNewComments())</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=messages&retop=@ViewBag.ReturnOperation&key=@Model.SecKey">New messages (@Model.GetAmountNewPrivateMessages())</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=groups&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@Model.SecKey">Groups</a>
+
+            @foreach (var group in Model.Groups)
+            {
+                <br /><div>&nbsp;</div><a href="Main?group=@(group.Name)&key=@Model.SecKey">@group.Name</a>
+
+                foreach (var wid in group.Robots)
+                {
+                    <br /><div>&nbsp;&nbsp;</div>@wid.Name<<<div>@wid.GetAmountNewItems()</div>
+                }
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Libraries
+            @foreach (var lib in Model.Libraries)
+            {
+                <br /><div>&nbsp;</div><a href="Main?library=@(lib.Name)&key=@Model.SecKey">@lib.Name <div>@lib.GetAmountNewWords())</div></a>
+            }
+        </td>
+    </tr>
+</table>

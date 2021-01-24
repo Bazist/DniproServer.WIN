@@ -1,0 +1,36 @@
+﻿@model Booben.Models.Robot
+
+<table border="1">
+    <tr>
+        <td>
+            small pic
+        </td>
+        <td colspan="2">
+            @Model.Name
+        </td>
+        <td>
+            @if (!Model.Author.Likes.Any(x => x.Login == ViewBag.MyLogin))
+            {
+                <a href="Main?op=likerobot&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@ViewBag.GroupName&robot=@Model.Name&key=@ViewBag.SecKey">Like!<span>(+@Model.Author.Likes.Count)</span></a>
+            }
+            else
+            {
+                <div>Like!<span>(+@Model.Author.Likes.Count)</span></div>
+            }
+        </td>
+        <td>
+            <a href="Main?op=copyrobot&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@ViewBag.GroupName&robot=@Model.Name&key=@ViewBag.SecKey">Copy Robot</a>
+        </td>
+        <td>
+            <a href="Robot?login=@ViewBag.Login&group=@ViewBag.GroupName&robot=@Model.Name&key=@ViewBag.SecKey">Edit Robot</a>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            @Model.Picture
+        </td>
+        <td colspan="3">
+            @Model.Description
+        </td>
+    </tr>
+</table>

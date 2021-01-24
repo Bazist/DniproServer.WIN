@@ -1,0 +1,85 @@
+﻿@using Booben.Models;
+@model Booben.Models.Robot
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booben - Robot Configuration</title>
+    <meta name="viewport" content="width=device-width" />
+</head>
+<body>
+    @using (Html.BeginForm("SaveInfo", "Robot", FormMethod.Post))
+    {
+        <center>
+            <table class="st" style="width: 700px" cellpadding="1" cellspacing="0">
+                <tr>
+                    <td colspan="2">
+                        Fill base information - STEP 1
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        @Html.Partial("Error")
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Is Private
+                    </td>
+                    <td>
+                        @Html.EditorFor(m => m.Author.IsPrivate)
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Picture:
+                    </td>
+                    <td>
+                        Pic
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Name:
+                    </td>
+                    <td>
+                        @Html.TextBoxFor(m => m.Name)
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Description:
+                    </td>
+                    <td>
+                        @Html.TextAreaFor(m => m.Description)
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <input class="st" id="cancel" name="btn" style="width: 200px" type="submit" value="Cancel"
+                               tabindex="1" />
+                    </td>
+                    <td align="right">
+                        @Html.Partial("Context")
+
+                        <input class="st" id="next" name="btn" style="width: 200px" type="submit" value="Next"
+                               tabindex="1" />
+                    </td>
+                </tr>
+            </table>
+        </center>
+    }
+</body>
+</html>

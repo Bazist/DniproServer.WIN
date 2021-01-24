@@ -1,0 +1,91 @@
+﻿@using Booben.Models;
+@model Booben.Models.Robot
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booben - Robot Configuration</title>
+    <meta name="viewport" content="width=device-width" />
+</head>
+<body>
+    @using (Html.BeginForm("SaveOutput", "Robot", FormMethod.Post))
+    {
+        <center>
+            <table class="st" style="width: 700px" cellpadding="1" cellspacing="0">
+                <tr>
+                    <td colspan="2">
+                        Fill output information - STEP 4
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        @Html.Partial("Error")
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Output type
+                    </td>
+                    <td>
+                        @{
+                            List<SelectListItem> outputTypes = new List<SelectListItem>();
+                            outputTypes.Add(new SelectListItem
+                            {
+                                Text = "Text",
+                                Value = "text",
+                                Selected = true
+                            });
+                            outputTypes.Add(new SelectListItem
+                            {
+                                Text = "Image",
+                                Value = "image"
+                            });
+                            outputTypes.Add(new SelectListItem
+                            {
+                                Text = "GIF",
+                                Value = "gif"
+                            });
+                            outputTypes.Add(new SelectListItem
+                            {
+                                Text = "Video",
+                                Value = "video"
+                            });
+                            outputTypes.Add(new SelectListItem
+                            {
+                                Text = "COUB",
+                                Value = "coub"
+                            });
+                        }
+
+                        @Html.DropDownListFor(m => m.Output.Type, outputTypes, new { @class = "st", @style = "width:200px" })
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <input class="st" id="previous" name="btn" style="width: 200px" type="submit" value="Previous"
+                               tabindex="1" />
+                    </td>
+                    <td align="right">
+                        @Html.Partial("Context")
+
+                        <input class="st" id="next" name="btn" style="width: 200px" type="submit" value="Next"
+                               tabindex="1" />
+                    </td>
+                </tr>
+            </table>
+        </center>
+    }
+</body>
+</html>

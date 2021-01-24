@@ -1,0 +1,20 @@
+﻿@model Booben.Models.Item
+
+<table border="1">
+    <tr>
+        <td align="left">
+            <font style='font-size:25px'><a href='@Model.URL'>@Model.Title</a></font>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <p>
+                <span>
+                    <font style='font-size:15px'><a href='@Model.URL'>@Model.URL</a></font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <font style='font-size:15px'><a href='.\\?pid={4}'>Подсветить все результаты</a></font>
+                </span>
+            </p>
+            <p>@Html.Raw(Model.GetDecodedText())</p>            
+        </td>
+    </tr>
+</table>

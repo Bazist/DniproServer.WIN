@@ -1,0 +1,119 @@
+﻿@using Booben.Models;
+@model Booben.Models.Robot
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booben - Robot Configuration</title>
+    <meta name="viewport" content="width=device-width" />
+</head>
+<body>
+    @using (Html.BeginForm("SaveCondition", "Robot", FormMethod.Post))
+    {
+        <center>
+            <table class="st" style="width: 700px" cellpadding="1" cellspacing="0">
+                <tr>
+                    <td colspan="2">
+                        Fill condition - STEP 3
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        @Html.Partial("Error")
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Only title:
+                    </td>
+                    <td>
+                        @Html.EditorFor(m => m.Conditions[0].OnlyTitle)
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Phrase:
+                    </td>
+                    <td>
+                        @Html.TextBoxFor(m => m.Conditions[0].Phrase)
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Words:
+                    </td>
+                    <td>
+                        @Html.TextAreaFor(m => m.Conditions[0].Words)
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Library Login:
+                    </td>
+                    <td>
+                        @Html.TextBoxFor(m => m.Conditions[0].Library.Login)
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Library name:
+                    </td>
+                    <td>
+                        @Html.TextBoxFor(m => m.Conditions[0].Library.LibName)
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Use stemming:
+                    </td>
+                    <td>
+                        @Html.EditorFor(m => m.Conditions[0].UseStemming)
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Min words:
+                    </td>
+                    <td>
+                        @Html.TextBoxFor(m => m.Conditions[0].MinWords)
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <input class="st" id="previous" name="btn" style="width: 200px" type="submit" value="Previous"
+                               tabindex="1" />
+                    </td>
+                    <td align="right">
+                        @Html.Partial("Context")
+
+                        <input class="st" id="next" name="btn" style="width: 200px" type="submit" value="Next"
+                               tabindex="1" />
+                    </td>
+                </tr>
+            </table>
+        </center>
+    }
+</body>
+</html>

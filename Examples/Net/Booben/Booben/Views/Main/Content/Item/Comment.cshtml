@@ -1,0 +1,30 @@
+﻿@model Booben.Models.Comment
+
+<table border="1">
+    <tr>
+        <td>
+            small pic
+        </td>
+        <td>
+            <a href="Main?op=edituser&retop=@ViewBag.ReturnOperation&login=@Model.Author.Login&key=@ViewBag.SecKey">@Model.Author.Login</a>
+        </td>
+        <td>
+            @Model.Author.OnDate
+        </td>
+        <td>
+            @if (!Model.Author.Likes.Any(x => x.Login == ViewBag.MyLogin))
+            {
+                <a href="Main?op=likecomment&retop=@ViewBag.ReturnOperation&login=@Model.Author.Login&group=@ViewBag.GroupName&robot=@ViewBag.Robot&library=@ViewBag.LibName&ondate=@Model.Author.OnDate&key=@ViewBag.SecKey">Like!<span>(+@Model.Author.Likes.Count)</span></a>
+            }
+            else
+            {
+                <span>+@Model.Author.Likes.Count</span>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td colspan="4" nowrap>
+            @Model.Text
+        </td>
+    </tr>
+</table>

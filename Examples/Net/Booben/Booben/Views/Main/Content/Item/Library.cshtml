@@ -1,0 +1,28 @@
+﻿@model Booben.Models.Library
+
+<table border="1">
+    <tr>
+        <td>
+            small pic
+        </td>
+        <td>
+            @Model.Name (@Model.Author.Login)
+        </td>
+        <td>
+            +@Model.Author.Likes.Count
+        </td>
+        <td>
+            do like
+        </td>
+    </tr>
+    <tr>
+        <td colspan="4" nowrap>
+            @Model.Category \ @Model.SubCategory \ @Model.Name
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">
+            @Model.Description
+        </td>
+    </tr>
+</table>

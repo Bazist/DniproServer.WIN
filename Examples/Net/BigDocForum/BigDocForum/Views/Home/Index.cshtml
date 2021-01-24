@@ -1,0 +1,49 @@
+﻿@model PikoNet.Models.Article[]
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dnipro Forum</title>
+</head>
+<body>
+    @using (Html.BeginForm("send", "Home", FormMethod.Post))
+    {
+        <center>
+            <table border="1" style="width:1000px;">
+                <tr>
+                    <td colspan="5">
+                        [Dnipro Forum]
+                    </td>
+                </tr>
+                @foreach(var a in Model)
+                {
+                <tr>
+                    <td style="width:50%">
+                        <a href="@(Url.Content("~/") + "article/index/" + a.ID.ToString())">@a.Title</a>    
+                    </td>
+                    <td style="width:10%">
+                        @a.Author    
+                    </td>
+                    <td style="width:10%">
+                        @a.CountMessage
+                    </td>
+                    <td style="width:20%">
+                        @(new DateTime(a.UpdatedDate).ToString())
+                    </td>
+                    <td style="width:10%">
+                        @a.LastAuthor
+                    </td>
+                </tr>
+                }
+                <tr>
+                    <td colspan="5" align=right>
+                        <input type="submit" name="btn" style="width: 50%" value="Добавить новую тему" />
+                    </td>
+                </tr>
+            </table>
+        </center>
+    }
+</body>
+</html>
