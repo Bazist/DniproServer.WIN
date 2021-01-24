@@ -1,0 +1,122 @@
+﻿@using Booben.Models;
+@model Booben.Models.User
+@{
+    Layout = null;
+}
+
+<table border="1">
+    <tr>
+        <td>
+            @Model.Picture
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=edituser&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Edit profile</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=favourits&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Favourits (@Model.GetAmountFavourits())</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=markasread&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Mark all as read</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=newlikes&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">New likes (@Model.GetAmountNewLikes())</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=newcomments&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">New comments (@Model.GetAmountNewComments())</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=privmessages&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Private messages (@Model.GetAmountNewPrivateMessages())</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=groups&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@Model.SecKey">Groups</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=refreshsearch&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Refresh search</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=marksearchasread&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Mark all results as read</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=addgroup&retop=@ViewBag.ReturnOperation&login=@Model.Login&group=@Model.GetNameOfNewGroup()&key=@ViewBag.SecKey">+Add new group</a>
+            @foreach (var group in Model.Groups)
+            {
+                if (group.Author.IsActive.Value)
+                {
+                    <br /><span>&nbsp;</span><a href="Main?op=editgroup&retop=@ViewBag.ReturnOperation&group=@(group.Name)&login=@Model.Login&key=@ViewBag.SecKey">@group.Name</a>
+
+                    foreach (var wid in group.Robots)
+                    {
+                        if (wid.Author.IsActive.Value)
+                        {
+                            <br /><span>&nbsp;&nbsp;&nbsp;</span><a href="Main?op=robot&retop=@ViewBag.ReturnOperation&group=@group.Name&robot=@wid.Name&login=@Model.Login&key=@ViewBag.SecKey">@wid.Name<span>(@wid.SearchItems(Model.Login, group.Name, true).Count)</span></a>
+                        }
+                    }
+                }
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Libraries
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <a href="Main?op=addlibrary&retop=@ViewBag.ReturnOperation&login=@Model.Login&library=@Model.GetNameOfNewLibrary()&key=@ViewBag.SecKey">+Add new library</a>
+            @foreach (var lib in Model.Libraries)
+            {
+                if (lib.Author.IsActive.Value)
+                {
+                    if (lib.GetAmountNewWords() == 0)
+                    {
+                        <br /><span>&nbsp;</span><a href="Main?op=library&retop=@ViewBag.ReturnOperation&library=@lib.Name&login=@Model.Login&key=@ViewBag.SecKey">@lib.Name<span></span></a>
+                    }
+                    else
+                    {
+                        <br /><span>&nbsp;</span><a href="Main?op=library&retop=@ViewBag.ReturnOperation&library=@lib.Name&login=@Model.Login&key=@ViewBag.SecKey">@lib.Name<span>(@lib.GetAmountNewWords())</span></a>
+                    }
+                }
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>
+            @if (Model.GetRequestedFriends().Count == 0)
+            {
+                <span>Friends</span>
+            }
+            else
+            {
+                <a href="Main?op=reqfriends&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Friends (@Model.GetRequestedFriends().Count)</a>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>
+            @foreach (var friend in Model.GetApprovedFriends())
+            {
+                <br /><span>&nbsp;</span><a href="Main?op=friend&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">@friend.Login</a>
+            }
+        </td>
+    </tr>
+</table>

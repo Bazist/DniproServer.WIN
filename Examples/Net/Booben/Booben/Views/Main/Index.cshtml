@@ -1,0 +1,95 @@
+﻿@using Booben.Models;
+@model Booben.Models.User
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booben - Scan internet in your interests</title>
+</head>
+<body>
+    <center>
+        <table class="st" style="width: 700px" cellpadding="1" cellspacing="0">
+            <tr>
+                <td colspan="2">
+                    @Html.Partial("Header")
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    @Html.Partial("Error")
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @if (ViewBag.IsMyGroup)
+                    {
+                        @Html.Partial("Content/MyLeftBar", Model)
+                    }
+                    else
+                    {
+                        @Html.Partial("Content/FriendLeftBar", Model)
+                    }
+                </td>
+                <td>
+                    @if (ViewBag.Operation == "edituser")
+                    {
+                        @Html.Partial("Content/EditUser", Model)
+                    }
+                    else if (ViewBag.Operation == "favourits")
+                    {
+                        @Html.Partial("Content/Favourits", Model)
+                    }
+                    else if (ViewBag.Operation == "newlikes")
+                    {
+                        @Html.Partial("Content/NewLikes", Model)
+                    }
+                    else if (ViewBag.Operation == "newcomments")
+                    {
+                        @Html.Partial("Content/NewComments", Model)
+                    }
+                    else if (ViewBag.Operation == "privmessages")
+                    {
+                        @Html.Partial("Content/PrivateMessages", Model)
+                    }
+                    else if (ViewBag.Operation == "robot")
+                    {
+                        @Html.Partial("Content/Robot", Model.Groups[(int)ViewBag.IndexGroup].Robots[(int)ViewBag.IndexRobot])
+                    }
+                    else if (ViewBag.Operation == "editgroup")
+                    {
+                        @Html.Partial("Content/EditGroup", Model.Groups[(int)ViewBag.IndexGroup])
+                    }
+                    else if (ViewBag.Operation == "library")
+                    {
+                        @Html.Partial("Content/Library", Model.Libraries[(int)ViewBag.IndexLibrary])
+                    }
+                    else if (ViewBag.Operation == "editlibrary")
+                    {
+                        @Html.Partial("Content/EditLibrary", Model.Libraries[(int)ViewBag.IndexLibrary])
+                    }
+                    else if (ViewBag.Operation == "reqfriends")
+                    {
+                        @Html.Partial("Content/ReqFriends", Model)
+                    }
+                    else if (ViewBag.Operation == "groups")
+                    {
+                        @Html.Partial("Content/Groups", Model)
+                    }
+                    else
+                    {
+                        <div style="width:100%;height:100%">Advertisment</div>
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    @Html.Partial("Footer")
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+</html>

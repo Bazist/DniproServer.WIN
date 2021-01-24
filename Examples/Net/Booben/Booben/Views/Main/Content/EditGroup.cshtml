@@ -1,0 +1,122 @@
+﻿@using Booben.Models;
+@model Booben.Models.Group
+@{
+    Layout = null;
+}
+
+@using (Html.BeginForm("SaveGroup", "Main", FormMethod.Post))
+{
+    <table border="1">
+        <tr>
+            <td align="right" colspan="2">
+                @if (ViewBag.IsMyGroup)
+                {
+                    <a href="Main?op=editgroup&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@Model.Name&key=@ViewBag.SecKey">Edit group</a>
+                    <br /><a href="Main?op=deletegroup&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@Model.Name&key=@ViewBag.SecKey">Delete group</a>
+                    <br /><a href="Main?op=copygroup&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@Model.Name&key=@ViewBag.SecKey">Copy group</a>
+
+                    <!--
+                    if (!Model.Subscribers.Any(x => x.Login == ViewBag.MyLogin && x.IsActive))
+                    {
+                        <br /><a href="Main?op=subscribegroup&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@Model.Name&key=@ViewBag.SecKey">Subscribe group</a>
+                    }
+                    else
+                    {
+                        <br /><a href="Main?op=unsubscribegroup&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@Model.Name&key=@ViewBag.SecKey">Unsibscribe group</a>
+                    }
+                    -->
+                }
+                else
+                {
+
+                }
+            </td>
+        </tr>
+        <tr>
+            <td>Name:</td>
+            <td>
+                @Html.TextBoxFor(m => m.Name)
+            </td>
+        </tr>
+        <tr>
+            <td>Description:</td>
+            <td>
+                @Html.TextAreaFor(m => m.Description)
+            </td>
+        </tr>
+        <tr>
+            <td>Is Private</td>
+            <td>
+                @Html.EditorFor(m => m.Author.IsPrivate)
+            </td>
+        </tr>
+        <tr>
+            <td align="left">
+                Robots:
+            </td>
+            <td align="right">
+                <a href="Main?op=addrobot&retop=@ViewBag.ReturnOperation&login=@ViewBag.MyLogin&group=@ViewBag.GroupName&robot=@Model.GetNameOfNewRobot()&key=@ViewBag.SecKey">Add robot</a>
+            </td>
+        </tr>
+        @foreach (var wid in Model.Robots)
+        {
+            if (wid.Author.IsActive.Value)
+            {
+                <tr>
+                    <td>
+                        @Html.Partial("Content/Item/Robot", wid)
+                    </td>
+                    <td>
+                        <a href="Main?op=deleterobot&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@ViewBag.GroupName&robot=@wid.Name&key=@ViewBag.SecKey">Delete robot</a>
+                    </td>
+                </tr>
+            }
+        }
+        <tr>
+            <td align="left">
+                Notifications:
+            </td>
+            <td align="right">
+                <a href="Main?op=addnotification&retop=@ViewBag.ReturnOperation&login=@ViewBag.MyLogin&group=@ViewBag.GroupName&key=@ViewBag.SecKey">Add notification</a>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <table border="1">
+                    <tr>
+                        <td>
+                            Is Active
+                        </td>
+                        <td>
+                            Type
+                        </td>
+                        <td>
+                            Address
+                        </td>
+                    </tr>
+                    @for (int i = 0; i < Model.Notifications.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                @Html.EditorFor(m => m.Notifications[i].IsActive)
+                            </td>
+                            <td>
+                                @Html.TextBoxFor(m => m.Notifications[i].Type)
+                            </td>
+                            <td>
+                                @Html.TextBoxFor(m => m.Notifications[i].Address)
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td align="right" colspan="2">
+                @Html.Partial("Context")
+                <input class="st" id="saveGroup" name="btn" style="width: 200px" type="submit" value="Save"
+                       tabindex="1" />
+            </td>
+        </tr>
+    </table>
+}

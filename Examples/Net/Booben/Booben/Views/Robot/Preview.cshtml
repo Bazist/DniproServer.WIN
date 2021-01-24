@@ -1,0 +1,66 @@
+﻿@using Booben.Models;
+@model Booben.Models.Robot
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booben - Robot Configuration</title>
+    <meta name="viewport" content="width=device-width" />
+</head>
+<body>
+    @using (Html.BeginForm("SavePreview", "Robot", FormMethod.Post))
+    {
+        <center>
+            <table class="st" style="width: 700px" cellpadding="1" cellspacing="0">
+                <tr>
+                    <td>
+                        Preview results - STEP 5
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        @Html.Partial("Error")
+                    </td>
+                </tr>
+                @foreach (var item in Model.SearchItems())
+                {
+                    <tr>
+                        <td align="right">
+                            <a href="Main?op=addfavourit&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&group=@ViewBag.GroupName&robot=@ViewBag.RobotName&index=@item.Index&key=@ViewBag.SecKey">Add to favourits</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            @Html.Partial("../Main/Content/Item/Item", item)
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td>
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td align="left">
+                        <input class="st" id="previous" name="btn" style="width: 200px" type="submit" value="Previous"
+                               tabindex="1" />
+                    </td>
+                    <td align="right">
+                        @Html.Partial("Context")
+
+                        <input class="st" id="next" name="btn" style="width: 200px" type="submit" value="Save"
+                               tabindex="1" />
+                    </td>
+                </tr>
+            </table>
+        </center>
+    }
+</body>
+</html>

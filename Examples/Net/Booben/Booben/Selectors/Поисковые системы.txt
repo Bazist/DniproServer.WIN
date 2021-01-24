@@ -1,0 +1,10 @@
+lucen sphinx elast elasticsearch solr xapian lazerto vsearch booben
+люс люс люс
+сфинкс сфикс сфинкс сфинкс
+эластик
+бубенк
+стебелек базист стебельк базист базист стебельк стебельк
+стебелёк
+sparql rdf hadoop bigdata бигдат
+cassandra mongodb couchdb redi riak hbase couchba orientdb aerospik neo4j hypert accumulo voltdb scalari
+нейросет

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://tempuri.org/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="FTSearchService" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://tempuri.org/Imports">
+      <xsd:import schemaLocation="http://localhost:5056/?xsd=xsd0" namespace="http://tempuri.org/" />
+      <xsd:import schemaLocation="http://localhost:5056/?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+      <xsd:import schemaLocation="http://localhost:5056/?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/FTSearchWCF" />
+      <xsd:import schemaLocation="http://localhost:5056/?xsd=xsd3" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="FTSearchService_StemContent_InputMessage">
+    <wsdl:part name="parameters" element="tns:StemContent" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_StemContent_OutputMessage">
+    <wsdl:part name="parameters" element="tns:StemContentResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_IndexText_InputMessage">
+    <wsdl:part name="parameters" element="tns:IndexText" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_IndexText_OutputMessage">
+    <wsdl:part name="parameters" element="tns:IndexTextResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchPhrase_InputMessage">
+    <wsdl:part name="parameters" element="tns:SearchPhrase" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchPhrase_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SearchPhraseResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchPhraseRel_InputMessage">
+    <wsdl:part name="parameters" element="tns:SearchPhraseRel" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchPhraseRel_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SearchPhraseRelResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchQuery_InputMessage">
+    <wsdl:part name="parameters" element="tns:SearchQuery" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchQuery_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SearchQueryResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchNewMems_InputMessage">
+    <wsdl:part name="parameters" element="tns:SearchNewMems" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchNewMems_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SearchNewMemsResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_CalculateTrend_InputMessage">
+    <wsdl:part name="parameters" element="tns:CalculateTrend" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_CalculateTrend_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CalculateTrendResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_GetInfo_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetInfo" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_GetInfo_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchHtmlSeldomWords_InputMessage">
+    <wsdl:part name="parameters" element="tns:SearchHtmlSeldomWords" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SearchHtmlSeldomWords_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SearchHtmlSeldomWordsResponse" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SaveIndex_InputMessage">
+    <wsdl:part name="parameters" element="tns:SaveIndex" />
+  </wsdl:message>
+  <wsdl:message name="FTSearchService_SaveIndex_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SaveIndexResponse" />
+  </wsdl:message>
+  <wsdl:portType name="FTSearchService">
+    <wsdl:operation name="StemContent">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/StemContent" message="tns:FTSearchService_StemContent_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/StemContentResponse" message="tns:FTSearchService_StemContent_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="IndexText">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/IndexText" message="tns:FTSearchService_IndexText_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/IndexTextResponse" message="tns:FTSearchService_IndexText_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchPhrase">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/SearchPhrase" message="tns:FTSearchService_SearchPhrase_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/SearchPhraseResponse" message="tns:FTSearchService_SearchPhrase_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchPhraseRel">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/SearchPhraseRel" message="tns:FTSearchService_SearchPhraseRel_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/SearchPhraseRelResponse" message="tns:FTSearchService_SearchPhraseRel_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchQuery">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/SearchQuery" message="tns:FTSearchService_SearchQuery_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/SearchQueryResponse" message="tns:FTSearchService_SearchQuery_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchNewMems">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/SearchNewMems" message="tns:FTSearchService_SearchNewMems_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/SearchNewMemsResponse" message="tns:FTSearchService_SearchNewMems_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CalculateTrend">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/CalculateTrend" message="tns:FTSearchService_CalculateTrend_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/CalculateTrendResponse" message="tns:FTSearchService_CalculateTrend_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetInfo">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/GetInfo" message="tns:FTSearchService_GetInfo_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/GetInfoResponse" message="tns:FTSearchService_GetInfo_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SearchHtmlSeldomWords">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/SearchHtmlSeldomWords" message="tns:FTSearchService_SearchHtmlSeldomWords_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/SearchHtmlSeldomWordsResponse" message="tns:FTSearchService_SearchHtmlSeldomWords_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SaveIndex">
+      <wsdl:input wsaw:Action="http://tempuri.org/FTSearchService/SaveIndex" message="tns:FTSearchService_SaveIndex_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/FTSearchService/SaveIndexResponse" message="tns:FTSearchService_SaveIndex_OutputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="BasicHttpBinding_FTSearchService" type="tns:FTSearchService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="StemContent">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/StemContent" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IndexText">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/IndexText" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchPhrase">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/SearchPhrase" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchPhraseRel">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/SearchPhraseRel" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchQuery">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/SearchQuery" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchNewMems">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/SearchNewMems" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CalculateTrend">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/CalculateTrend" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetInfo">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/GetInfo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SearchHtmlSeldomWords">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/SearchHtmlSeldomWords" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SaveIndex">
+      <soap:operation soapAction="http://tempuri.org/FTSearchService/SaveIndex" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="FTSearchService">
+    <wsdl:port name="BasicHttpBinding_FTSearchService" binding="tns:BasicHttpBinding_FTSearchService">
+      <soap:address location="http://localhost:5056/" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

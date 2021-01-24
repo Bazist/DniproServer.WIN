@@ -1,0 +1,58 @@
+﻿@using Booben.Models;
+@model Booben.Models.Library
+@{
+    Layout = null;
+}
+
+@using (Html.BeginForm("SaveLibrary", "Main", FormMethod.Post))
+{
+<table border="0">
+    <tr>
+        <td align="left">
+            Category:
+        </td>
+        <td align="left">
+            @Html.TextBoxFor(m => m.Category)
+        </td>
+    </tr>
+    <tr>
+        <td align="left">
+            Sub Category:
+        </td>
+        <td align="left">
+            @Html.TextBoxFor(m => m.SubCategory)
+        </td>
+    </tr>
+    <tr>
+        <td align="left">
+            Name:
+        </td>
+        <td align="left">
+            @Html.TextBoxFor(m => m.Name)
+        </td>
+    </tr>
+    <tr>
+        <td align="left">
+            Description:
+        </td>
+        <td align="left">
+            @Html.TextAreaFor(m => m.Description)
+        </td>
+    </tr>
+    <tr>
+        <td align="left">
+            Words:
+        </td>
+        <td align="left">
+            @Html.TextAreaFor(m => m.Words)
+        </td>
+    </tr>
+    <tr>
+        <td align="right" colspan="2">
+            @Html.Partial("Context")
+            <input class="st" id="saveLibrary" name="btn" style="width: 200px" type="submit" value="Save"
+                   tabindex="1" />
+        </td>
+    </tr>
+</table>
+}

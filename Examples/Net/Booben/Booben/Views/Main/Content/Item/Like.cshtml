@@ -1,0 +1,15 @@
+﻿@model Booben.Models.Like
+
+<table border="1">
+    <tr>
+        <td nowrap>
+            small pic
+        </td>
+        <td nowrap>
+            <a href="Main?op=edituser&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">@Model.Login<span>+1</span></a>
+        </td>
+        <td nowrap>
+            @Model.OnDate.ToString()
+        </td>
+    </tr>
+</table>

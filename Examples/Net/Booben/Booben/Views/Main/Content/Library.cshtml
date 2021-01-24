@@ -1,0 +1,69 @@
+﻿@using Booben.Models;
+@model Booben.Models.Library
+@{
+    Layout = null;
+}
+
+<table border="0">
+    <tr>
+        <td align="left" nowrap>
+            @Model.Category \ @Model.SubCategory \ @Model.Name
+        </td>
+        <td align="right" nowrap>
+            @if (!Model.Author.Likes.Any(x => x.Login == ViewBag.MyLogin))
+            {
+                <a href="Main?op=likelibrary&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&library=@Model.Name&key=@ViewBag.SecKey">Like!<span>(+@Model.Author.Likes.Count)</span></a>
+            }
+            else
+            {
+                <div>Like!<span>(+@Model.Author.Likes.Count)</span></div>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+            @if (ViewBag.IsMyGroup)
+            {
+                <a href="Main?op=editlibrary&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&library=@Model.Name&key=@ViewBag.SecKey">Edit library</a>
+                <br /><a href="Main?op=deletelibrary&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&library=@Model.Name&key=@ViewBag.SecKey">Delete library</a>
+            }
+            else
+            {
+                <a href="Main?op=copylibrary&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&library=@Model.Name&key=@ViewBag.SecKey">Copy library</a>
+                <br /><a href="Main?op=subscribelibrary&retop=@ViewBag.ReturnOperation&login=@ViewBag.Login&library=@Model.Name&key=@ViewBag.SecKey">Subscribe library</a>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td align="left">
+            Description:
+        </td>
+        <td align="left">
+            @Model.Description
+        </td>
+    </tr>
+    <tr>
+        <td align="left">
+            Words:
+        </td>
+        <td align="left">
+            @Model.Words
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            Comments:
+        </td>
+    </tr>
+    @foreach (var com in Model.Comments)
+    {
+        <tr>
+            <td colspan="2">
+                @Html.Partial("Content/Item/Comment", com)
+            </td>
+        </tr>
+    }
+    @Html.Partial("Content/SendComment")
+</table>

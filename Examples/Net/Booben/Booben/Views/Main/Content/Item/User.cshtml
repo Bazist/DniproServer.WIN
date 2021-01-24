@@ -1,0 +1,63 @@
+﻿@model Booben.Models.User
+
+<table border="1">
+    <tr>
+        <td align="right" colspan="2" nowrap>
+            @if (!Model.Author.Likes.Any(x => x.Login == ViewBag.MyLogin))
+            {
+                <a href="Main?op=likeuser&retop=@ViewBag.ReturnOperation&login=@Model.Login&key=@ViewBag.SecKey">Like!<span>(+@Model.Author.Likes.Count)</span></a>
+            }
+            else
+            {
+                <span>Like!<span>(+@Model.Author.Likes.Count)</span></span>
+            }
+        </td>
+    </tr>
+    <tr>
+        <td nowrap>
+            <table border="1">
+                <tr>
+                    <td>
+                        @Model.Picture
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td nowrap>
+            <table border="1">
+                <tr>
+                    <td>
+                        Login:
+                    </td>
+                    <td>
+                        @Model.Login
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        From:
+                    </td>
+                    <td>
+                        @Model.From
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Age:
+                    </td>
+                    <td>
+                        @Model.Age
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Interests
+                    </td>
+                    <td>
+                        @Model.Interests
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
