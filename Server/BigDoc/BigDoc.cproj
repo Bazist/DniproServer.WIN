@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F42A38F4-38B9-4D18-9B1D-F13F16F947C2}</ProjectGuid>
+    <Compiler>
+      <Compiler ctype="GppCompiler" />
+    </Compiler>
+    <Language>CPP</Language>
+    <Target>Bin</Target>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug</OutputPath>
+    <Externalconsole>true</Externalconsole>
+    <OutputName>BigDoc</OutputName>
+    <CompileTarget>Bin</CompileTarget>
+    <DefineSymbols>DEBUG MONODEVELOP</DefineSymbols>
+    <SourceDirectory>.</SourceDirectory>
+    <ExtraCompilerArguments>-std=c++11</ExtraCompilerArguments>
+    <ExtraLinkerArguments>-pthread </ExtraLinkerArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <Externalconsole>true</Externalconsole>
+    <OutputName>BigDoc</OutputName>
+    <CompileTarget>Bin</CompileTarget>
+    <OptimizationLevel>3</OptimizationLevel>
+    <DefineSymbols>MONODEVELOP</DefineSymbols>
+    <SourceDirectory>.</SourceDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="BigDoc.h" />
+    <None Include="BigDocError.h" />
+    <None Include="BigDocInfo.h" />
+    <None Include="BigDocInterpreter.h" />
+    <None Include="BigDocQuery.h" />
+    <None Include="HArrayFixBase.h" />
+    <None Include="HArrayTran.h" />
+    <None Include="HArrayTranItemKeysPool.h" />
+    <None Include="HArrayTranItems.h" />
+    <None Include="HArrayTranItemsPool.h" />
+    <None Include="HArrayVarRAM.h" />
+    <None Include="IndexesPool.h" />
+    <None Include="ReadedList.h" />
+    <None Include="Server.h" />
+    <None Include="stdafx.h" />
+    <None Include="Test.h" />
+    <None Include="AttrValuesPool.h" />
+    <None Include="BinFile.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BigDoc_query.cpp" />
+    <Compile Include="BigDoc_scan.cpp" />
+    <Compile Include="BigDoc_shrink.cpp" />
+    <Compile Include="BigDoc_tran.cpp" />
+    <Compile Include="BigDocInterpreter.cpp" />
+    <Compile Include="HArrayVarRAM_delValueByKey.cpp" />
+    <Compile Include="HArrayVarRAM_getKeysAndValuesByRange.cpp" />
+    <Compile Include="HArrayVarRAM_getValueByKey.cpp" />
+    <Compile Include="HArrayVarRAM_getValuesByRange.cpp" />
+    <Compile Include="HArrayVarRAM_hasPartKey.cpp" />
+    <Compile Include="HArrayVarRAM_insert.cpp" />
+    <Compile Include="HArrayVarRAM_scanKeysAndValues.cpp" />
+    <Compile Include="Main.cpp" />
+    <Compile Include="Server.cpp" />
+  </ItemGroup>
+</Project>
