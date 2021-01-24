@@ -1,13 +1,13 @@
 ﻿/*
-# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: dniprodb@gmail.com, skype: vyacheslavm81)
-# This file is part of DniproClient.
+# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
+# This file is part of BigDocClient.
 #
-# DniproClient is free software : you can redistribute it and / or modify
+# BigDocClient is free software : you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# DniproClient is distributed in the hope that it will be useful,
+# BigDocClient is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
 # GNU General Public License for more details.
@@ -23,19 +23,19 @@ using System.Text;
 using System.Runtime.Serialization.Json;
 using System.IO;
 
-namespace DniproClient
+namespace BigDocClient
 {
-    public class DniproDB
+    public class BigDoc
     {
         #region Constructors
 
-        public DniproDB(string host,
+        public BigDoc(string host,
                         int port,
                         Encoding encoding = null)
         {
             if (_client == null)
             {
-                _client = new DniproClient(host, port, encoding);
+                _client = new BigDocClient(host, port, encoding);
                 _client.Open();
             }
         }
@@ -44,7 +44,7 @@ namespace DniproClient
 
         #region Members
 
-        private DniproClient _client = null;
+        private BigDocClient _client = null;
 
         private Dictionary<string, uint> _collIDs = new Dictionary<string,uint>();
         
@@ -65,7 +65,7 @@ namespace DniproClient
             }
         }
 
-        internal DniproClient Client
+        internal BigDocClient Client
         {
             get
             {
@@ -73,7 +73,7 @@ namespace DniproClient
             }
         }
 
-        public DniproDB this[string collName]
+        public BigDoc this[string collName]
         {
             get
             {

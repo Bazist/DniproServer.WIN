@@ -1,13 +1,13 @@
 ﻿/*
-# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: dniprodb@gmail.com, skype: vyacheslavm81)
-# This file is part of DniproClient.
+# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
+# This file is part of BigDocClient.
 #
-# DniproClient is free software : you can redistribute it and / or modify
+# BigDocClient is free software : you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# DniproClient is distributed in the hope that it will be useful,
+# BigDocClient is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
 # GNU General Public License for more details.
@@ -23,7 +23,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
-namespace DniproClient
+namespace BigDocClient
 {
     public class Tests
     {
@@ -43,12 +43,12 @@ namespace DniproClient
             public List<int> Arr { get; set; }
         }
 
-        public static void Clear(DniproDB db)
+        public static void Clear(BigDoc db)
         {
             db.Clear();
         }
 
-        public static void Test0(DniproDB db)
+        public static void Test0(BigDoc db)
         {
             List<string> docs = new List<string>();
             for (int i = 0; i < 100000; i++)
@@ -66,7 +66,7 @@ namespace DniproClient
             Console.WriteLine("Test0: " + s.ElapsedMilliseconds.ToString());
         }
 
-        public static void Test1(DniproDB db)
+        public static void Test1(BigDoc db)
         {
             Stopwatch s = new Stopwatch();
 
@@ -84,7 +84,7 @@ namespace DniproClient
             Console.WriteLine("Test1: " + s.ElapsedMilliseconds.ToString() + "-" + count.ToString());
         }
 
-        public static void Test2(DniproDB db)
+        public static void Test2(BigDoc db)
         {
             db.AddDoc("{'login':'michael'}");
             db.AddDoc("{'login':'micha'}");
@@ -94,7 +94,7 @@ namespace DniproClient
             db.GetWhere("{'login':@'mi*'}").Print("{'login':$}");
         }
 
-        public static void Test3(DniproDB db)
+        public static void Test3(BigDoc db)
         {
             db.AddDoc("{'arr':['1','2','3']}");
             db.AddDoc("{'arr':['3','4','2']}");
@@ -104,7 +104,7 @@ namespace DniproClient
             db.GetWhere("{'arr':[In,'2','3']}").Print("{'arr':[$, $, $]}");
         }
 
-        public static void Test4(DniproDB db)
+        public static void Test4(BigDoc db)
         {
             db.AddDoc("{'arr':'1'}");
             db.AddDoc("{'arr':'3'}");
@@ -116,7 +116,7 @@ namespace DniproClient
             db.GetWhere("{'arr':@'1-2'}").Delete("{'arr':$]}");
         }
 
-        public static void Test5(DniproDB db)
+        public static void Test5(BigDoc db)
         {
             db.AddDoc("{'firstName':'John','lastName':'Smith', 'Value':'1'}");
             db.AddDoc("{'firstName':'John','lastName':'Dereck', 'Value':'2'}");
@@ -126,7 +126,7 @@ namespace DniproClient
             db.GetWhere("{'firstName':'John','lastName':'Smith'}").Print("{'Value':$]}");
         }
 
-        public static void Test6(DniproDB db)
+        public static void Test6(BigDoc db)
         {
             TO[] docs = new TO[50000];
 
@@ -151,7 +151,7 @@ namespace DniproClient
             Console.WriteLine("Test6: " + s.ElapsedMilliseconds.ToString());
         }
 
-        public static void Test7(DniproDB db)
+        public static void Test7(BigDoc db)
         {
             TO to1 = new TO
             {
@@ -200,7 +200,7 @@ namespace DniproClient
             public bool IsDefault { get; set; }
         }
 
-        public static void Test8(DniproDB db)
+        public static void Test8(BigDoc db)
         {
             PlanOption[] objs = new PlanOption[500000];
 
@@ -250,7 +250,7 @@ namespace DniproClient
             public List<Comment> Childs { get; set; }
         }
 
-        public static void Test9(DniproDB db)
+        public static void Test9(BigDoc db)
         {
             List<Comment> level1 = new List<Comment>();
             List<Comment> level2 = new List<Comment>();
@@ -334,7 +334,7 @@ namespace DniproClient
             public List<int> Arr { get; set; }
         }
 
-        public static void Test10(DniproDB db)
+        public static void Test10(BigDoc db)
         {
             SerTest st = new SerTest();
             st.Arr = new List<int>();
@@ -380,7 +380,7 @@ namespace DniproClient
             public List<int> Arr { get; set; }
         }
 
-        public static void Test11(DniproDB db)
+        public static void Test11(BigDoc db)
         {
             Person[] docs = new Person[100000];
 
@@ -405,7 +405,7 @@ namespace DniproClient
             Console.WriteLine("Test11: " + s.ElapsedMilliseconds.ToString());
         }
 
-        public static void Test12(DniproDB db)
+        public static void Test12(BigDoc db)
         {
             PartDoc[] docs = new PartDoc[100000];
 
@@ -424,7 +424,7 @@ namespace DniproClient
             Console.WriteLine("Test12: " + s.ElapsedMilliseconds.ToString());
         }
 
-        public static void Test13(DniproDB db)
+        public static void Test13(BigDoc db)
         {
             PartDoc[] docs = new PartDoc[100000];
 
@@ -459,7 +459,7 @@ namespace DniproClient
             public Address Address { get; set; }
         }
 
-        public static void Test14(DniproDB db)
+        public static void Test14(BigDoc db)
         {
             Address address = new Address() { Country = "United Kingdom", City = "London" };
 

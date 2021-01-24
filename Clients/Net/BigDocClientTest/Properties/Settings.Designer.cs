@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace DniproClientTest.Properties
+namespace BigDocClientTest.Properties
 {
 
 

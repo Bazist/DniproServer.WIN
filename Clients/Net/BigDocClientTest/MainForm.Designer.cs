@@ -1,4 +1,4 @@
-﻿namespace DniproClientTest
+﻿namespace BigDocClientTest
 {
     partial class MainForm
     {

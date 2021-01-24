@@ -107,7 +107,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DniproClient\DniproClient.csproj">
+    <ProjectReference Include="..\BigDocClient\BigDocClient.csproj">
       <Project>{44F08B5F-EEC3-49A3-B34D-B64071155814}</Project>
       <Name>DniproClient</Name>
     </ProjectReference>

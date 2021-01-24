@@ -8,8 +8,8 @@
     <ProjectGuid>{44F08B5F-EEC3-49A3-B34D-B64071155814}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DniproClient</RootNamespace>
-    <AssemblyName>DniproClient</AssemblyName>
+    <RootNamespace>BigDocClient</RootNamespace>
+    <AssemblyName>BigDocClient</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -42,10 +42,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Change.cs" />
-    <Compile Include="DniproClient.cs" />
-    <Compile Include="DniproDB.cs" />
-    <Compile Include="DniproPacket.cs" />
-    <Compile Include="DniproQuery.cs" />
+    <Compile Include="BigDocClient.cs" />
+    <Compile Include="BigDoc.cs" />
+    <Compile Include="BigDocPacket.cs" />
+    <Compile Include="BigDocQuery.cs" />
     <Compile Include="JoinedEnum.cs" />
     <Compile Include="Load.cs" />
     <Compile Include="PartDoc.cs" />

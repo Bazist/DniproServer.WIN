@@ -1,13 +1,13 @@
 ﻿/*
-# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: dniprodb@gmail.com, skype: vyacheslavm81)
-# This file is part of DniproClient.
+# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
+# This file is part of BigDocClient.
 #
-# DniproClient is free software : you can redistribute it and / or modify
+# BigDocClient is free software : you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# DniproClient is distributed in the hope that it will be useful,
+# BigDocClient is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
 # GNU General Public License for more details.
@@ -25,9 +25,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Windows.Forms;
-using DniproClient;
+using BigDocClient;
 
-namespace DniproClientTest
+namespace BigDocClientTest
 {
     public partial class MainForm : Form
     {
@@ -38,7 +38,7 @@ namespace DniproClientTest
             InitializeComponent();
         }
 
-        DniproDB db = new DniproDB("127.0.0.1", 4477);
+        BigDoc db = new BigDoc("127.0.0.1", 4477);
 
         public DataTable Companies = new DataTable();
 

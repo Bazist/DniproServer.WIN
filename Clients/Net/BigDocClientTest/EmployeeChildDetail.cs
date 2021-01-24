@@ -1,13 +1,13 @@
 ﻿/*
-# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: dniprodb@gmail.com, skype: vyacheslavm81)
-# This file is part of DniproClient.
+# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
+# This file is part of BigDocClient.
 #
-# DniproClient is free software : you can redistribute it and / or modify
+# BigDocClient is free software : you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# DniproClient is distributed in the hope that it will be useful,
+# BigDocClient is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
 # GNU General Public License for more details.
@@ -16,7 +16,7 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using DniproClient;
+using BigDocClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -26,7 +26,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-namespace DniproClientTest
+namespace BigDocClientTest
 {
     public partial class EmployeeChildDetail : Form
     {
@@ -45,7 +45,7 @@ namespace DniproClientTest
         private string _oldFirstName;
         private string _oldLastName;
 
-        DniproDB db = new DniproDB("booben.com", 4477);
+        BigDoc db = new BigDoc("booben.com", 4477);
 
         public string FirstName
         {
