@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DniproClient;
+using BigDocClient;
 
 namespace ConfigScreenOnCascadeTran
 {
@@ -17,14 +17,14 @@ namespace ConfigScreenOnCascadeTran
         {
             InitializeComponent();
 
-            DB = new DniproDB("localhost", 4477);
+            DB = new BigDoc("localhost", 4477);
 
             DB.BeginTran();
 
             LoadDoc();
         }
 
-        private DniproDB DB { get; set; }
+        private BigDoc DB { get; set; }
         private uint DocID { get; set; }
         
         const string DB_HEADER_JSON = "{'type':'config'}";

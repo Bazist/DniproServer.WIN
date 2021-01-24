@@ -7,13 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DniproClient;
+using BigDocClient;
 
 namespace ConfigScreenOnCascadeTran
 {
     public partial class ChildForm : Form
     {
-        public ChildForm(DniproDB db, uint docID)
+        public ChildForm(BigDoc db, uint docID)
         {
             InitializeComponent();
 
@@ -25,7 +25,7 @@ namespace ConfigScreenOnCascadeTran
             DB.GetPartDoc<ChildForm>(this, DB_JSON, OBJ_JSON, DocID);
         }
 
-        private DniproDB DB { get; set; }
+        private BigDoc DB { get; set; }
         private uint DocID { get; set; }
         
         const string DB_JSON = "{'confVal2':$,'confVal3':$}";

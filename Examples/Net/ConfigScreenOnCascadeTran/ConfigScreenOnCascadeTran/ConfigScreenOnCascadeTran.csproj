@@ -97,9 +97,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\..\FTS\DniproClient.NET\DniproClient\DniproClient.csproj">
+    <ProjectReference Include="..\..\..\..\Clients\Net\BigDocClient\BigDocClient.csproj">
       <Project>{44f08b5f-eec3-49a3-b34d-b64071155814}</Project>
-      <Name>DniproClient</Name>
+      <Name>BigDocClient</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
