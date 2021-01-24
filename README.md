@@ -2,7 +2,7 @@
 
 **BigDoc** one of the fastest document oriented database in the world. The database has innovated core based on **Trie** structures, **Inverted indexes** and **Lock Free** algorithms. We reinvented standard approaches in core to store **JSONs** only as set of keys.
 
-# Why Dnipro ?
+# Why BigDoc ?
 ## REALLY EASY SYNTAX
 
 Syntax so important for daily using.
