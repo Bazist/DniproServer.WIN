@@ -1,6 +1,6 @@
-# Dnipro Server
+# BigDoc
 
-**DniproDB** one of the fastest document oriented database in the world. The database has innovated core based on **Trie** structures, **Inverted indexes** and **Lock Free** algorithms. We reinvented standard approaches in core to store **JSONs** only as set of keys.
+**BigDoc** one of the fastest document oriented database in the world. The database has innovated core based on **Trie** structures, **Inverted indexes** and **Lock Free** algorithms. We reinvented standard approaches in core to store **JSONs** only as set of keys.
 
 # Why Dnipro ?
 ## REALLY EASY SYNTAX
@@ -52,7 +52,7 @@ So
 * When you load part of document, you just lookup several keys. You don't need download all document on client at all.
 
 And ... what you should know ... one operation of insert/update/lookup of long key costs about **fifty nanoseconds** on core level.
-In regular benchmarks **Dnipro** faster than standard databases in [ten](http://forum.pikosec.com/viewforum.php?f=7) times and more.
+In regular benchmarks **BigDoc** faster than standard databases in [ten](http://forum.pikosec.com/viewforum.php?f=7) times and more.
 
 Run in console **db.SelfTest()** to see how many seconds need to your computer to finish more than ten millions queries in our benchmark.
 
