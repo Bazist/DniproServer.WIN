@@ -8,7 +8,6 @@ using System.IO;
 
 using Booben.Models;
 using System.Net;
-using DniproClient;
 
 namespace Booben.Controllers
 {
@@ -36,7 +35,7 @@ namespace Booben.Controllers
 
                 //return null;
 
-                //DniproDB DB = new DniproClient.DniproDB("127.0.0.1", 4477);
+                //BigDoc DB = new BigDocClient.BigDoc("127.0.0.1", 4477);
 
                 Home home = new Home();
 

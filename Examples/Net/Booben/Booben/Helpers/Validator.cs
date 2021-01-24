@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Text;
-using DniproClient;
+using BigDocClient;
 using System.Text.RegularExpressions;
 
 namespace Booben

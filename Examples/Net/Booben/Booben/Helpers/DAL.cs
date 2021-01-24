@@ -1,5 +1,5 @@
-﻿using Booben.Models;
-using DniproClient;
+﻿using BigDocClient;
+using Booben.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +10,7 @@ namespace Booben
 {
     public class DAL
     {
-        public static DniproDB DB = new DniproDB("127.0.0.1", 4477);
+        public static BigDoc DB = new BigDoc("127.0.0.1", 4477);
 
         private void SaveUserFileLog(string login)
         {
@@ -20,7 +20,7 @@ namespace Booben
 
                 string json = Serialization.FormatJson(Serialization.SerializeChanges(user));
 
-                File.WriteAllText(@"C:\FTS\DniproExamples\Booben\Booben\Users\" + login + ".txt", json);
+                File.WriteAllText(@"C:\FTS\BigDocExamples\Booben\Booben\Users\" + login + ".txt", json);
             }
         }
 
@@ -105,7 +105,7 @@ namespace Booben
 
         public void Index()
         {
-            DB.AddDoc(File.ReadAllText(@"C:\FTS\DniproExamples\Booben\Booben\Users\aaa.txt"));
+            DB.AddDoc(File.ReadAllText(@"C:\FTS\BigDocExamples\Booben\Booben\Users\aaa.txt"));
         }
 
         public string GetSecKey(string login, string password)

@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 14 for Web
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Booben", "Booben\Booben.csproj", "{4BC5382E-4341-44D7-A29D-E55F67434F32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DniproClient", "..\..\DniproClient.NET\DniproClient\DniproClient.csproj", "{44F08B5F-EEC3-49A3-B34D-B64071155814}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigDocClient", "..\..\..\Clients\Net\BigDocClient\BigDocClient.csproj", "{44F08B5F-EEC3-49A3-B34D-B64071155814}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D481BECC-979C-4A81-A7CC-055701251450}
 	EndGlobalSection
 EndGlobal

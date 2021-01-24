@@ -7,7 +7,7 @@ using System.IO;
 
 using Booben.Models;
 using System.Net;
-using DniproClient;
+using BigDocClient;
 
 namespace Booben.Controllers
 {

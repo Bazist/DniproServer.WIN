@@ -9,7 +9,6 @@ using System.IO;
 
 using Booben.Models;
 using System.Net;
-using DniproClient;
 
 namespace Booben.Controllers
 {
