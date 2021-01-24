@@ -1,6 +1,6 @@
-## DniproClient
+## BigDocClient
 
-- Client for BigDoc
+- BigDocClient for Java
 
 ## How to build DniproClient.JVM using Maven
 
