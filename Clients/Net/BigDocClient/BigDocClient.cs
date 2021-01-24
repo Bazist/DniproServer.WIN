@@ -34,8 +34,8 @@ namespace BigDocClient
             _port = port;
 
             _unBuffer = Marshal.AllocHGlobal(1000000);
-            _dniproPacketSize = Marshal.SizeOf(new DniproPacket());
-            _packet = new DniproPacket();
+            _BigDocPacketSize = Marshal.SizeOf(new BigDocPacket());
+            _packet = new BigDocPacket();
 
             if (encoding == null)
             {
@@ -91,7 +91,7 @@ namespace BigDocClient
 
         private string _host;
         private int _port;
-        int _dniproPacketSize;
+        int _BigDocPacketSize;
         IntPtr _unBuffer;
 
         IPEndPoint _remoteEP = null;
@@ -101,7 +101,7 @@ namespace BigDocClient
 
         public byte[] _buffer = new byte[1000000];
         public int _bufferPos = 4;
-        private DniproPacket _packet;
+        private BigDocPacket _packet;
 
         internal bool _useExistingSession = false;
 
@@ -177,9 +177,9 @@ namespace BigDocClient
 
             Marshal.StructureToPtr(_packet, _unBuffer, false);
 
-            Marshal.Copy(_unBuffer, _buffer, _bufferPos, _dniproPacketSize);
+            Marshal.Copy(_unBuffer, _buffer, _bufferPos, _BigDocPacketSize);
 
-            _bufferPos += _dniproPacketSize;
+            _bufferPos += _BigDocPacketSize;
 
             Array.Copy(json, 0, _buffer, _bufferPos, json.Length);
 

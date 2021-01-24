@@ -24,9 +24,9 @@ using System.Runtime.Serialization.Json;
 
 namespace BigDocClient
 {
-    public class DniproQuery
+    public class BigDocQuery
     {
-        internal DniproQuery(BigDoc db)
+        internal BigDocQuery(BigDoc db)
         {
             _db = db;
             _client = db.Client;
@@ -35,21 +35,21 @@ namespace BigDocClient
         private BigDoc _db;
         private BigDocClient _client;
 
-        public DniproQuery GetWhere(string json)
+        public BigDocQuery GetWhere(string json)
         {
             _client.AddPacket(7, json);
 
             return this;
         }
 
-        public DniproQuery AndWhere(string json)
+        public BigDocQuery AndWhere(string json)
         {
             _client.AddPacket(9, json);
 
             return this;
         }
 
-        public DniproQuery OrWhere(string json)
+        public BigDocQuery OrWhere(string json)
         {
             _client.AddPacket(11, json);
 
@@ -95,28 +95,28 @@ namespace BigDocClient
             return BitConverter.ToUInt32(bytes, 4);
         }
 
-        public DniproQuery Take(uint count)
+        public BigDocQuery Take(uint count)
         {
             _client.AddPacket(17, "", count);
 
             return this;
         }
 
-        public DniproQuery Skip(uint count)
+        public BigDocQuery Skip(uint count)
         {
             _client.AddPacket(18, "", count);
 
             return this;
         }
 
-        //public DniproQuery Sort<T>(T template, bool isAsc = true)
+        //public BigDocQuery Sort<T>(T template, bool isAsc = true)
         //{
         //    _client.AddPacket(22, Serialization.SerializeChanges(template), isAsc ? (uint)1 : (uint)0);
 
         //    return this;
         //}
 
-        public DniproQuery Sort(string json, bool isAsc = true)
+        public BigDocQuery Sort(string json, bool isAsc = true)
         {
             _client.AddPacket(22, json, isAsc ? (uint)1 : (uint)0);
 
@@ -131,14 +131,14 @@ namespace BigDocClient
             return BitConverter.ToUInt32(bytes, 4);
         }
 
-        public DniproQuery Distinct(string json)
+        public BigDocQuery Distinct(string json)
         {
             _client.AddPacket(20, json);
 
             return this;
         }
 
-        public DniproQuery Join<T>(T template1,
+        public BigDocQuery Join<T>(T template1,
                                    T template2,
                                    string collName = null)
         {
@@ -148,7 +148,7 @@ namespace BigDocClient
             return Join(json1, json2, collName);
         }
 
-        public DniproQuery Join(string json1,
+        public BigDocQuery Join(string json1,
                                 string json2,
                                 string collName = null)
         {
@@ -444,7 +444,7 @@ namespace BigDocClient
             }
         }
 
-        public DniproQuery GetAll()
+        public BigDocQuery GetAll()
         {
             _client.AddPacket(25, "");
 

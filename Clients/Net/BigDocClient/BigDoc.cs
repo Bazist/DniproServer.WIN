@@ -142,23 +142,23 @@ namespace BigDocClient
             Client.CollID = _collIDs[collName];
         }
 
-        public DniproQuery GetWhere(string json)
+        public BigDocQuery GetWhere(string json)
         {
-            DniproQuery dq = new DniproQuery(this);
+            BigDocQuery dq = new BigDocQuery(this);
 
             return dq.GetWhere(json);
         }
 
-        public DniproQuery GetWhere<T>(T template)
+        public BigDocQuery GetWhere<T>(T template)
         {
-            DniproQuery dq = new DniproQuery(this);
+            BigDocQuery dq = new BigDocQuery(this);
 
             return dq.GetWhere(Serialization.SerializeChanges(template));
         }
 
-        public DniproQuery GetAll()
+        public BigDocQuery GetAll()
         {
-            DniproQuery dq = new DniproQuery(this);
+            BigDocQuery dq = new BigDocQuery(this);
 
             return dq.GetAll();
         }

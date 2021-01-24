@@ -6,7 +6,7 @@ using System.Web.Mvc;
 using System.Web.Security;
 using System.Text;
 
-namespace PikoNet.Models
+namespace BigDocForum.Models
 {
     public class Message
     {

@@ -6,11 +6,11 @@ using System.Web.Mvc;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using PikoNet.Models;
-using PikoNet.FTSearchService;
-using DniproClient;
+using BigDocForum.Models;
+using BigDocForum.FTSearchService;
+using BigDocClient;
 
-namespace PikoNet.Controllers
+namespace BigDocForum.Controllers
 {
     public class ArticleController : Controller
     {

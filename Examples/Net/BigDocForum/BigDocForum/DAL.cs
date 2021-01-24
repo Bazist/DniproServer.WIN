@@ -1,14 +1,14 @@
-﻿using DniproClient;
+﻿using BigDocClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace PikoNet
+namespace BigDocForum
 {
     public class DAL
     {
-        public static DniproDB _db = new DniproDB("127.0.0.1", 4477);
+        public static BigDoc _db = new BigDoc("127.0.0.1", 4477);
 
         public static int GetCountMessage(int articleId)
         {

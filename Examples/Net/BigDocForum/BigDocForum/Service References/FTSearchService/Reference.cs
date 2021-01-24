@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace PikoNet.FTSearchService {
+namespace BigDocForum.FTSearchService {
     
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -29,12 +29,12 @@ namespace PikoNet.FTSearchService {
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    public interface FTSearchServiceChannel : PikoNet.FTSearchService.FTSearchService, System.ServiceModel.IClientChannel {
+    public interface FTSearchServiceChannel : BigDocForum.FTSearchService.FTSearchService, System.ServiceModel.IClientChannel {
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    public partial class FTSearchServiceClient : System.ServiceModel.ClientBase<PikoNet.FTSearchService.FTSearchService>, PikoNet.FTSearchService.FTSearchService {
+    public partial class FTSearchServiceClient : System.ServiceModel.ClientBase<BigDocForum.FTSearchService.FTSearchService>, BigDocForum.FTSearchService.FTSearchService {
         
         public FTSearchServiceClient() {
         }

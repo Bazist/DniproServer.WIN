@@ -1,11 +1,11 @@
-﻿@model PikoNet.Models.Article[]
+﻿@model BigDocForum.Models.Article[]
 @{
     Layout = null;
 }
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dnipro Forum</title>
+    <title>BigDoc Forum</title>
 </head>
 <body>
     @using (Html.BeginForm("send", "Home", FormMethod.Post))
@@ -14,7 +14,7 @@
             <table border="1" style="width:1000px;">
                 <tr>
                     <td colspan="5">
-                        [Dnipro Forum]
+                        [BigDoc Forum]
                     </td>
                 </tr>
                 @foreach(var a in Model)

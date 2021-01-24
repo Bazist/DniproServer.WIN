@@ -23,7 +23,7 @@ using System.Text;
 
 namespace BigDocClient
 {
-    internal struct DniproPacket
+    internal struct BigDocPacket
     {
         public byte MethodType;
         public uint TranID;
