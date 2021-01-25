@@ -1,6 +1,6 @@
-## DniproClient.JVM
+## BigDocClient
 
-- This is a port for Java based on [DniproClient.Net](https://github.com/Bazist/DniproClient.NET).
+- BigDocClient for Java
 
 ## How to build DniproClient.JVM using Maven
 
