@@ -1,5 +1,5 @@
 /*
-# Copyright(C) 2010-2016 Viacheslav Makoveichuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
+# Copyright(C) 2010-2021 Viacheslav Makoveichuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
 # This file is part of BigDoc.
 #
 # BigDoc is free software : you can redistribute it and / or modify
@@ -397,7 +397,7 @@ void* BigDoc::writeTrans(void* lpParam)
 }
 
 bool BigDoc::readTrans(char* filePath,
-						 uint32 onDate = 0)
+					   uint32 onDate = 0)
 {
 	const uint32 buffSize = 10 * WRITE_TRANS_BUFFER_SIZE;
 

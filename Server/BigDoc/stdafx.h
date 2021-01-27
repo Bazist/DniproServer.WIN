@@ -1,5 +1,5 @@
 /*
-# Copyright(C) 2010-2016 Vyacheslav Makoveychuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
+# Copyright(C) 2010-2021 Vyacheslav Makoveychuk (email: BigDoc@gmail.com, skype: vyacheslavm81)
 # This file is part of BigDoc.
 #
 # BigDoc is free software : you can redistribute it and / or modify
