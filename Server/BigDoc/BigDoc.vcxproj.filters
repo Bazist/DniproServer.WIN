@@ -22,9 +22,6 @@
     <Filter Include="Source Files\HArray">
       <UniqueIdentifier>{62503676-f14a-41da-b1f3-d9697c03212f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Transaction">
-      <UniqueIdentifier>{3ff176af-3169-413e-b078-51085492fcce}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -57,9 +54,6 @@
     <ClInclude Include="HArrayTranItems.h">
       <Filter>Header Files\Transaction</Filter>
     </ClInclude>
-    <ClInclude Include="ReadedList.h">
-      <Filter>Header Files\Transaction</Filter>
-    </ClInclude>
     <ClInclude Include="Test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -83,6 +77,9 @@
     </ClInclude>
     <ClInclude Include="BigDocQuery.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ReadList.h">
+      <Filter>Header Files\Transaction</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

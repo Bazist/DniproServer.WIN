@@ -21,7 +21,7 @@
 #include "HArrayVarRAM.h"
 #include "HArrayTranItems.h"
 #include "HArrayTranItemsPool.h"
-#include "ReadedList.h"
+#include "ReadList.h"
 
 class HArrayTran
 {
@@ -37,7 +37,7 @@ public:
 	uint32 TranIdentity;
 	uchar8 TranID;
 	uchar8 ParentTranID;
-	HArrayTran* pGrandParentTran;
+	HArrayTran* pGrandParentTran; //topest transaction
 
 	uchar8 TranType;
 	bool IsWritable;
@@ -63,7 +63,7 @@ public:
 	HArrayTranItemKeysPool tranItemKeysPool;
 	ValueListPool valueListPool;
 
-	ReadedList readedList;
+	ReadList readList;
 
 	uint32 tempInt;
 
@@ -111,7 +111,7 @@ public:
 		indexesPool.init();
 		//attrValuesPool.init();
 		//valueListPool.init();
-		readedList.init();
+		readList.init();
 
 		pAttrValuesPage = 0;
 
@@ -1060,7 +1060,7 @@ public:
 						uint32 keyLen,
 						uchar8& valueType,
 						uchar8 readModeType = 0,
-						ReadedList* pReadedList = 0)
+						ReadList* pReadList = 0)
 	{
 		if (ParentTranID)
 		{
@@ -1069,7 +1069,7 @@ public:
 													keyLen,
 													valueType,
 													readModeType,
-													pReadedList);
+													pReadList);
 		}
 
 		uint32 tranValueInserted;
@@ -1088,7 +1088,7 @@ public:
 				storeValueType,
 				readModeType,
 				TranID,
-				&readedList);
+				&readList);
 		
 
 		//0. inserted in tran
@@ -1171,7 +1171,7 @@ public:
 					valueType,
 					4,
 					TranID,
-					&readedList)) //4. Check if key blocked, but excluded my cells
+					&readList)) //4. Check if key blocked, but excluded my cells
 				{
 					return true;
 				}
@@ -1194,7 +1194,7 @@ public:
 						valueType,
 						4,
 						TranID,
-						&readedList)) //4. Check if key blocked, but excluded my cells
+						&readList)) //4. Check if key blocked, but excluded my cells
 					{
 						return true;
 					}
@@ -1224,7 +1224,7 @@ public:
 
 	static std::atomic_int testVal;
 
-	void commit(bool hasReadedCells)
+	void commit(bool hasReadCells)
 	{
 		//this method never calls for nested trans
 
@@ -1298,7 +1298,7 @@ public:
 
 		if (Count2 < 128) //in one block
 		{
-			if (!hasReadedCells)
+			if (!hasReadCells)
 			{
 				for (uint32 i = 0; i < Count2; i++)
 				{
@@ -1338,7 +1338,7 @@ public:
 
 			while (true)
 			{
-				if (!hasReadedCells)
+				if (!hasReadCells)
 				{
 					for (uint32 i = 0; i < count; i++)
 					{
@@ -1552,7 +1552,7 @@ public:
 				Count1 = 0;
 				Count2 = 0;
 
-				readedList.clear();
+				readList.clear();
 
 				IsWritable = false;
 				//HasCommitedLabel = false;

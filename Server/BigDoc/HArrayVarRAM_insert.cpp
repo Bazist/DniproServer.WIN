@@ -192,15 +192,15 @@ NEXT_KEY_PART:
 					//shounted, notify trans !
 					if (onContentCellMovedFunc)
 					{
-						uchar8 tranID = contentCell.ReadedByTranID.load();
+						uchar8 tranID = contentCell.ReadByTranID.load();
 						if (tranID)
 						{
 							onContentCellMovedFunc(tranID,
-								&contentCell.ReadedByTranID,
-								&varCell.ValueContentCell.ReadedByTranID);
+								&contentCell.ReadByTranID,
+								&varCell.ValueContentCell.ReadByTranID);
 
-							varCell.ValueContentCell.ReadedByTranID.store(contentCell.ReadedByTranID.load());
-							contentCell.ReadedByTranID.store(0);
+							varCell.ValueContentCell.ReadByTranID.store(contentCell.ReadByTranID.load());
+							contentCell.ReadByTranID.store(0);
 						}
 					}
 
@@ -243,15 +243,15 @@ NEXT_KEY_PART:
 				//shounted, notify trans !
 				if (onContentCellMovedFunc)
 				{
-					uchar8 tranID = contentCell.ReadedByTranID.load();
+					uchar8 tranID = contentCell.ReadByTranID.load();
 					if (tranID)
 					{
 						onContentCellMovedFunc(tranID,
-							&contentCell.ReadedByTranID,
-							&varCell.ValueContentCell.ReadedByTranID);
+							&contentCell.ReadByTranID,
+							&varCell.ValueContentCell.ReadByTranID);
 
-						varCell.ValueContentCell.ReadedByTranID.store(contentCell.ReadedByTranID.load());
-						contentCell.ReadedByTranID.store(0);
+						varCell.ValueContentCell.ReadByTranID.store(contentCell.ReadByTranID.load());
+						contentCell.ReadByTranID.store(0);
 					}
 				}
 
@@ -389,15 +389,15 @@ NEXT_KEY_PART:
 					//shounted, notify trans !
 					if (onContentCellMovedFunc)
 					{
-						uchar8 tranID = currContentCell.ReadedByTranID.load();
+						uchar8 tranID = currContentCell.ReadByTranID.load();
 						if (tranID)
 						{
 							onContentCellMovedFunc(tranID,
-								&currContentCell.ReadedByTranID,
-								&varCell.ValueContentCell.ReadedByTranID);
+								&currContentCell.ReadByTranID,
+								&varCell.ValueContentCell.ReadByTranID);
 
-							varCell.ValueContentCell.ReadedByTranID.store(currContentCell.ReadedByTranID.load());
-							currContentCell.ReadedByTranID.store(0);
+							varCell.ValueContentCell.ReadByTranID.store(currContentCell.ReadByTranID.load());
+							currContentCell.ReadByTranID.store(0);
 						}
 					}
 
@@ -443,15 +443,15 @@ NEXT_KEY_PART:
 				//shounted, notify trans !
 				if (onContentCellMovedFunc)
 				{
-					uchar8 tranID = contentCell.ReadedByTranID.load();
+					uchar8 tranID = contentCell.ReadByTranID.load();
 					if (tranID)
 					{
 						onContentCellMovedFunc(tranID,
-							&contentCell.ReadedByTranID,
-							&varCell.ValueContentCell.ReadedByTranID);
+							&contentCell.ReadByTranID,
+							&varCell.ValueContentCell.ReadByTranID);
 
-						varCell.ValueContentCell.ReadedByTranID.store(contentCell.ReadedByTranID.load());
-						contentCell.ReadedByTranID.store(0);
+						varCell.ValueContentCell.ReadByTranID.store(contentCell.ReadByTranID.load());
+						contentCell.ReadByTranID.store(0);
 					}
 				}
 
@@ -592,16 +592,16 @@ NEXT_KEY_PART:
 			//shounted, notify trans !
 			if (onContentCellMovedFunc)
 			{
-				uchar8 tranID = contentCell.ReadedByTranID.load();
+				uchar8 tranID = contentCell.ReadByTranID.load();
 
 				if (tranID)
 				{
 					onContentCellMovedFunc(tranID,
-						&contentCell.ReadedByTranID,
-						&varCell.ValueContentCell.ReadedByTranID);
+						&contentCell.ReadByTranID,
+						&varCell.ValueContentCell.ReadByTranID);
 
-					varCell.ValueContentCell.ReadedByTranID.store(contentCell.ReadedByTranID.load());
-					contentCell.ReadedByTranID.store(0);
+					varCell.ValueContentCell.ReadByTranID.store(contentCell.ReadByTranID.load());
+					contentCell.ReadByTranID.store(0);
 				}
 			}
 
@@ -670,15 +670,15 @@ NEXT_KEY_PART:
 		//shounted, notify trans !
 		if (onContentCellMovedFunc)
 		{
-			uchar8 tranID = contentCell.ReadedByTranID.load();
+			uchar8 tranID = contentCell.ReadByTranID.load();
 			if (tranID)
 			{
 				onContentCellMovedFunc(tranID,
-					&contentCell.ReadedByTranID,
-					&varCell.ValueContentCell.ReadedByTranID);
+					&contentCell.ReadByTranID,
+					&varCell.ValueContentCell.ReadByTranID);
 
-				varCell.ValueContentCell.ReadedByTranID.store(contentCell.ReadedByTranID.load());
-				contentCell.ReadedByTranID.store(0);
+				varCell.ValueContentCell.ReadByTranID.store(contentCell.ReadByTranID.load());
+				contentCell.ReadByTranID.store(0);
 			}
 		}
 

@@ -526,7 +526,7 @@ public:
 					};
 				}
 
-				if(len == buffSize) //not all readed
+				if(len == buffSize) //not all read
 				{
 					pos += i;
 				}

@@ -73,7 +73,7 @@ void BigDoc::procAlias(char* json,
 																valueType,
 																2,
 																pTran->TranID,
-																&pTran->readedList); //2. Read data and check blocking and block with put to array blocked cell (ha2)
+																&pTran->readList); //2. Read data and check blocking and block with put to array blocked cell (ha2)
 			}
 		}
 
@@ -1163,7 +1163,7 @@ uint32 BigDoc::getPartDoc(char* jsonTemplate,
 				else //pTran->TranType == REPEATABLE_READ_TRAN || pTran->TranType == SNAPSHOT_TRAN
 				{
 					//2. Read data and check blocking and block with put to array blocked cell (ha2)
-					attrValue = has2[pTran->CollID]->attrValuesPool.fromSerPointer(pTran->getValueByKey2((uint32*)key, currPos, valueType, 2, &pTran->readedList));
+					attrValue = has2[pTran->CollID]->attrValuesPool.fromSerPointer(pTran->getValueByKey2((uint32*)key, currPos, valueType, 2, &pTran->readList));
 				}
 			}
 

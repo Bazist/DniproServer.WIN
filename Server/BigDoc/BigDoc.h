@@ -80,7 +80,7 @@ public:
 	static std::atomic_bool blockCheckDeadlock;
 
 	static std::atomic<uint32> amountReaders;
-	static std::atomic<uint32> amountMarkIsReadedTrans;
+	static std::atomic<uint32> amountMarkIsReadTrans;
 	static std::atomic<uint32> amountShapshotTrans;
 
 	std::atomic<uint32> amountWritedTranPages;
@@ -205,7 +205,7 @@ public:
 		blockCheckDeadlock = false;
 
 		amountReaders = 0;
-		amountMarkIsReadedTrans = 0;
+		amountMarkIsReadTrans = 0;
 		amountShapshotTrans = 0;
 
 		writeTranOnHDD = false;
@@ -403,7 +403,7 @@ public:
 		std::atomic<uchar8>* oldAddress,
 		std::atomic<uchar8>* newAddress)
 	{
-		_trans[tranID].readedList.replaceAddress(oldAddress, newAddress);
+		_trans[tranID].readList.replaceAddress(oldAddress, newAddress);
 	}
 
 	inline void print(char* key, uint32 len, uint32 level)

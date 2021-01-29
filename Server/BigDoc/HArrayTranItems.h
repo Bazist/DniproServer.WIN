@@ -30,7 +30,7 @@ class HArrayTranItem
 {
 public:
 	HArrayTranItemType Type; //1 - Inserted, 2 - Deleted, 3 - Rollbacked
-	uint32* pIndexInVL; //index in Value List (need for fast fast delete item from ha1.ValueList with big Count)
+	uint32* pIndexInVL; //index in Value List (need for fast delete item from ha1.ValueList with big Count)
 	uchar8 TranID;
 	uchar8 CollID;
 	uint32* Key;

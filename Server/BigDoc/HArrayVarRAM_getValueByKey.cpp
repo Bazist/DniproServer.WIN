@@ -24,7 +24,7 @@ uint32 HArrayVarRAM::getValueByKey(uint32* key,
 								  uchar8& valueType,
 								  uchar8 readModeType,
 								  uchar8 tranID,
-								  ReadedList* pReadedList)								  
+								  ReadList* pReadList)								  
 {
 	keyLen >>= 2; //in 4 bytes
 	uint32 maxSafeShort = MAX_SAFE_SHORT - keyLen;
@@ -60,7 +60,7 @@ NEXT_KEY_PART:
 				
 				if (readModeType)
 				{
-					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadedList);
+					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadList);
 				}
 				else
 				{
@@ -81,7 +81,7 @@ NEXT_KEY_PART:
 
 				if (readModeType)
 				{
-					return processReadByTranID(contentCell, readModeType, tranID, pReadedList);
+					return processReadByTranID(contentCell, readModeType, tranID, pReadList);
 				}
 				else
 				{
@@ -119,7 +119,7 @@ NEXT_KEY_PART:
 				
 				if (readModeType)
 				{
-					return processReadByTranID(varCell.ValueContentCell, readModeType, tranID, pReadedList);
+					return processReadByTranID(varCell.ValueContentCell, readModeType, tranID, pReadList);
 				}
 				else
 				{
@@ -136,7 +136,7 @@ NEXT_KEY_PART:
 
 				if (readModeType)
 				{
-					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadedList);
+					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadList);
 				}
 				else
 				{
@@ -179,7 +179,7 @@ NEXT_KEY_PART:
 
 				if (readModeType)
 				{
-					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadedList);
+					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadList);
 				}
 				else
 				{

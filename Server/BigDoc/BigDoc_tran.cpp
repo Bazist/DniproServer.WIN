@@ -23,7 +23,7 @@ HArrayTran BigDoc::_trans[MAX_TRANS];
 std::atomic_bool BigDoc::blockCheckDeadlock;// = 0;
 
 std::atomic<uint32> BigDoc::amountReaders;// = 0;
-std::atomic<uint32> BigDoc::amountMarkIsReadedTrans;// = 0;
+std::atomic<uint32> BigDoc::amountMarkIsReadTrans;// = 0;
 std::atomic<uint32> BigDoc::amountShapshotTrans;// = 0;
 
 ulong64 BigDoc::tranLogSize = 0;
@@ -666,7 +666,7 @@ bool BigDoc::readTrans(char* filePath,
 
 			tranLogSize = i;
 
-			if (len == buffSize) //not all readed
+			if (len == buffSize) //not all read
 			{
 				pos += i;
 			}
@@ -770,10 +770,10 @@ bool BigDoc::checkDeadlock(uchar8 tranID)
 	for (uint32 i = 1; i < MAX_TRANS; i++)
 	{
 		if (i != tranID &&
-			_trans[i].readedList.BlockedByTranID &&
-			_trans[tranID].readedList.BlockedByTranID &&
-			_trans[i].readedList.BlockedByTranID == _trans[tranID].TranID &&
-			_trans[tranID].readedList.BlockedByTranID == _trans[i].TranID) //deadlock !!
+			_trans[i].readList.BlockedByTranID &&
+			_trans[tranID].readList.BlockedByTranID &&
+			_trans[i].readList.BlockedByTranID == _trans[tranID].TranID &&
+			_trans[tranID].readList.BlockedByTranID == _trans[i].TranID) //deadlock !!
 		{
 			BigDocError de;
 
@@ -783,19 +783,19 @@ bool BigDoc::checkDeadlock(uchar8 tranID)
 				tranID, _trans[i].TranID,
 				_trans[tranID].LastJson,
 				_trans[i].LastJson,
-				(char*)_trans[tranID].readedList.BlockedOnValue,
-				(char*)_trans[i].readedList.BlockedOnValue);
+				(char*)_trans[tranID].readList.BlockedOnValue,
+				(char*)_trans[i].readList.BlockedOnValue);
 
 			//rollback tran
 			HArrayTran& tran = _trans[tranID];
 
 			if (tran.TranType == REPEATABLE_READ_TRAN)
 			{
-				amountMarkIsReadedTrans--;
+				amountMarkIsReadTrans--;
 			}
 			else if (tran.TranType == SNAPSHOT_TRAN)
 			{
-				amountMarkIsReadedTrans--;
+				amountMarkIsReadTrans--;
 
 				amountShapshotTrans--;
 			}
@@ -866,17 +866,19 @@ uint32 BigDoc::beginTran(uchar8 tranType,
 				//nested tran
 				if (parentTranID)
 				{
+					HArrayTran& parentTran = _trans[parentTranID];
+
 					tran.ParentTranID = parentTranID;
 					
-					_trans[parentTranID].HasChilds = true;
+					parentTran.HasChilds = true;
 
-					if (!_trans[parentTranID].pGrandParentTran)
+					if (!parentTran.pGrandParentTran)
 					{
-						tran.pGrandParentTran = &_trans[parentTranID];
+						tran.pGrandParentTran = &parentTran;
 					}
 					else
 					{
-						tran.pGrandParentTran = _trans[parentTranID].pGrandParentTran;
+						tran.pGrandParentTran = parentTran.pGrandParentTran;
 					}
 
 					if (tran.TranType > tran.pGrandParentTran->TranType)
@@ -894,11 +896,11 @@ uint32 BigDoc::beginTran(uchar8 tranType,
 				{
 					if (tranType == REPEATABLE_READ_TRAN)
 					{
-						amountMarkIsReadedTrans++;
+						amountMarkIsReadTrans++;
 					}
 					else if (tranType == SNAPSHOT_TRAN)
 					{
-						amountMarkIsReadedTrans++;
+						amountMarkIsReadTrans++;
 
 						amountShapshotTrans++;
 					}
@@ -922,11 +924,11 @@ void BigDoc::rollbackTran(uint32 tranID)
 	{
 		if (tran.TranType == REPEATABLE_READ_TRAN)
 		{
-			amountMarkIsReadedTrans--;
+			amountMarkIsReadTrans--;
 		}
 		else if (tran.TranType == SNAPSHOT_TRAN)
 		{
-			amountMarkIsReadedTrans--;
+			amountMarkIsReadTrans--;
 
 			amountShapshotTrans--;
 		}
@@ -1025,12 +1027,12 @@ void BigDoc::commitTran(uint32 tranID)
 		//wait while readers finish their work
 		while (amountReaders.load());
 
-		bool hasReadedCells = false;
+		bool hasReadCells = false;
 
-		//release readed cells
+		//release read cells
 		if (tran.TranType == READ_COMMITED_TRAN)
 		{
-			if (amountMarkIsReadedTrans > 0)		//there is another snap tran
+			if (amountMarkIsReadTrans > 0)		//there is another snap tran
 			{
 				if (tran.isModifyCellsOfOtherTrans())	//check if we will modify cells of other trans
 				{
@@ -1047,12 +1049,12 @@ void BigDoc::commitTran(uint32 tranID)
 					goto TRY_COMMIT;
 				}
 
-				hasReadedCells = true;
+				hasReadCells = true;
 			}
 		}
 		else //if (tran.TranType == REPEATABLE_READ_TRAN || tran.TranType == SNAPSHOT_TRAN)
 		{
-			if (amountMarkIsReadedTrans > 1)		//first my snap tran, second another snap tran
+			if (amountMarkIsReadTrans > 1)		//first my snap tran, second another snap tran
 			{
 				if (tran.isModifyCellsOfOtherTransExcludeMine())	//check if we will modify cells of other trans
 				{
@@ -1069,17 +1071,17 @@ void BigDoc::commitTran(uint32 tranID)
 					goto TRY_COMMIT;
 				}
 
-				hasReadedCells = true;
+				hasReadCells = true;
 			}
 
-			//release readed values
-			tran.readedList.releaseValues();
+			//release read values
+			tran.readList.releaseValues();
 
-			amountMarkIsReadedTrans--;
+			amountMarkIsReadTrans--;
 		}
 
 		//commit tran
-		tran.commit(hasReadedCells);
+		tran.commit(hasReadCells);
 
 		//allow readers
 		blockReaders.store(false);

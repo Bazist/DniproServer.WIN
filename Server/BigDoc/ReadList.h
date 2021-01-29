@@ -26,73 +26,73 @@
 #include <atomic>
 #include "stdafx.h"
 
-class ReadedPage
+class ReadPage
 {
 public:
-	ReadedPage()
+	ReadPage()
 	{
 		pNext = 0;
 	}
 
 	std::atomic<uchar8>* Values[MAX_CHAR];
 
-	ReadedPage* pNext;
+	ReadPage* pNext;
 };
 
-class ReadedList
+class ReadList
 {
 public:
-	ReadedList()
+	ReadList()
 	{
 	}
 
 	void init()
 	{
-		memset(this, 0, sizeof(ReadedList));
+		memset(this, 0, sizeof(ReadList));
 
-		pReadedPage = pLastReadedPage = new ReadedPage();
+		pReadPage = pLastReadPage = new ReadPage();
 	}
 
 	uchar8 BlockedByTranID;
 	uint32 BlockedOnValue;
 
-	ReadedPage* pReadedPage;
+	ReadPage* pReadPage;
 
-	ReadedPage* pLastReadedPage;
-	uint32 currReadedPos;
+	ReadPage* pLastReadPage;
+	uint32 currReadPos;
 
 	void addValue(std::atomic<uchar8>* pValue)
 	{
-		if (currReadedPos >= MAX_CHAR)
+		if (currReadPos >= MAX_CHAR)
 		{
-			if (pLastReadedPage->pNext)
+			if (pLastReadPage->pNext)
 			{
-				pLastReadedPage = pLastReadedPage->pNext;
+				pLastReadPage = pLastReadPage->pNext;
 			}
 			else
 			{
-				pLastReadedPage = pLastReadedPage->pNext = new ReadedPage();
+				pLastReadPage = pLastReadPage->pNext = new ReadPage();
 			}
 
-			currReadedPos = 0;
+			currReadPos = 0;
 		}
 
-		pLastReadedPage->Values[currReadedPos++] = pValue;
+		pLastReadPage->Values[currReadPos++] = pValue;
 
 		return;
 	}
 
 	void releaseValues()
 	{
-		ReadedPage* pCurrReadedPage = pReadedPage;
+		ReadPage* pCurrReadPage = pReadPage;
 
 		while (true)
 		{
-			if (pCurrReadedPage == pLastReadedPage) //last page
+			if (pCurrReadPage == pLastReadPage) //last page
 			{
-				for (uint32 i = 0; i < currReadedPos; i++)
+				for (uint32 i = 0; i < currReadPos; i++)
 				{
-					pCurrReadedPage->Values[i]->store(0); //release
+					pCurrReadPage->Values[i]->store(0); //release
 				}
 							
 				break;
@@ -101,10 +101,10 @@ public:
 			{
 				for (uint32 i = 0; i < MAX_CHAR; i++)
 				{
-					pCurrReadedPage->Values[i]->store(0); //release
+					pCurrReadPage->Values[i]->store(0); //release
 				}
 
-				pCurrReadedPage = pCurrReadedPage->pNext;
+				pCurrReadPage = pCurrReadPage->pNext;
 			}
 		}
 	}
@@ -114,17 +114,17 @@ public:
 	void replaceAddress(std::atomic<uchar8>* oldAddress,
 						std::atomic<uchar8>* newAddress)
 	{
-		ReadedPage* pCurrReadedPage = pReadedPage;
+		ReadPage* pCurrReadPage = pReadPage;
 
 		while (true)
 		{
-			if (pCurrReadedPage == pLastReadedPage) //last page
+			if (pCurrReadPage == pLastReadPage) //last page
 			{
-				for (uint32 i = 0; i < currReadedPos; i++)
+				for (uint32 i = 0; i < currReadPos; i++)
 				{
-					if (pCurrReadedPage->Values[i] == oldAddress)
+					if (pCurrReadPage->Values[i] == oldAddress)
 					{
-						pCurrReadedPage->Values[i] = newAddress;
+						pCurrReadPage->Values[i] = newAddress;
 						
 						return;
 					}
@@ -136,30 +136,30 @@ public:
 			{
 				for (uint32 i = 0; i < MAX_CHAR; i++)
 				{
-					if (pCurrReadedPage->Values[i] == oldAddress)
+					if (pCurrReadPage->Values[i] == oldAddress)
 					{
-						pCurrReadedPage->Values[i] = newAddress;
+						pCurrReadPage->Values[i] = newAddress;
 
 						return;
 					}
 				}
 
-				pCurrReadedPage = pCurrReadedPage->pNext;
+				pCurrReadPage = pCurrReadPage->pNext;
 			}
 		}
 	}
 
 	//bool hasValue(std::atomic<uchar8>* pValue)
 	//{
-	//	ReadedPage* pCurrReadedPage = pReadedPage;
+	//	ReadPage* pCurrReadPage = pReadPage;
 
 	//	while (true)
 	//	{
-	//		if (pCurrReadedPage == pLastReadedPage) //last page
+	//		if (pCurrReadPage == pLastReadPage) //last page
 	//		{
-	//			for (uint32 i = 0; i < currReadedPos; i++)
+	//			for (uint32 i = 0; i < currReadPos; i++)
 	//			{
-	//				if (pCurrReadedPage->Values[i] == pValue)
+	//				if (pCurrReadPage->Values[i] == pValue)
 	//				{
 	//					return true;
 	//				}
@@ -171,21 +171,21 @@ public:
 	//		{
 	//			for (uint32 i = 0; i < MAX_CHAR; i++)
 	//			{
-	//				if (pCurrReadedPage->Values[i] == pValue)
+	//				if (pCurrReadPage->Values[i] == pValue)
 	//				{
 	//					return true;
 	//				}
 	//			}
 
-	//			pCurrReadedPage = pCurrReadedPage->pNext;
+	//			pCurrReadPage = pCurrReadPage->pNext;
 	//		}
 	//	}
 	//}
 
 	void clear()
 	{
-		pLastReadedPage = pReadedPage;
-		currReadedPos = 0;
+		pLastReadPage = pReadPage;
+		currReadPos = 0;
 
 		BlockedByTranID = 0;
 		BlockedOnValue = 0;
@@ -193,15 +193,15 @@ public:
 
 	void destroy()
 	{
-		ReadedPage* pCurrReadedPage = pReadedPage;
+		ReadPage* pCurrReadPage = pReadPage;
 
-		while (pCurrReadedPage)
+		while (pCurrReadPage)
 		{
-			ReadedPage* pNextPage = pCurrReadedPage->pNext;
+			ReadPage* pNextPage = pCurrReadPage->pNext;
 
-			delete pCurrReadedPage;
+			delete pCurrReadPage;
 
-			pCurrReadedPage = pNextPage;
+			pCurrReadPage = pNextPage;
 		}
 	}
 };

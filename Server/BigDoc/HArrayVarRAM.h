@@ -510,7 +510,7 @@ public:
 					   uchar8& valueType,
 					   uchar8 readModeType = 0,
 					   uchar8 tranID = 0,
-					   ReadedList* pReadedList = 0);
+					   ReadList* pReadList = 0);
 
 	bool hasPartKey(uint32* key, uint32 keyLen);
 	void delValueByKey(uint32* key, uint32 keyLen, uint32 value, uint32 index = 0);
@@ -530,11 +530,11 @@ public:
 
 	//ISREADED ===========================================================================================================
 	inline uint32 processReadByTranID(ContentCell& contentCell,
-									uchar8 readedModeType,
+									uchar8 readModeType,
 									uchar8 tranID,
-									ReadedList* pReadedList)
+									ReadList* pReadList)
 	{
-		switch (readedModeType)
+		switch (readModeType)
 		{
 			case 0: //0. Without any check (ha1)
 			{
@@ -542,16 +542,16 @@ public:
 			}
 			case 1: //1. Read data with check blocking (ha2)
 			{
-				if (contentCell.ReadedByTranID.load() != tranID) //not mine blocking
+				if (contentCell.ReadByTranID.load() != tranID) //not mine blocking
 				{
 					uint32 timeout = 10000;
 
-					while (contentCell.ReadedByTranID.load())
+					while (contentCell.ReadByTranID.load())
 					{
 						if (--timeout)
 						{
-							pReadedList->BlockedByTranID = contentCell.ReadedByTranID.load();
-							pReadedList->BlockedOnValue = contentCell.Value;
+							pReadList->BlockedByTranID = contentCell.ReadByTranID.load();
+							pReadList->BlockedOnValue = contentCell.Value;
 
 							msleep(1); //do time for other threads
 						}
@@ -573,20 +573,20 @@ public:
 			}
 			case 2: //2. Read data and check blocking and block with put to array blocked cell (ha2)
 			{
-				if (contentCell.ReadedByTranID.load() != tranID) //not mine blocking
+				if (contentCell.ReadByTranID.load() != tranID) //not mine blocking
 				{
 					uint32 timeout = 10000;
 
 					uchar8 val = 0;
 
-					while (!contentCell.ReadedByTranID.compare_exchange_weak(val, tranID)) //block
+					while (!contentCell.ReadByTranID.compare_exchange_weak(val, tranID)) //block
 					{
 						val = 0;
 
 						if (--timeout)
 						{
-							pReadedList->BlockedByTranID = contentCell.ReadedByTranID.load();
-							pReadedList->BlockedOnValue = contentCell.Value;
+							pReadList->BlockedByTranID = contentCell.ReadByTranID.load();
+							pReadList->BlockedOnValue = contentCell.Value;
 
 							msleep(1); //do time for other threads
 						}
@@ -603,18 +603,18 @@ public:
 						}
 					}
 
-					pReadedList->addValue(&contentCell.ReadedByTranID);
+					pReadList->addValue(&contentCell.ReadByTranID);
 				}
 
 				return contentCell.Value;
 			}
 			case 3: //3. Check if key blocked (ha2 for commit)
 			{
-				return contentCell.ReadedByTranID.load();
+				return contentCell.ReadByTranID.load();
 			}
 			case 4: //4. Check if key blocked, but excluded my cells
 			{
-				if(contentCell.ReadedByTranID.load() == tranID)
+				if(contentCell.ReadByTranID.load() == tranID)
 				{
 					return 0; //mine blocking
 				}
