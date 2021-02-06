@@ -811,11 +811,11 @@ public:
 	//GET =============================================================================================================
 
 	uint32 getValueByKey(uint32* key,
-						  uint32 keyLen,
-						  uchar8& valueType,
-						  uchar8 readModeType,
-						  uchar8 tranID,
-						  ReadList* pReadList);
+		uint32 keyLen,
+		uchar8& valueType,
+		uchar8 readModeType = 0,
+		uchar8 tranID = 0,
+		ReadList* pReadList = 0);
 
 	bool hasPartKey(uint32* key, uint32 keyLen);
 	
@@ -824,7 +824,7 @@ public:
 	bool delValueByKey(uint32* key,
 		 			   uint32 keyLen,
 					   uint32 value,
-					   uint32 index);
+					   uint32 index = 0);
 
 	static void msleep(uint32 ms)
 	{

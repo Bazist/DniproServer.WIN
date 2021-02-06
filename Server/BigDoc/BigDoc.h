@@ -534,7 +534,7 @@ public:
 
 		strcpy(pHA1->Name, name);
 
-		pHA1->init(4, 16);
+		pHA1->init(16);
 		pHA1->AllowValueList = true;
 
 		return pHA1;
@@ -546,7 +546,7 @@ public:
 
 		strcpy(pHA2->Name, name);
 
-		pHA2->init(4, 16);
+		pHA2->init(16);
 		pHA2->AllowValueList = false;
 
 		pHA2->onContentCellMovedFunc = onContentCellMoved;

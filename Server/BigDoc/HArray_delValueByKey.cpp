@@ -749,6 +749,8 @@ bool HArray::delValueByKey(uint32* key,
 			delValueByKey(key, keyLen);
 		}
 	}
+
+	return true;
 }
 
 bool HArray::delValueByKey(uint32* key,
