@@ -123,8 +123,6 @@ uint32 BigDoc::shrink()
 {
 	ulong64 beforeMemory = getUsedMemory();
 
-	uint32 key[32];
-
 	for (uint32 i = 0; i < countColls; i++)
 	{
 		ScanShrinkKeyData scanKeyData;
@@ -140,7 +138,7 @@ uint32 BigDoc::shrink()
 		scanKeyData.pOldHA2 = has2[i];
 
 		//scan
-		has2[i]->scanKeysAndValues(key, &shrinkKeyHA, &scanKeyData);
+		has2[i]->scanKeysAndValues(&shrinkKeyHA, &scanKeyData);
 
 		//destroy ha2
 		has2[i]->destroy();

@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
-#include "HArrayVarRAM.h"
+#include "HArray.h"
 #include "BigDoc.h"
 #include "BigDocQuery.h"
 #include "BigDocInterpreter.h"
