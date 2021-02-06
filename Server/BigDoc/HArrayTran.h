@@ -18,7 +18,7 @@
 
 #pragma once
 #include <atomic>
-#include "HArray.h"
+#include "HArrayVarRAM.h"
 #include "HArrayTranItems.h"
 #include "HArrayTranItemsPool.h"
 #include "ReadList.h"
@@ -54,8 +54,8 @@ public:
 
 	HArrayTranItemsPool* pHArrayTranItemsPool;
 	
-	HArray** has1;
-	HArray** has2;
+	HArrayVarRAM** has1;
+	HArrayVarRAM** has2;
 
 	IndexesPool indexesPool;
 	AttrValuesPage* pAttrValuesPage;
@@ -82,8 +82,8 @@ public:
 
 	void init(uchar8 tranID,
 		HArrayTranItemsPool* pHArrayTranItemsPool,
-		HArray** has1,
-		HArray** has2,
+		HArrayVarRAM** has1,
+		HArrayVarRAM** has2,
 		ON_CONTENT_CELL_MOVED_FUNC* onContentCellMovedFunc)
 	{
 		CollID = 0; //default;

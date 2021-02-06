@@ -105,11 +105,11 @@
     <ClInclude Include="BigDocInfo.h" />
     <ClInclude Include="BigDocInterpreter.h" />
     <ClInclude Include="BigDocQuery.h" />
-    <ClInclude Include="HArray.h" />
-    <ClInclude Include="HArrayBase.h" />
+    <ClInclude Include="HArrayFixBase.h" />
     <ClInclude Include="HArrayTranItemKeysPool.h" />
     <ClInclude Include="HArrayTranItems.h" />
     <ClInclude Include="HArrayTranItemsPool.h" />
+    <ClInclude Include="HArrayVarRAM.h" />
     <ClInclude Include="IndexesPool.h" />
     <ClInclude Include="ReadList.h" />
     <ClInclude Include="Server.h" />
@@ -124,16 +124,13 @@
     <ClCompile Include="BigDoc_shrink.cpp" />
     <ClCompile Include="BigDoc_tran.cpp" />
     <ClCompile Include="BigDocInterpreter.cpp" />
-    <ClCompile Include="HArray_delValueByKey.cpp" />
-    <ClCompile Include="HArray_getKeysAndValuesByRange.cpp" />
-    <ClCompile Include="HArray_getValueByKey.cpp" />
-    <ClCompile Include="HArray_hasPartKey.cpp" />
-    <ClCompile Include="HArray_insert.cpp" />
-    <ClCompile Include="HArray_rebuild.cpp" />
-    <ClCompile Include="HArray_resizeHeader.cpp" />
-    <ClCompile Include="HArray_scanKeysAndValues.cpp" />
-    <ClCompile Include="HArray_shrink.cpp" />
-    <ClCompile Include="HArray_test.cpp" />
+    <ClCompile Include="HArrayVarRAM_delValueByKey.cpp" />
+    <ClCompile Include="HArrayVarRAM_getKeysAndValuesByRange.cpp" />
+    <ClCompile Include="HArrayVarRAM_getValueByKey.cpp" />
+    <ClCompile Include="HArrayVarRAM_getValuesByRange.cpp" />
+    <ClCompile Include="HArrayVarRAM_hasPartKey.cpp" />
+    <ClCompile Include="HArrayVarRAM_scanKeysAndValues.cpp" />
+    <ClCompile Include="HArrayVarRAM_insert.cpp" />
     <ClCompile Include="Main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>

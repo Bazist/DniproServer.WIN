@@ -1,13 +1,13 @@
 /*
-# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: slv709@gmail.com, skype: vyacheslavm81)
-# This file is part of HArray.
+# Copyright(C) 2010-2021 Viacheslav Makoveichuk (email: slv709@gmail.com, skype: vyacheslavm81)
+# This file is part of BigDoc.
 #
-# HArray is free software : you can redistribute it and / or modify
+# BigDoc is free software : you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# HArray is distributed in the hope that it will be useful,
+# BigDoc is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
 # GNU General Public License for more details.
@@ -18,16 +18,18 @@
 
 #pragma once
 
-#ifndef _HARRAY_FIX_BASE		 // Allow use of features specific to Windows XP or later.
+#ifndef _HARRAY_FIX_BASE		 // Allow use of features specific to Windows XP or later.                   
 #define _HARRAY_FIX_BASE 0x709 // Change this to the appropriate value to target other versions of Windows.
 
-#endif
+#endif	
 
+#include <atomic>
 #include "stdafx.h"
 #include "BinFile.h"
-#include <atomic>
+#include "ReadList.h"
+#include "AttrValuesPool.h"
 
-#define _RELEASE 0x1234567
+//#define _RELEASE 0x1234567
 
 const uint32 REPOSITORY_VERSION = 1;
 
@@ -50,44 +52,14 @@ const uchar8 MIN_BRANCH_TYPE1 = 1;
 const uchar8 MAX_BRANCH_TYPE1 = BRANCH_ENGINE_SIZE;
 const uchar8 MIN_BRANCH_TYPE2 = BRANCH_ENGINE_SIZE + 1;
 const uchar8 MAX_BRANCH_TYPE2 = BRANCH_ENGINE_SIZE * 2;
-const uchar8 MIN_BLOCK_TYPE = MAX_BRANCH_TYPE2 + 1;
+const uchar8 MIN_BLOCK_TYPE = 50;
 const uchar8 MAX_BLOCK_TYPE = MIN_BLOCK_TYPE + (32 / BLOCK_ENGINE_STEP) - 1;
-const uchar8 VAR_TYPE = MAX_BLOCK_TYPE + 1; //for var value
-const uchar8 CONTINUE_VAR_TYPE = VAR_TYPE + 1; //for continue var value
-const uchar8 CURRENT_VALUE_TYPE = CONTINUE_VAR_TYPE + 1;
-const uchar8 VALUE_TYPE = CURRENT_VALUE_TYPE + 1;
-const uchar8 VALUE_LIST_TYPE = VALUE_TYPE + 1;
-const uchar8 ONLY_CONTENT_TYPE = VALUE_LIST_TYPE + 1;
-
-const uchar8 MOVES_LEVEL1_STAT = 0;
-const uchar8 MOVES_LEVEL2_STAT = 1;
-const uchar8 MOVES_LEVEL3_STAT = 2;
-const uchar8 MOVES_LEVEL4_STAT = 3;
-const uchar8 MOVES_LEVEL5_STAT = 4;
-const uchar8 MOVES_LEVEL6_STAT = 5;
-const uchar8 MOVES_LEVEL7_STAT = 6;
-const uchar8 MOVES_LEVEL8_STAT = 7;
-const uchar8 SHORT_WAY_STAT = 8;
-const uchar8 LONG_WAY_STAT = 9;
-const uchar8 CONTENT_BRANCH_STAT = 10;
-
-const uchar8 CURRENT_VALUE_SEGMENT_TYPE = 1;
-const uchar8 BRANCH_SEGMENT_TYPE = CURRENT_VALUE_SEGMENT_TYPE + 1;
-const uchar8 BLOCK_VALUE_SEGMENT_TYPE = BRANCH_SEGMENT_TYPE + 1;
-const uchar8 BLOCK_BRANCH1_SEGMENT_TYPE = BLOCK_VALUE_SEGMENT_TYPE + 1;
-const uchar8 BLOCK_BRANCH2_SEGMENT_TYPE = BLOCK_BRANCH1_SEGMENT_TYPE + 1;
-const uchar8 BLOCK_OFFSET_SEGMENT_TYPE = BLOCK_BRANCH2_SEGMENT_TYPE + 1;
-const uchar8 VAR_SHUNT_SEGMENT_TYPE = BLOCK_OFFSET_SEGMENT_TYPE + 1;
-const uchar8 VAR_VALUE_SEGMENT_TYPE = VAR_SHUNT_SEGMENT_TYPE + 1;
-
-const uint32 MIN_COUNT_RELEASED_CONTENT_CELLS = MAX_SHORT * 2; //two pages
-const uint32 MIN_COUNT_RELEASED_BRANCH_CELLS = MAX_SHORT;
-const uint32 MIN_COUNT_RELEASED_BLOCK_CELLS = MAX_SHORT;
-const uint32 MIN_COUNT_RELEASED_VAR_CELLS = MAX_SHORT;
-
-const uchar8 MAX_KEY_SEGMENTS = MAX_CHAR - ONLY_CONTENT_TYPE;
-const uchar8 MIN_HEADER_BASE_BITS = 14;		  //16384 slots
-const uchar8 MAX_HEADER_FILL_FACTOR_BITS = 4; //fill factor 1/16 of header size
+const uchar8 VAR_TYPE = 125; //for var value
+const uchar8 CONTINUE_VAR_TYPE = 126; //for continue var value
+const uchar8 CURRENT_VALUE_TYPE = 127;
+const uchar8 VALUE_TYPE = 128;
+const uchar8 VALUE_LIST_TYPE = 129;
+const uchar8 ONLY_CONTENT_TYPE = 130;
 
 typedef bool HARRAY_ITEM_VISIT_FUNC(uint32* key, uint32 keyLen, uint32 value, uchar8 valueType, void* pData);
 
@@ -131,21 +103,24 @@ struct HACursor
 //	uchar8 Type;
 //};
 
-struct HArrayPair
+struct HArrayFixPair
 {
-public:
 	uint32 Key[16];
 	uint32 Value;
 	uint32 KeyLen;
 
-	void print()
+	int compareTo(HArrayFixPair& pair)
 	{
-		for(int i=0; i<KeyLen; i++)
+		for (uint32 i = 0; i < KeyLen; i++)
 		{
-			printf("%u ", Key[i]);
+			if (Key[i] < pair.Key[i])
+				return -1;
+
+			if (Key[i] > pair.Key[i])
+				return 1;
 		}
 
-		printf("=> %u\n", Value);
+		return 0;
 	}
 };
 
@@ -162,42 +137,40 @@ struct BlockCell
 	uint32 ValueOrOffset;
 };
 
-//struct ContentCell
-//{
-//	uchar8 Type;
-//	uint32 Value;
-//};
+struct ContentCell
+{
+	std::atomic<uchar8> ReadByTranID;
+	uchar8 Type;
+	uint32 Value;
+};
 
 struct VarCell
 {
-	std::atomic<uchar8> ValueContCellReadByTranID;
-	uchar8 ValueContCellType;
-	uint32 ValueContCellValue;
-	
-	std::atomic<uchar8> ContCellReadByTranID;
-	uchar8 ContCellType;
-	uint32 ContCellValue;
+	ContentCell ValueContentCell;
+	ContentCell ContCell;
 };
 
-struct ContentPage
+class ContentPage
 {
-	std::atomic<uchar8> ReadByTranID[MAX_SHORT];
-	uchar8 pType[MAX_SHORT];
-	uint32 pContent[MAX_SHORT];
+public:
+	ContentCell pContent[MAX_SHORT];
 };
 
-struct VarPage
+class VarPage
 {
+public:
 	VarCell pVar[MAX_SHORT];
 };
 
-struct BranchPage
+class BranchPage
 {
+public:
 	BranchCell pBranch[MAX_SHORT];
 };
 
-struct BlockPage
+class BlockPage
 {
+public:
 	BlockPage()
 	{
 		for (uint32 i = 0; i < MAX_SHORT; i++)
@@ -208,75 +181,6 @@ struct BlockPage
 
 	BlockCell pBlock[MAX_SHORT];
 };
-
-struct CompactPage
-{
-	CompactPage()
-	{
-		for (uint32 i = 0; i < MAX_CHAR; i++)
-		{
-			Values[i] = 0;
-			Offsets[i] = 0;
-		}
-
-		Count = 0;
-	}
-
-	uint32 Values[MAX_CHAR];
-	uint32 Offsets[MAX_CHAR];
-
-	uint32 Count;
-
-	CompactPage* pNextPage;
-};
-
-struct SegmentPath
-{
-	uchar8 Type;
-
-	uchar8* pContentCellType;
-	uint32* pContentCellValue;
-
-	BlockCell* pBlockCell;
-	uint32 StartBlockOffset;
-
-	BranchCell* pBranchCell1;
-	uint32 BranchOffset1;
-
-	BranchCell* pBranchCell2;
-	uint32 BranchOffset2;
-
-	VarCell* pVarCell;
-	uint32 VarOffset;
-
-	uint32 BranchIndex;
-	uint32 ContentOffset;
-	uint32 BlockSubOffset;
-
-	void print()
-	{
-		/*
-		printf("Type: %u, ", Type);
-		
-		if(pContentCell)
-			printf("ContentCell: Type=%u, Value=%u, ", pContentCell->Type, pContentCell->Value);
-
-		if(pBlockCell)
-			printf("BlockCell: Type=%u, Offset=%u, ValueOrOffset=%u, ", pBlockCell->Type, pBlockCell->Offset, pBlockCell->ValueOrOffset);
-
-		printf("StartBlockOffset: %u, ", StartBlockOffset);
-
-		if (pBranchCell1)
-			printf("pBranchCell1: Type=%u, Offset=%u, ValueOrOffset=%u, ", pBlockCell->Type, pBlockCell->Offset, pBlockCell->ValueOrOffset);
-		*/
-	}
-};
-
-typedef uint32 (*NormalizeFunc)(void* key);
-
-typedef int (*CompareFunc)(void* key1, uint32 keyLen1, void* key2, uint32 keyLen2);
-
-typedef int(*CompareSegmentFunc)(void* keySeg1, void* keySeg2, uint32 index);
 
 class ValueList
 {
@@ -377,13 +281,13 @@ public:
 		addValue(value);
 	}
 
-	inline bool delValue(uint32 value, uint32 index = 0)
+	inline void delValue(uint32 value, uint32 index = 0)
 	{
 		if (pValues[index] == value) //fast way
 		{
 			pValues[index] = 0;
 
-			return true;
+			return;
 		}
 
 		for (uint32 i = 1; i < Count; i++) //long way
@@ -392,11 +296,9 @@ public:
 			{
 				pValues[i] = 0;
 
-				return true;
+				return;
 			}
 		}
-
-		return false;
 	}
 
 	inline void delValues(ValueList* pValueList)
@@ -433,7 +335,7 @@ public:
 		return false;
 	}
 
-	void read(BinFile* pFile)
+	void read(BinFile *pFile)
 	{
 		pFile->readInt(&Count);
 		pFile->readInt(&Size);
@@ -482,7 +384,7 @@ public:
 
 		ValueListsSize = 4;
 
-		pValueLists = new ValueList * [ValueListsSize];
+		pValueLists = new ValueList*[ValueListsSize];
 	}
 
 	ValueList** pValueLists;
@@ -564,7 +466,7 @@ public:
 	void reallocateValueLists()
 	{
 		uint32 newValueListsSize = ValueListsSize * 2;
-		ValueList** pTempValueLists = new ValueList * [newValueListsSize];
+		ValueList** pTempValueLists = new ValueList*[newValueListsSize];
 
 		uint32 j = 0;
 		for (; j < ValueListsSize; j++)
@@ -609,11 +511,6 @@ public:
 		Count++;
 
 		return pValueList;
-	}
-
-	inline void releaseObject(ValueList* pValueList)
-	{
-		//todo implement
 	}
 
 	inline ValueList* newSerObject(uint32& serPointer)
@@ -696,7 +593,7 @@ public:
 	{
 		uint32 page = Size >> 16;
 
-		for (uint32 i = 0; i < page; i++)
+		for (uint32 i = 0; i<page; i++)
 		{
 			delete[] pValueLists[i];
 		}

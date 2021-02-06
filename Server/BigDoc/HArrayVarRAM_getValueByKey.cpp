@@ -1,13 +1,13 @@
 /*
-# Copyright(C) 2010-2017 Viacheslav Makoveichuk (email: slv709@gmail.com, skype: vyacheslavm81)
-# This file is part of HArray.
+# Copyright(C) 2010-2021 Viacheslav Makoveichuk (email: slv709@gmail.com, skype: vyacheslavm81)
+# This file is part of BigDoc.
 #
-# HArray is free software : you can redistribute it and / or modify
+# BigDoc is free software : you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# HArray is distributed in the hope that it will be useful,
+# BigDoc is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
 # GNU General Public License for more details.
@@ -17,64 +17,82 @@
 */
 
 #include "stdafx.h"
-#include "HArray.h"
+#include "HArrayVarRAM.h"
 
-bool HArray::hasPartKey(uint32* key,
-							  uint32 keyLen)
+uint32 HArrayVarRAM::getValueByKey(uint32* key,
+								  uint32 keyLen,
+								  uchar8& valueType,
+								  uchar8 readModeType,
+								  uchar8 tranID,
+								  ReadList* pReadList)								  
 {
 	keyLen >>= 2; //in 4 bytes
 	uint32 maxSafeShort = MAX_SAFE_SHORT - keyLen;
 
-	uint32 headerOffset;
-
-	if (!normalizeFunc)
-	{
-		headerOffset = key[0] >> HeaderBits;
-	}
-	else
-	{
-		headerOffset = (*normalizeFunc)(key);
-	}
-
-	uint32 contentOffset = pHeader[headerOffset];
-
+	uint32 contentOffset = pHeader[key[0]>>HeaderBits];
+	
 	if(contentOffset)
 	{
 		uint32 keyOffset = 0;
-
+	
 NEXT_KEY_PART:
 		ContentPage* pContentPage = pContentPages[contentOffset>>16];
 		ushort16 contentIndex = contentOffset&0xFFFF;
 
-		uchar8 contentCellType = pContentPage->pType[contentIndex]; //move to type part
-
+		uchar8 contentCellType = pContentPage->pContent[contentIndex].Type; //move to type part
+	
 		if(contentCellType >= ONLY_CONTENT_TYPE) //ONLY CONTENT =========================================================================================
 		{
+			if((keyLen - keyOffset) != (contentCellType - ONLY_CONTENT_TYPE))
+			{
+				return 0;
+			}
+			
 			if(contentIndex < maxSafeShort) //content in one page
 			{
 				for(; keyOffset < keyLen; contentIndex++, keyOffset++)
 				{
-					if(pContentPage->pContent[contentIndex] != key[keyOffset])
-						return false;
+					if(pContentPage->pContent[contentIndex].Value != key[keyOffset])
+						return 0;
 				}
 
-				return true;
+				valueType = pContentPage->pContent[contentIndex].Type;
+				
+				if (readModeType)
+				{
+					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadList);
+				}
+				else
+				{
+					return pContentPage->pContent[contentIndex].Value; //return value
+				}
 			}
 			else //content in two pages
 			{
 				for(; keyOffset < keyLen; contentOffset++, keyOffset++)
 				{
-					if(pContentPages[contentOffset>>16]->pContent[contentOffset&0xFFFF] != key[keyOffset])
-						return false;
+					if(pContentPages[contentOffset>>16]->pContent[contentOffset&0xFFFF].Value != key[keyOffset])
+						return 0;
 				}
 
-				return true;
+				ContentCell& contentCell = pContentPages[contentOffset>>16]->pContent[contentOffset&0xFFFF];
+
+				valueType = contentCell.Type;
+
+				if (readModeType)
+				{
+					return processReadByTranID(contentCell, readModeType, tranID, pReadList);
+				}
+				else
+				{
+					return contentCell.Value; //return value
+				}
 			}
 		}
 
 		uint32& keyValue = key[keyOffset];
-		uint32 contentCellValueOrOffset = pContentPage->pContent[contentIndex];
-
+		uint32 contentCellValueOrOffset = pContentPage->pContent[contentIndex].Value;
+	
 		if(contentCellType == VAR_TYPE) //VAR =====================================================================
 		{
 			VarPage* pVarPage = pVarPages[contentCellValueOrOffset >> 16];
@@ -82,26 +100,55 @@ NEXT_KEY_PART:
 
 			if(keyOffset < keyLen)
 			{
-				contentCellType = varCell.ContCellType; //read from var cell
-				contentCellValueOrOffset = varCell.ContCellValue;
-
+				contentCellType = varCell.ContCell.Type; //read from var cell
+				
 				if(contentCellType == CONTINUE_VAR_TYPE) //CONTINUE VAR =====================================================================
 				{
-					contentOffset = contentCellValueOrOffset;
+					contentOffset = varCell.ContCell.Value;
 
 					goto NEXT_KEY_PART;
+				}
+				else
+				{
+					contentCellValueOrOffset = varCell.ContCell.Value;
 				}
 			}
 			else
 			{
-				return true;
+				valueType = varCell.ValueContentCell.Type;
+				
+				if (readModeType)
+				{
+					return processReadByTranID(varCell.ValueContentCell, readModeType, tranID, pReadList);
+				}
+				else
+				{
+					return varCell.ValueContentCell.Value;
+				}
 			}
 		}
 		else if(keyOffset == keyLen)
 		{
-			return true;
-		}
+			if(contentCellType == VALUE_TYPE ||
+			   contentCellType == VALUE_LIST_TYPE)
+			{
+				valueType = contentCellType;
 
+				if (readModeType)
+				{
+					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadList);
+				}
+				else
+				{
+					return contentCellValueOrOffset;
+				}
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
 		if(contentCellType <= MAX_BRANCH_TYPE1) //BRANCH =====================================================================
 		{
 			BranchPage* pBranchPage = pBranchPages[contentCellValueOrOffset >> 16];
@@ -121,11 +168,28 @@ NEXT_KEY_PART:
 				}
 			}
 
-			return false;
+			return 0;
 		}
-		else if(contentCellType == VALUE_TYPE)
+		else if(contentCellType == VALUE_TYPE ||
+				contentCellType == VALUE_LIST_TYPE)
 		{
-			return true;
+			if(keyOffset == keyLen)
+			{
+				valueType = contentCellType;
+
+				if (readModeType)
+				{
+					return processReadByTranID(pContentPage->pContent[contentIndex], readModeType, tranID, pReadList);
+				}
+				else
+				{
+					return contentCellValueOrOffset;
+				}
+			}
+			else
+			{
+				return 0;
+			}
 		}
 		else if(contentCellType <= MAX_BLOCK_TYPE) //VALUE IN BLOCK ===================================================================
 		{
@@ -136,7 +200,7 @@ NEXT_KEY_PART:
 	NEXT_BLOCK:
 			uint32 subOffset = ((keyValue << idxKeyValue) >> BLOCK_ENGINE_SHIFT);
 			uint32 blockOffset = startOffset + subOffset;
-
+		
 			BlockPage* pBlockPage = pBlockPages[blockOffset >> 16];
 			BlockCell& blockCell = pBlockPage->pBlock[blockOffset & 0xFFFF];
 
@@ -144,7 +208,7 @@ NEXT_KEY_PART:
 
 			if(blockCellType == EMPTY_TYPE)
 			{
-				return false;
+				return 0;
 			}
 			else if(blockCellType == CURRENT_VALUE_TYPE) //current value
 			{
@@ -157,7 +221,7 @@ NEXT_KEY_PART:
 				}
 				else
 				{
-					return false;
+					return 0;
 				}
 			}
 			else if(blockCellType <= MAX_BRANCH_TYPE1) //branch cell
@@ -177,7 +241,7 @@ NEXT_KEY_PART:
 					}
 				}
 
-				return false;
+				return 0;
 			}
 			else if(blockCellType <= MAX_BRANCH_TYPE2) //branch cell
 			{
@@ -213,7 +277,7 @@ NEXT_KEY_PART:
 					}
 				}
 
-				return false;
+				return 0;
 			}
 			else if(blockCell.Type <= MAX_BLOCK_TYPE)
 			{
@@ -225,7 +289,7 @@ NEXT_KEY_PART:
 			}
 			else
 			{
-				return false;
+				return 0;
 			}
 		}
 		else if(contentCellType == CURRENT_VALUE_TYPE) //PART OF KEY =========================================================================
@@ -234,15 +298,15 @@ NEXT_KEY_PART:
 			{
 				contentOffset++;
 				keyOffset++;
-
+			
 				goto NEXT_KEY_PART;
 			}
-			else
+			else 
 			{
-				return false;
+				return 0;
 			}
 		}
 	}
 
-	return false;
+	return 0;
 }
