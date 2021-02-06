@@ -37,6 +37,7 @@
 #include <tchar.h>
 #pragma comment(lib, "Ws2_32.lib")
 
+#define int32 __int32
 #define uint32 unsigned __int32
 #define ulong64 unsigned __int64
 #define ushort16 unsigned __int16
@@ -51,6 +52,7 @@
 #include<sys/socket.h>
 #include<arpa/inet.h> //inet_addr
 
+#define int32 int32_t
 #define uint32 uint32_t
 #define ulong64 uint64_t
 #define ushort16 uint16_t

@@ -29,7 +29,7 @@
 #include "BigDocInfo.h"
 #include "AttrValuesPool.h"
 #include "IndexesPool.h"
-#include "HArrayVarRAM.h"
+#include "HArray.h"
 #include "HArrayTran.h"
 
 struct ScanKeyData
@@ -62,10 +62,10 @@ public:
 struct ScanShrinkKeyData
 {
 public:
-	HArrayVarRAM* pNewHA1;
-	HArrayVarRAM* pNewHA2;
+	HArray* pNewHA1;
+	HArray* pNewHA2;
 
-	HArrayVarRAM* pOldHA2;
+	HArray* pOldHA2;
 };
 
 class BigDoc
@@ -109,8 +109,8 @@ public:
 	static ulong64 tranLogSize;
 	static ulong64 blobLogSize;
 	
-	HArrayVarRAM* has1[MAX_CHAR];
-	HArrayVarRAM* has2[MAX_CHAR];
+	HArray* has1[MAX_CHAR];
+	HArray* has2[MAX_CHAR];
 
 	uint32 countColls;
 	uint32 currTime;
@@ -528,9 +528,9 @@ public:
 		return false;
 	}
 
-	HArrayVarRAM* createHA1(char* name)
+	HArray* createHA1(char* name)
 	{
-		HArrayVarRAM* pHA1 = new HArrayVarRAM();
+		HArray* pHA1 = new HArray();
 
 		strcpy(pHA1->Name, name);
 
@@ -540,9 +540,9 @@ public:
 		return pHA1;
 	}
 
-	HArrayVarRAM* createHA2(char* name)
+	HArray* createHA2(char* name)
 	{
-		HArrayVarRAM* pHA2 = new HArrayVarRAM();
+		HArray* pHA2 = new HArray();
 
 		strcpy(pHA2->Name, name);
 
